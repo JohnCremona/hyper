@@ -1,0 +1,8 @@
+Density of non-negative definite real polynomials of degree 8
+Use full (0) or simplified (1) criterion? Input depth of recursion: 
+After recursion in the quarter box, non = 0.409928, neg = 0.281139
+0.0702848 <= (neg.def.density) <= 0.147518
+lower bound for non-neg def density  = 0.852482
+upper bound for non-neg def density  = 0.929715
+middle value for non-neg def density = 0.891099
+error bound for non-neg def density  = 0.0386166

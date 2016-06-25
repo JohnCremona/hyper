@@ -1,0 +1,1285 @@
+Density of non-negative definite real polynomials of degree 2
+Input depth of recursion: Box at depth -9:
+ai: -1 0 -1
+bi: 0 1 0
+recursing...
+Box at depth -8:
+ai: -2 0 -2
+bi: -1 2 0
+recursing...
+Box at depth -7:
+ai: -2 0 -2
+bi: -1 1 0
+recursing...
+Box at depth -6:
+ai: -2 0 -2
+bi: -1 1 -1
+all negative definite
+Box at depth -6:
+ai: -2 0 -1
+bi: -1 1 0
+recursing...
+Box at depth -5:
+ai: -4 0 -2
+bi: -3 2 0
+recursing...
+Box at depth -4:
+ai: -4 0 -2
+bi: -3 1 0
+recursing...
+Box at depth -3:
+ai: -4 0 -2
+bi: -3 1 -1
+all negative definite
+Box at depth -3:
+ai: -4 0 -1
+bi: -3 1 0
+recursing...
+Box at depth -2:
+ai: -8 0 -2
+bi: -7 2 0
+recursing...
+Box at depth -1:
+ai: -8 0 -2
+bi: -7 1 0
+recursing...
+Box at depth 0:
+ai: -8 0 -2
+bi: -7 1 -1
+all negative definite
+Box at depth 0:
+ai: -8 0 -1
+bi: -7 1 0
+reached max depth
+Box at depth -1:
+ai: -8 1 -2
+bi: -7 2 0
+recursing...
+Box at depth 0:
+ai: -8 1 -2
+bi: -7 2 -1
+all negative definite
+Box at depth 0:
+ai: -8 1 -1
+bi: -7 2 0
+reached max depth
+Box at depth -2:
+ai: -7 0 -2
+bi: -6 2 0
+recursing...
+Box at depth -1:
+ai: -7 0 -2
+bi: -6 1 0
+recursing...
+Box at depth 0:
+ai: -7 0 -2
+bi: -6 1 -1
+all negative definite
+Box at depth 0:
+ai: -7 0 -1
+bi: -6 1 0
+reached max depth
+Box at depth -1:
+ai: -7 1 -2
+bi: -6 2 0
+recursing...
+Box at depth 0:
+ai: -7 1 -2
+bi: -6 2 -1
+all negative definite
+Box at depth 0:
+ai: -7 1 -1
+bi: -6 2 0
+reached max depth
+Box at depth -4:
+ai: -4 1 -2
+bi: -3 2 0
+recursing...
+Box at depth -3:
+ai: -4 1 -2
+bi: -3 2 -1
+all negative definite
+Box at depth -3:
+ai: -4 1 -1
+bi: -3 2 0
+recursing...
+Box at depth -2:
+ai: -8 2 -2
+bi: -7 4 0
+recursing...
+Box at depth -1:
+ai: -8 2 -2
+bi: -7 3 0
+recursing...
+Box at depth 0:
+ai: -8 2 -2
+bi: -7 3 -1
+all negative definite
+Box at depth 0:
+ai: -8 2 -1
+bi: -7 3 0
+reached max depth
+Box at depth -1:
+ai: -8 3 -2
+bi: -7 4 0
+recursing...
+Box at depth 0:
+ai: -8 3 -2
+bi: -7 4 -1
+all negative definite
+Box at depth 0:
+ai: -8 3 -1
+bi: -7 4 0
+reached max depth
+Box at depth -2:
+ai: -7 2 -2
+bi: -6 4 0
+recursing...
+Box at depth -1:
+ai: -7 2 -2
+bi: -6 3 0
+recursing...
+Box at depth 0:
+ai: -7 2 -2
+bi: -6 3 -1
+all negative definite
+Box at depth 0:
+ai: -7 2 -1
+bi: -6 3 0
+reached max depth
+Box at depth -1:
+ai: -7 3 -2
+bi: -6 4 0
+recursing...
+Box at depth 0:
+ai: -7 3 -2
+bi: -6 4 -1
+all negative definite
+Box at depth 0:
+ai: -7 3 -1
+bi: -6 4 0
+reached max depth
+Box at depth -5:
+ai: -3 0 -2
+bi: -2 2 0
+recursing...
+Box at depth -4:
+ai: -3 0 -2
+bi: -2 1 0
+recursing...
+Box at depth -3:
+ai: -3 0 -2
+bi: -2 1 -1
+all negative definite
+Box at depth -3:
+ai: -3 0 -1
+bi: -2 1 0
+recursing...
+Box at depth -2:
+ai: -6 0 -2
+bi: -5 2 0
+recursing...
+Box at depth -1:
+ai: -6 0 -2
+bi: -5 1 0
+recursing...
+Box at depth 0:
+ai: -6 0 -2
+bi: -5 1 -1
+all negative definite
+Box at depth 0:
+ai: -6 0 -1
+bi: -5 1 0
+reached max depth
+Box at depth -1:
+ai: -6 1 -2
+bi: -5 2 0
+recursing...
+Box at depth 0:
+ai: -6 1 -2
+bi: -5 2 -1
+all negative definite
+Box at depth 0:
+ai: -6 1 -1
+bi: -5 2 0
+reached max depth
+Box at depth -2:
+ai: -5 0 -2
+bi: -4 2 0
+recursing...
+Box at depth -1:
+ai: -5 0 -2
+bi: -4 1 0
+recursing...
+Box at depth 0:
+ai: -5 0 -2
+bi: -4 1 -1
+all negative definite
+Box at depth 0:
+ai: -5 0 -1
+bi: -4 1 0
+reached max depth
+Box at depth -1:
+ai: -5 1 -2
+bi: -4 2 0
+recursing...
+Box at depth 0:
+ai: -5 1 -2
+bi: -4 2 -1
+all negative definite
+Box at depth 0:
+ai: -5 1 -1
+bi: -4 2 0
+reached max depth
+Box at depth -4:
+ai: -3 1 -2
+bi: -2 2 0
+recursing...
+Box at depth -3:
+ai: -3 1 -2
+bi: -2 2 -1
+all negative definite
+Box at depth -3:
+ai: -3 1 -1
+bi: -2 2 0
+recursing...
+Box at depth -2:
+ai: -6 2 -2
+bi: -5 4 0
+recursing...
+Box at depth -1:
+ai: -6 2 -2
+bi: -5 3 0
+recursing...
+Box at depth 0:
+ai: -6 2 -2
+bi: -5 3 -1
+all negative definite
+Box at depth 0:
+ai: -6 2 -1
+bi: -5 3 0
+reached max depth
+Box at depth -1:
+ai: -6 3 -2
+bi: -5 4 0
+recursing...
+Box at depth 0:
+ai: -6 3 -2
+bi: -5 4 -1
+all negative definite
+Box at depth 0:
+ai: -6 3 -1
+bi: -5 4 0
+reached max depth
+Box at depth -2:
+ai: -5 2 -2
+bi: -4 4 0
+recursing...
+Box at depth -1:
+ai: -5 2 -2
+bi: -4 3 0
+recursing...
+Box at depth 0:
+ai: -5 2 -2
+bi: -4 3 -1
+all negative definite
+Box at depth 0:
+ai: -5 2 -1
+bi: -4 3 0
+reached max depth
+Box at depth -1:
+ai: -5 3 -2
+bi: -4 4 0
+recursing...
+Box at depth 0:
+ai: -5 3 -2
+bi: -4 4 -1
+reached max depth
+Box at depth 0:
+ai: -5 3 -1
+bi: -4 4 0
+reached max depth
+Box at depth -7:
+ai: -2 1 -2
+bi: -1 2 0
+recursing...
+Box at depth -6:
+ai: -2 1 -2
+bi: -1 2 -1
+recursing...
+Box at depth -5:
+ai: -4 2 -4
+bi: -3 4 -2
+all negative definite
+Box at depth -5:
+ai: -3 2 -4
+bi: -2 4 -2
+recursing...
+Box at depth -4:
+ai: -3 2 -4
+bi: -2 3 -2
+all negative definite
+Box at depth -4:
+ai: -3 3 -4
+bi: -2 4 -2
+recursing...
+Box at depth -3:
+ai: -3 3 -4
+bi: -2 4 -3
+all negative definite
+Box at depth -3:
+ai: -3 3 -3
+bi: -2 4 -2
+recursing...
+Box at depth -2:
+ai: -6 6 -6
+bi: -5 8 -4
+all negative definite
+Box at depth -2:
+ai: -5 6 -6
+bi: -4 8 -4
+recursing...
+Box at depth -1:
+ai: -5 6 -6
+bi: -4 7 -4
+all negative definite
+Box at depth -1:
+ai: -5 7 -6
+bi: -4 8 -4
+recursing...
+Box at depth 0:
+ai: -5 7 -6
+bi: -4 8 -5
+all negative definite
+Box at depth 0:
+ai: -5 7 -5
+bi: -4 8 -4
+reached max depth
+Box at depth -6:
+ai: -4 2 -1
+bi: -1 2 0
+recursing...
+Box at depth -5:
+ai: -8 4 -2
+bi: -5 4 0
+recursing...
+Box at depth -4:
+ai: -16 8 -4
+bi: -13 8 0
+recursing...
+Box at depth -3:
+ai: -16 8 -4
+bi: -13 8 -2
+all negative definite
+Box at depth -3:
+ai: -16 8 -2
+bi: -13 8 0
+recursing...
+Box at depth -2:
+ai: -32 16 -4
+bi: -29 16 0
+recursing...
+Box at depth -1:
+ai: -32 16 -4
+bi: -29 16 -2
+recursing...
+Box at depth 0:
+ai: -64 32 -8
+bi: -61 32 -4
+reached max depth
+Box at depth 0:
+ai: -61 32 -8
+bi: -58 32 -4
+reached max depth
+Box at depth -1:
+ai: -64 32 -2
+bi: -29 16 0
+none negative definite
+Box at depth -2:
+ai: -29 32 -8
+bi: -26 16 0
+none negative definite
+Box at depth -4:
+ai: -13 8 -4
+bi: -10 8 0
+recursing...
+Box at depth -3:
+ai: -13 8 -4
+bi: -10 8 -2
+all negative definite
+Box at depth -3:
+ai: -13 8 -2
+bi: -10 8 0
+recursing...
+Box at depth -2:
+ai: -26 16 -4
+bi: -23 16 0
+recursing...
+Box at depth -1:
+ai: -26 16 -4
+bi: -23 16 -2
+recursing...
+Box at depth 0:
+ai: -52 32 -8
+bi: -49 32 -4
+reached max depth
+Box at depth 0:
+ai: -49 32 -8
+bi: -46 32 -4
+reached max depth
+Box at depth -1:
+ai: -52 32 -2
+bi: -23 16 0
+none negative definite
+Box at depth -2:
+ai: -23 32 -8
+bi: -20 16 0
+none negative definite
+Box at depth -5:
+ai: -5 8 -4
+bi: -2 4 0
+recursing...
+Box at depth -4:
+ai: -5 8 -4
+bi: -2 4 -2
+recursing...
+Box at depth -3:
+ai: -10 16 -8
+bi: -7 8 -4
+all negative definite
+Box at depth -3:
+ai: -7 16 -8
+bi: -4 8 -4
+none negative definite
+Box at depth -4:
+ai: -10 16 -2
+bi: -2 4 0
+none negative definite
+Box at depth -8:
+ai: -1 0 -2
+bi: 0 2 0
+recursing...
+Box at depth -7:
+ai: -1 0 -2
+bi: 0 1 0
+recursing...
+Box at depth -6:
+ai: -1 0 -2
+bi: 0 1 -1
+recursing...
+Box at depth -5:
+ai: -2 0 -4
+bi: -1 2 -2
+all negative definite
+Box at depth -5:
+ai: -1 0 -4
+bi: 0 2 -2
+recursing...
+Box at depth -4:
+ai: -1 0 -4
+bi: 0 1 -2
+recursing...
+Box at depth -3:
+ai: -1 0 -4
+bi: 0 1 -3
+recursing...
+Box at depth -2:
+ai: -2 0 -8
+bi: -1 2 -6
+all negative definite
+Box at depth -2:
+ai: -1 0 -8
+bi: 0 2 -6
+recursing...
+Box at depth -1:
+ai: -1 0 -8
+bi: 0 1 -6
+recursing...
+Box at depth 0:
+ai: -1 0 -8
+bi: 0 1 -7
+reached max depth
+Box at depth 0:
+ai: -1 0 -7
+bi: 0 1 -6
+reached max depth
+Box at depth -1:
+ai: -1 1 -8
+bi: 0 2 -6
+recursing...
+Box at depth 0:
+ai: -1 1 -8
+bi: 0 2 -7
+reached max depth
+Box at depth 0:
+ai: -1 1 -7
+bi: 0 2 -6
+reached max depth
+Box at depth -3:
+ai: -2 0 -3
+bi: 0 1 -2
+recursing...
+Box at depth -2:
+ai: -2 0 -3
+bi: -1 1 -2
+all negative definite
+Box at depth -2:
+ai: -1 0 -3
+bi: 0 1 -2
+recursing...
+Box at depth -1:
+ai: -2 0 -6
+bi: -1 2 -4
+all negative definite
+Box at depth -1:
+ai: -1 0 -6
+bi: 0 2 -4
+recursing...
+Box at depth 0:
+ai: -1 0 -6
+bi: 0 1 -4
+reached max depth
+Box at depth 0:
+ai: -1 1 -6
+bi: 0 2 -4
+reached max depth
+Box at depth -4:
+ai: -2 1 -8
+bi: 0 2 -2
+recursing...
+Box at depth -3:
+ai: -2 1 -8
+bi: 0 2 -5
+recursing...
+Box at depth -2:
+ai: -4 2 -16
+bi: 0 4 -13
+recursing...
+Box at depth -1:
+ai: -4 2 -16
+bi: -2 4 -13
+all negative definite
+Box at depth -1:
+ai: -2 2 -16
+bi: 0 4 -13
+recursing...
+Box at depth 0:
+ai: -4 4 -32
+bi: 0 8 -29
+reached max depth
+Box at depth 0:
+ai: -4 4 -29
+bi: 0 8 -26
+reached max depth
+Box at depth -2:
+ai: -4 2 -13
+bi: 0 4 -10
+recursing...
+Box at depth -1:
+ai: -4 2 -13
+bi: -2 4 -10
+all negative definite
+Box at depth -1:
+ai: -2 2 -13
+bi: 0 4 -10
+recursing...
+Box at depth 0:
+ai: -4 4 -26
+bi: 0 8 -23
+reached max depth
+Box at depth 0:
+ai: -4 4 -23
+bi: 0 8 -20
+reached max depth
+Box at depth -3:
+ai: -4 2 -5
+bi: 0 2 -2
+recursing...
+Box at depth -2:
+ai: -4 2 -5
+bi: -2 2 -2
+all negative definite
+Box at depth -2:
+ai: -2 2 -5
+bi: 0 2 -2
+recursing...
+Box at depth -1:
+ai: -4 4 -10
+bi: 0 4 -7
+recursing...
+Box at depth 0:
+ai: -4 4 -10
+bi: -2 4 -7
+all negative definite
+Box at depth 0:
+ai: -2 4 -10
+bi: 0 4 -7
+reached max depth
+Box at depth -1:
+ai: -4 4 -7
+bi: 0 4 -4
+recursing...
+Box at depth 0:
+ai: -4 4 -7
+bi: -2 4 -4
+all negative definite
+Box at depth 0:
+ai: -2 4 -7
+bi: 0 4 -4
+reached max depth
+Box at depth -6:
+ai: -2 0 -1
+bi: 0 1 0
+recursing...
+Box at depth -5:
+ai: -2 0 -1
+bi: -1 1 0
+recursing...
+Box at depth -4:
+ai: -4 0 -2
+bi: -3 2 0
+recursing...
+Box at depth -3:
+ai: -4 0 -2
+bi: -3 1 0
+recursing...
+Box at depth -2:
+ai: -4 0 -2
+bi: -3 1 -1
+all negative definite
+Box at depth -2:
+ai: -4 0 -1
+bi: -3 1 0
+recursing...
+Box at depth -1:
+ai: -8 0 -2
+bi: -7 2 0
+recursing...
+Box at depth 0:
+ai: -8 0 -2
+bi: -7 1 0
+reached max depth
+Box at depth 0:
+ai: -8 1 -2
+bi: -7 2 0
+reached max depth
+Box at depth -1:
+ai: -7 0 -2
+bi: -6 2 0
+recursing...
+Box at depth 0:
+ai: -7 0 -2
+bi: -6 1 0
+reached max depth
+Box at depth 0:
+ai: -7 1 -2
+bi: -6 2 0
+reached max depth
+Box at depth -3:
+ai: -4 1 -2
+bi: -3 2 0
+recursing...
+Box at depth -2:
+ai: -4 1 -2
+bi: -3 2 -1
+all negative definite
+Box at depth -2:
+ai: -4 1 -1
+bi: -3 2 0
+recursing...
+Box at depth -1:
+ai: -8 2 -2
+bi: -7 4 0
+recursing...
+Box at depth 0:
+ai: -8 2 -2
+bi: -7 3 0
+reached max depth
+Box at depth 0:
+ai: -8 3 -2
+bi: -7 4 0
+reached max depth
+Box at depth -1:
+ai: -7 2 -2
+bi: -6 4 0
+recursing...
+Box at depth 0:
+ai: -7 2 -2
+bi: -6 3 0
+reached max depth
+Box at depth 0:
+ai: -7 3 -2
+bi: -6 4 0
+reached max depth
+Box at depth -4:
+ai: -3 0 -2
+bi: -2 2 0
+recursing...
+Box at depth -3:
+ai: -3 0 -2
+bi: -2 1 0
+recursing...
+Box at depth -2:
+ai: -3 0 -2
+bi: -2 1 -1
+all negative definite
+Box at depth -2:
+ai: -3 0 -1
+bi: -2 1 0
+recursing...
+Box at depth -1:
+ai: -6 0 -2
+bi: -5 2 0
+recursing...
+Box at depth 0:
+ai: -6 0 -2
+bi: -5 1 0
+reached max depth
+Box at depth 0:
+ai: -6 1 -2
+bi: -5 2 0
+reached max depth
+Box at depth -1:
+ai: -5 0 -2
+bi: -4 2 0
+recursing...
+Box at depth 0:
+ai: -5 0 -2
+bi: -4 1 0
+reached max depth
+Box at depth 0:
+ai: -5 1 -2
+bi: -4 2 0
+reached max depth
+Box at depth -3:
+ai: -3 1 -2
+bi: -2 2 0
+recursing...
+Box at depth -2:
+ai: -3 1 -2
+bi: -2 2 -1
+all negative definite
+Box at depth -2:
+ai: -3 1 -1
+bi: -2 2 0
+recursing...
+Box at depth -1:
+ai: -6 2 -2
+bi: -5 4 0
+recursing...
+Box at depth 0:
+ai: -6 2 -2
+bi: -5 3 0
+reached max depth
+Box at depth 0:
+ai: -6 3 -2
+bi: -5 4 0
+reached max depth
+Box at depth -1:
+ai: -5 2 -2
+bi: -4 4 0
+recursing...
+Box at depth 0:
+ai: -5 2 -2
+bi: -4 3 0
+reached max depth
+Box at depth 0:
+ai: -5 3 -2
+bi: -4 4 0
+reached max depth
+Box at depth -5:
+ai: -1 0 -2
+bi: 0 1 0
+recursing...
+Box at depth -4:
+ai: -1 0 -2
+bi: 0 1 -1
+recursing...
+Box at depth -3:
+ai: -2 0 -4
+bi: -1 2 -2
+all negative definite
+Box at depth -3:
+ai: -1 0 -4
+bi: 0 2 -2
+recursing...
+Box at depth -2:
+ai: -1 0 -4
+bi: 0 1 -2
+recursing...
+Box at depth -1:
+ai: -1 0 -4
+bi: 0 1 -3
+recursing...
+Box at depth 0:
+ai: -2 0 -8
+bi: -1 2 -6
+all negative definite
+Box at depth 0:
+ai: -1 0 -8
+bi: 0 2 -6
+reached max depth
+Box at depth -1:
+ai: -2 0 -3
+bi: 0 1 -2
+recursing...
+Box at depth 0:
+ai: -2 0 -3
+bi: -1 1 -2
+all negative definite
+Box at depth 0:
+ai: -1 0 -3
+bi: 0 1 -2
+reached max depth
+Box at depth -2:
+ai: -2 1 -8
+bi: 0 2 -2
+recursing...
+Box at depth -1:
+ai: -2 1 -8
+bi: 0 2 -5
+recursing...
+Box at depth 0:
+ai: -4 2 -16
+bi: 0 4 -13
+reached max depth
+Box at depth 0:
+ai: -4 2 -13
+bi: 0 4 -10
+reached max depth
+Box at depth -1:
+ai: -4 2 -5
+bi: 0 2 -2
+recursing...
+Box at depth 0:
+ai: -4 2 -5
+bi: -2 2 -2
+all negative definite
+Box at depth 0:
+ai: -2 2 -5
+bi: 0 2 -2
+reached max depth
+Box at depth -4:
+ai: -2 0 -1
+bi: 0 1 0
+recursing...
+Box at depth -3:
+ai: -2 0 -1
+bi: -1 1 0
+recursing...
+Box at depth -2:
+ai: -4 0 -2
+bi: -3 2 0
+recursing...
+Box at depth -1:
+ai: -4 0 -2
+bi: -3 1 0
+recursing...
+Box at depth 0:
+ai: -4 0 -2
+bi: -3 1 -1
+all negative definite
+Box at depth 0:
+ai: -4 0 -1
+bi: -3 1 0
+reached max depth
+Box at depth -1:
+ai: -4 1 -2
+bi: -3 2 0
+recursing...
+Box at depth 0:
+ai: -4 1 -2
+bi: -3 2 -1
+all negative definite
+Box at depth 0:
+ai: -4 1 -1
+bi: -3 2 0
+reached max depth
+Box at depth -2:
+ai: -3 0 -2
+bi: -2 2 0
+recursing...
+Box at depth -1:
+ai: -3 0 -2
+bi: -2 1 0
+recursing...
+Box at depth 0:
+ai: -3 0 -2
+bi: -2 1 -1
+all negative definite
+Box at depth 0:
+ai: -3 0 -1
+bi: -2 1 0
+reached max depth
+Box at depth -1:
+ai: -3 1 -2
+bi: -2 2 0
+recursing...
+Box at depth 0:
+ai: -3 1 -2
+bi: -2 2 -1
+all negative definite
+Box at depth 0:
+ai: -3 1 -1
+bi: -2 2 0
+reached max depth
+Box at depth -3:
+ai: -1 0 -2
+bi: 0 1 0
+recursing...
+Box at depth -2:
+ai: -1 0 -2
+bi: 0 1 -1
+recursing...
+Box at depth -1:
+ai: -2 0 -4
+bi: -1 2 -2
+all negative definite
+Box at depth -1:
+ai: -1 0 -4
+bi: 0 2 -2
+recursing...
+Box at depth 0:
+ai: -1 0 -4
+bi: 0 1 -2
+reached max depth
+Box at depth 0:
+ai: -1 1 -4
+bi: 0 2 -2
+reached max depth
+Box at depth -2:
+ai: -2 0 -1
+bi: 0 1 0
+recursing...
+Box at depth -1:
+ai: -2 0 -1
+bi: -1 1 0
+recursing...
+Box at depth 0:
+ai: -4 0 -2
+bi: -3 2 0
+reached max depth
+Box at depth 0:
+ai: -3 0 -2
+bi: -2 2 0
+reached max depth
+Box at depth -1:
+ai: -1 0 -2
+bi: 0 1 0
+recursing...
+Box at depth 0:
+ai: -1 0 -2
+bi: 0 1 -1
+reached max depth
+Box at depth 0:
+ai: -1 0 -1
+bi: 0 1 0
+reached max depth
+Box at depth -7:
+ai: -2 1 -4
+bi: 0 2 0
+recursing...
+Box at depth -6:
+ai: -2 1 -4
+bi: 0 2 -2
+recursing...
+Box at depth -5:
+ai: -2 1 -4
+bi: -1 2 -2
+all negative definite
+Box at depth -5:
+ai: -1 1 -4
+bi: 0 2 -2
+recursing...
+Box at depth -4:
+ai: -1 1 -4
+bi: 0 2 -3
+recursing...
+Box at depth -3:
+ai: -2 2 -8
+bi: -1 4 -6
+all negative definite
+Box at depth -3:
+ai: -1 2 -8
+bi: 0 4 -6
+recursing...
+Box at depth -2:
+ai: -1 2 -8
+bi: 0 3 -6
+recursing...
+Box at depth -1:
+ai: -1 2 -8
+bi: 0 3 -7
+recursing...
+Box at depth 0:
+ai: -2 4 -16
+bi: -1 6 -14
+all negative definite
+Box at depth 0:
+ai: -1 4 -16
+bi: 0 6 -14
+reached max depth
+Box at depth -1:
+ai: -2 4 -7
+bi: 0 3 -6
+recursing...
+Box at depth 0:
+ai: -2 4 -7
+bi: -1 3 -6
+all negative definite
+Box at depth 0:
+ai: -1 4 -7
+bi: 0 3 -6
+reached max depth
+Box at depth -2:
+ai: -2 3 -16
+bi: 0 4 -6
+recursing...
+Box at depth -1:
+ai: -2 3 -16
+bi: 0 4 -11
+recursing...
+Box at depth 0:
+ai: -4 6 -32
+bi: 0 8 -27
+reached max depth
+Box at depth 0:
+ai: -4 6 -27
+bi: 0 8 -22
+reached max depth
+Box at depth -1:
+ai: -4 6 -11
+bi: 0 4 -6
+recursing...
+Box at depth 0:
+ai: -8 12 -22
+bi: 0 8 -17
+reached max depth
+Box at depth 0:
+ai: -8 12 -17
+bi: 0 8 -12
+reached max depth
+Box at depth -4:
+ai: -2 2 -3
+bi: 0 2 -2
+recursing...
+Box at depth -3:
+ai: -2 2 -3
+bi: -1 2 -2
+all negative definite
+Box at depth -3:
+ai: -1 2 -3
+bi: 0 2 -2
+recursing...
+Box at depth -2:
+ai: -2 4 -6
+bi: -1 4 -4
+recursing...
+Box at depth -1:
+ai: -2 4 -6
+bi: -1 4 -5
+all negative definite
+Box at depth -1:
+ai: -2 4 -5
+bi: -1 4 -4
+recursing...
+Box at depth 0:
+ai: -4 8 -10
+bi: -3 8 -8
+all negative definite
+Box at depth 0:
+ai: -3 8 -10
+bi: -2 8 -8
+reached max depth
+Box at depth -2:
+ai: -1 4 -6
+bi: 0 4 -4
+recursing...
+Box at depth -1:
+ai: -1 4 -6
+bi: 0 4 -5
+recursing...
+Box at depth 0:
+ai: -2 8 -12
+bi: -1 8 -10
+reached max depth
+Box at depth 0:
+ai: -1 8 -12
+bi: 0 8 -10
+none negative definite
+Box at depth -1:
+ai: -2 8 -5
+bi: 0 4 -4
+none negative definite
+Box at depth -6:
+ai: -2 1 -2
+bi: 0 2 0
+recursing...
+Box at depth -5:
+ai: -2 1 -2
+bi: -1 2 0
+recursing...
+Box at depth -4:
+ai: -2 1 -2
+bi: -1 2 -1
+recursing...
+Box at depth -3:
+ai: -4 2 -4
+bi: -3 4 -2
+all negative definite
+Box at depth -3:
+ai: -3 2 -4
+bi: -2 4 -2
+recursing...
+Box at depth -2:
+ai: -3 2 -4
+bi: -2 3 -2
+all negative definite
+Box at depth -2:
+ai: -3 3 -4
+bi: -2 4 -2
+recursing...
+Box at depth -1:
+ai: -3 3 -4
+bi: -2 4 -3
+all negative definite
+Box at depth -1:
+ai: -3 3 -3
+bi: -2 4 -2
+recursing...
+Box at depth 0:
+ai: -6 6 -6
+bi: -5 8 -4
+all negative definite
+Box at depth 0:
+ai: -5 6 -6
+bi: -4 8 -4
+reached max depth
+Box at depth -4:
+ai: -4 2 -1
+bi: -1 2 0
+recursing...
+Box at depth -3:
+ai: -8 4 -2
+bi: -5 4 0
+recursing...
+Box at depth -2:
+ai: -16 8 -4
+bi: -13 8 0
+recursing...
+Box at depth -1:
+ai: -16 8 -4
+bi: -13 8 -2
+all negative definite
+Box at depth -1:
+ai: -16 8 -2
+bi: -13 8 0
+recursing...
+Box at depth 0:
+ai: -32 16 -4
+bi: -29 16 0
+reached max depth
+Box at depth 0:
+ai: -29 16 -4
+bi: -26 16 0
+reached max depth
+Box at depth -2:
+ai: -13 8 -4
+bi: -10 8 0
+recursing...
+Box at depth -1:
+ai: -13 8 -4
+bi: -10 8 -2
+all negative definite
+Box at depth -1:
+ai: -13 8 -2
+bi: -10 8 0
+recursing...
+Box at depth 0:
+ai: -26 16 -4
+bi: -23 16 0
+reached max depth
+Box at depth 0:
+ai: -23 16 -4
+bi: -20 16 0
+reached max depth
+Box at depth -3:
+ai: -5 8 -4
+bi: -2 4 0
+recursing...
+Box at depth -2:
+ai: -5 8 -4
+bi: -2 4 -2
+recursing...
+Box at depth -1:
+ai: -10 16 -8
+bi: -7 8 -4
+all negative definite
+Box at depth -1:
+ai: -7 16 -8
+bi: -4 8 -4
+none negative definite
+Box at depth -2:
+ai: -10 16 -2
+bi: -2 4 0
+none negative definite
+Box at depth -5:
+ai: -1 2 -4
+bi: 0 2 0
+recursing...
+Box at depth -4:
+ai: -1 2 -4
+bi: 0 2 -2
+recursing...
+Box at depth -3:
+ai: -1 2 -4
+bi: 0 2 -3
+recursing...
+Box at depth -2:
+ai: -2 4 -8
+bi: -1 4 -6
+all negative definite
+Box at depth -2:
+ai: -1 4 -8
+bi: 0 4 -6
+recursing...
+Box at depth -1:
+ai: -1 4 -8
+bi: 0 4 -7
+recursing...
+Box at depth 0:
+ai: -2 8 -16
+bi: -1 8 -14
+reached max depth
+Box at depth 0:
+ai: -1 8 -16
+bi: 0 8 -14
+none negative definite
+Box at depth -1:
+ai: -2 8 -7
+bi: 0 4 -6
+none negative definite
+Box at depth -3:
+ai: -2 4 -3
+bi: 0 2 -2
+recursing...
+Box at depth -2:
+ai: -2 4 -3
+bi: -1 2 -2
+all negative definite
+Box at depth -2:
+ai: -1 4 -3
+bi: 0 2 -2
+none negative definite
+Box at depth -4:
+ai: -2 4 -2
+bi: 0 2 0
+none negative definite
+
+After recursion in the quarter box, non = 0.132812, neg = 0.712891
+0.178223 <= (neg.def.density) <= 0.216797
+lower bound for non-neg def density  = 0.783203
+upper bound for non-neg def density  = 0.821777
+middle value for non-neg def density = 0.80249
+error bound for non-neg def density  = 0.0192871
+exact value = 0.813603	--OK, in interval

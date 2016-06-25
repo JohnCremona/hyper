@@ -1,0 +1,8 @@
+Density of non-negative definite real polynomials of degree 10
+Use full (0) or simplified (1) criterion? Input depth of recursion: 
+After recursion in the quarter box, non = 0.390288, neg = 0.185076
+0.046269 <= (neg.def.density) <= 0.152428
+lower bound for non-neg def density  = 0.847572
+upper bound for non-neg def density  = 0.953731
+middle value for non-neg def density = 0.900652
+error bound for non-neg def density  = 0.0530795

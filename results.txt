@@ -1,0 +1,483 @@
+Results of the python programs in boxes.sage and the C progams in boxes.cc:
+
+1. GENUS 1 (QUARTICS)
+
+Expecting density 0.874 for "not negative definite"
+
+Sampling, 10^6 points: 0.8740745
+                       0.8739535
+                       0.8740895
+                       0.8736505 (16s)
+Sampling, 10^7 points: 0.87413925 (2m41s)
+
+
+With tolerance 0.001:
+
+sage: time res = quartic_densities2(0.001)
+0 real roots:
+(0.0124511718750000, 0.683349609375000), diameter 0.670898437500000
+2 real roots:
+(0.316650390625000, 0.987548828125000), diameter 0.670898437500000
+4 real roots:
+(0.000000000000000, 0.670898437500000), diameter 0.670898437500000
+not negative definite:
+(0.658325195312500, 0.993774414062500), diameter 0.335449218750000
+CPU times: user 4.68 s, sys: 209 ms, total: 4.89 s
+
+With tolerance 0.0001:
+
+sage: time res = quartic_densities2(0.0001)
+0 real roots:
+(0.0687408447265625, 0.528121948242188), diameter 0.459381103515625
+2 real roots:
+(0.471878051757812, 0.931259155273438), diameter 0.459381103515625
+4 real roots:
+(0.000000000000000, 0.459381103515625), diameter 0.459381103515625
+not negative definite:
+(0.736137390136718, 0.965629577636719), diameter 0.229492187500000
+CPU times: user 1min 42s, sys: 228 ms, total: 1min 42s
+
+With tolerance 0.0001:
+
+sage: time res = quartic_densities2(0.00001)
+0 real roots:
+(0.133889079093933, 0.424112200737000), diameter 0.290223121643066
+2 real roots:
+(0.570640802383422, 0.860863924026490), diameter 0.290223121643066
+4 real roots:
+(0.00524699687957763, 0.295470118522645), diameter 0.290223121643066
+not negative definite:
+(0.787943899631500, 0.933055460453034), diameter 0.145111560821533
+CPU times: user 38min 2s, sys: 3.28 s, total: 38min 5s
+
+Neg Def only (quartic_densities4(tol)):
+10^-3: 1.1s,  (0.774949596, 0.993573588), diameter 0.21862399
+10^-4: 30s,   (0.802309097, 0.964721679), diameter 0.162412
+10^-5: 11m53s (0.826131912, 0.932004682), diameter 0.105872
+10^-6: 11m53s (0.826131912, 0.932004682), diameter 0.105872
+old:
+10^-7: 4h24m  (0.842790509, 0.908747432), diameter 0.0659569
+
+Convexity version
+10^-3: 5s, (0.770751953125000, 0.948852539062500), diameter 0.1781
+10^-4: 2m, (0.782096862792968, 0.914749145507813), diameter 0.1326
+10^-5: 53m,(0.788767337799072, 0.895013689994813), diameter 0.1062
+
+New Convexity version
+2^-13:
+(0.835123062133789, 0.914749145507813), diameter 0.0796260833740234
+CPU times: user 1min 51s, sys: 225 ms, total: 1min 51s
+(0.853896081447601, 0.895013689994813), diameter 0.0411176085472107
+CPU times: user 33min 39s, sys: 2.87 s, total: 33min 42s
+(0.863508559763431, 0.884636919945479), diameter 0.0211283601820469
+
+2^-16 (7m):
+(0.853896081447601, 0.894989252090455), diameter 0.0410931706428528
+2^-21 (1h56m)
+(0.863508559763431, 0.884634776040912), diameter 0.0211262162774801
+
+2^-26
+(0.868331281759310, 0.879372696275823), diameter 0.0110414145165123
+
+C program: (use tolerance 1 mod 5)
+time echo 21 | ./boxes (0.8s)
+lower bound = 0.864183
+upper bound = 0.883735
+middle value = 0.873959
+error bound  = 0.00977624
+
+time echo 26 | ./boxes (2m5s)
+lower bound = 0.868672
+upper bound = 0.878928
+middle value = 0.8738
+error bound  = 0.0051277
+
+time echo 31 | ./boxes (34m54s)
+lower bound = 0.870914
+upper bound = 0.876517
+middle value = 0.873715 [so 0.871, 0.872, 0.873, 0.874, 0.875, 0.876, 0.877]
+error bound  = 0.00280155
+
+time echo 36 | ./boxes (623m=10h23m)
+lower bound = 0.872033
+upper bound = 0.875314
+middle value = 0.873674   [so 0.872, 0.873, 0.874, 0.875]
+error bound  = 0.00164025
+
+time echo 41 | ./boxes (1088m=18h8m)
+lower bound = 0.872193
+upper bound = 0.875139
+middle value = 0.873666  [so 0.872, 0.873, 0.874, 0.875]
+error bound  = 0.00147275
+
+
+time echo 35 | ./boxes (13h36m)
+lower bound = 0.871948
+upper bound = 0.875422
+middle value = 0.873685
+error bound  = 0.00173744
+
+$ time echo 46 | ./boxes (14d 23h)
+Input log_2-tolerance: tolerance = 1.42109e-14
+res[0] = 13.9628, res[1] = 2.00596
+lower bound = 0.872673
+upper bound = 0.874627
+middle value = 0.87365
+error bound  = 0.000977271
+
+##########################################################
+#
+# New multidegree version using pari for sturm()
+#
+
+Density of non-negative definite real polynomials of degree 4
+
+depth 15: 0.6s
+lower bound for non-neg def density  = 0.820663
+upper bound for non-neg def density  = 0.929527
+middle value for non-neg def density = 0.875095
+error bound for non-neg def density  = 0.0544319
+
+depth 16: 0.9s
+lower bound for non-neg def density  = 0.826683
+upper bound for non-neg def density  = 0.924866
+middle value for non-neg def density = 0.875774
+error bound for non-neg def density  = 0.0490913
+
+depth 17:1.7s
+lower bound for non-neg def density  = 0.835802
+upper bound for non-neg def density  = 0.914549
+middle value for non-neg def density = 0.875175
+error bound for non-neg def density  = 0.0393734
+
+depth 18: 3s
+lower bound for non-neg def density  = 0.839987
+upper bound for non-neg def density  = 0.908849
+middle value for non-neg def density = 0.874418
+error bound for non-neg def density  = 0.034431
+
+depth 19: 5.7s
+lower bound for non-neg def density  = 0.843435
+upper bound for non-neg def density  = 0.906045
+middle value for non-neg def density = 0.87474
+error bound for non-neg def density  = 0.0313051
+
+depth 20: 10.7s
+lower bound for non-neg def density  = 0.846392
+upper bound for non-neg def density  = 0.903441
+middle value for non-neg def density = 0.874916
+error bound for non-neg def density  = 0.0285246
+
+depth 21: 19.3s
+lower bound for non-neg def density  = 0.849678
+upper bound for non-neg def density  = 0.900605
+middle value for non-neg def density = 0.875142
+error bound for non-neg def density  = 0.0254638
+
+depth 22: 34s
+lower bound for non-neg def density  = 0.854531
+upper bound for non-neg def density  = 0.894987
+middle value for non-neg def density = 0.874759
+error bound for non-neg def density  = 0.0202284
+
+depth 23: 1m1s
+lower bound for non-neg def density  = 0.856817
+upper bound for non-neg def density  = 0.891985
+middle value for non-neg def density = 0.874401
+error bound for non-neg def density  = 0.0175844
+
+depth 24: 1m48s
+lower bound for non-neg def density  = 0.85853
+upper bound for non-neg def density  = 0.890443
+middle value for non-neg def density = 0.874486
+error bound for non-neg def density  = 0.0159569
+
+depth 25: 3m9s
+lower bound for non-neg def density  = 0.860009
+upper bound for non-neg def density  = 0.88906
+middle value for non-neg def density = 0.874534
+error bound for non-neg def density  = 0.0145252
+
+depth 30:
+lower bound for non-neg def density  = 0.866987
+upper bound for non-neg def density  = 0.881617
+middle value for non-neg def density = 0.874302
+error bound for non-neg def density  = 0.00731467
+
+##########################################################
+#
+# New version using pari for sturm() and Manjul's scaling
+#
+
+Density of non-negative definite real polynomials of degree 4
+
+depth   time            lower bound   upper bound difference
+        (laptop)
+20      9.3s            0.863649      0.885567    0.0109
+21      16.3s           0.865273      0.883833    0.00927
+22      29s             0.867479      0.881216    0.00686
+23      47s             0.868189      0.88041     0.00611
+24      1m22s           0.868794      0.879821    0.0055
+25      2m22s           0.869624      0.878944    0.00466
+26      4m19s           0.870762      0.87765     0.00344
+27      6m56s           0.871123      0.877251    0.00306
+28      11m52s          0.871425      0.876954    0.002764
+
+        (atkin)
+30      65m             0.872427      0.875876    0.00172
+35      813m            0.87336       0.874895    0.000767
+36      1456m           0.873436      0.87482     0.000692316
+
+
+######################################################################
+
+2. GENUS 2 (SEXTICS)
+
+depth 15: 1.3s
+lower bound for non-neg def density  = 0.791779
+upper bound for non-neg def density  = 0.984665
+middle value for non-neg def density = 0.888222
+error bound for non-neg def density  = 0.0964432
+
+depth 20: 40s
+lower bound for non-neg def density  = 0.832038
+upper bound for non-neg def density  = 0.959689
+middle value for non-neg def density = 0.895864
+error bound for non-neg def density  = 0.0638256
+
+depth 21: 1m5s
+lower bound for non-neg def density  = 0.836803
+upper bound for non-neg def density  = 0.956916
+middle value for non-neg def density = 0.89686
+error bound for non-neg def density  = 0.0600566
+
+depth 22: 2m
+lower bound for non-neg def density  = 0.84115
+upper bound for non-neg def density  = 0.954219
+middle value for non-neg def density = 0.897684
+error bound for non-neg def density  = 0.0565345
+
+depth 23: 3m48s
+lower bound for non-neg def density  = 0.845613
+upper bound for non-neg def density  = 0.951163
+middle value for non-neg def density = 0.898388
+error bound for non-neg def density  = 0.052775
+
+depth 24: 6m56s
+lower bound for non-neg def density  = 0.851078
+upper bound for non-neg def density  = 0.9476
+middle value for non-neg def density = 0.899339
+error bound for non-neg def density  = 0.0482609
+
+depth 25: 13m
+lower bound for non-neg def density  = 0.859619
+upper bound for non-neg def density  = 0.940217
+middle value for non-neg def density = 0.899918
+error bound for non-neg def density  = 0.0402992
+
+depth 30: 4h 29m 41s
+lower bound for non-neg def density  = 0.873674
+upper bound for non-neg def density  = 0.928693
+middle value for non-neg def density = 0.901183
+error bound for non-neg def density  = 0.0275091
+
+######################################################################
+
+2. GENUS 3 (OCTICS)
+
+depth 10: <0.1s
+lower bound for non-neg def density  = 0.751465
+upper bound for non-neg def density  = 1
+middle value for non-neg def density = 0.875732
+error bound for non-neg def density  = 0.124268
+
+depth 15: 2.6s
+lower bound for non-neg def density  = 0.765549
+upper bound for non-neg def density  = 0.997864
+middle value for non-neg def density = 0.881706
+error bound for non-neg def density  = 0.116158
+
+depth 16: 5.3s
+lower bound for non-neg def density  = 0.77232
+upper bound for non-neg def density  = 0.996254
+middle value for non-neg def density = 0.884287
+error bound for non-neg def density  = 0.111967
+
+depth 17: 9s
+lower bound for non-neg def density  = 0.780399
+upper bound for non-neg def density  = 0.99544
+middle value for non-neg def density = 0.887919
+error bound for non-neg def density  = 0.10752
+
+depth 18: 16s
+lower bound for non-neg def density  = 0.786978
+upper bound for non-neg def density  = 0.99434
+middle value for non-neg def density = 0.890659
+error bound for non-neg def density  = 0.103681
+
+depth 19: 40s
+lower bound for non-neg def density  = 0.792554
+upper bound for non-neg def density  = 0.993203
+middle value for non-neg def density = 0.892879
+error bound for non-neg def density  = 0.100325
+
+depth 20: 1m
+lower bound for non-neg def density  = 0.797645
+upper bound for non-neg def density  = 0.991823
+middle value for non-neg def density = 0.894734
+error bound for non-neg def density  = 0.0970892
+
+depth 25: 33m 28s
+lower bound for non-neg def density  = 0.8363
+upper bound for non-neg def density  = 0.975382
+middle value for non-neg def density = 0.905841
+error bound for non-neg def density  = 0.0695414
+
+depth 30: 12h 45m
+lower bound for non-neg def density  = 0.857288
+upper bound for non-neg def density  = 0.965943
+middle value for non-neg def density = 0.911616
+error bound for non-neg def density  = 0.0543273
+
+######################################################################
+
+2. GENUS 4 (degree 10)
+
+depth 25: 50m 20s
+lower bound for non-neg def density  = 0.801402
+upper bound for non-neg def density  = 0.995446
+middle value for non-neg def density = 0.898424
+error bound for non-neg def density  = 0.0970217
+
+depth 30: 23h 50m
+lower bound for non-neg def density  = 0.835325
+upper bound for non-neg def density  = 0.985618
+middle value for non-neg def density = 0.910471
+error bound for non-neg def density  = 0.0751462
+
+#################################
+Lower bounds only using simplified neg def criterion
+[Using +-1 only Tom worked out 0.83750 g=1 deg=4
+                               0.85653 g=2 deg=6
+                               0.86793 g=3 deg=8
+                               0.87572 g=4 deg=10
+
+deg 4, depth 30 (26s):   0.832657
+       depth 35 (6m31s): 0.835068
+
+using \pm2 also: depth 30 (24s):  0.8468
+                 depth 40 (108m): 0.850598
+with <pm(1/2) too, depth 25:      0.853022
+                   depth 35:      0.862339
+
+deg 6, depth 30 (1m37s): 0.835258
+                  depth 35:         0.86036
+- with \pm2 also, depth 30 (1m30s): 0.851669
+                  depth 35          0.874276
+
+deg 8, depth 25 (8s):    0.815031
+       depth 30 (2m53s): 0.835993
+       depth 35:         0.852482
+       depth 40:         0.862524
+  1,2  depth 35:         0.866017
+       depth 40:
+
+deg 10, depth 25 (9s):    0.788425
+        depth 30 (4m41s): 0.809969
+        depth 35 (116m):  0.832771
+ 1,2    depth 35 (1540m): 0.841185
+
+
+======================================================================
+Lower bounds from vinci
+======================================================================
+
+Notes: hyper.sage contains a function make_vinci_input(degree, depth,
+prefix) which creates a file prefix.ine for vinci input for given
+degree and height bound.
+
+Genus 1, degree 4, successive height bounds on hyperplanes:
+
+0.837500
+0.865456 = 29798535703/34431022080
+0.871582 = 165332882028090684736624504986978293/189692965607627338716651497072640000
+	 = 0.871581513307539
+0.872837 = 582616934566221796420055046918520978113322773245916578749 /
+	   667498128368111496869605515181004404115781019344568320000
+	 = 0.872836806285276
+0.873543
+0.873720
+0.873893
+0.873960
+0.874011 (with h=9)
+...
+0.874083 (with h=13, the furthest possible with the 254 hyperplane restriction)
+
+deg4_3: 24360083579536653980026992085661707/189692965607627338716651497072640000  =   1.284184866925e-01
+john@john-Latitude-E5470:~/hyper$ vinci -m lrs deg4_4 | grep Volume
+Volume:  84881193801889700449550468262483426002458246098651741251/667498128368111496869605515181004404115781019344568320000  =   1.271631937147e-01
+john@john-Latitude-E5470:~/hyper$ vinci -m lrs deg4_5 | grep Volume
+Volume:  2372555197058711927345494879325250810418452492243889570993648377786641076672043463138614050919504009995912222587982508793199091237170715706708277059718749524216426976660911/18773501103037500533230528174515704532464524463090489135485757298966293 =  1.263778761371e+100
+john@john-Latitude-E5470:~/hyper$ vinci -m lrs deg4_6 | grep Volume
+Volume:  37117473957086658805038388586393041685046189841793940928776966149394082497662882850425241585559521239046456389203275112040943899787639558679736806003149541066428777532041306134161250464144363/2939294185950093635395336625437944197615813885095154 =  1.262802278673e+138
+
+
+Height 3 data in hyper4.ine, using exact lrs (vinci -m lrs hyper4) outputs exact volume v=1.316.. hence lower bound 1-v=0.868... = 1308537172362208151115677213/1506930045349828527267840000 = 
+(29 * 689599 * 596811671 * 109636240793) /
+(2^16 * 3^11 * 5^4 * 7^2 * 11 * 13 * 17 * 19 * 23 * 31 * 41 * 43 * 73)
+
+Genus 2, degree 6, successive height bounds on hyperplanes:
+
+0.856532
+0.889580
+0.897829
+0.899869
+0.900884 (h=5)
+0.901173
+...
+
+Genus 3, degree 8, successive height bounds on hyperplanes:
+
+0.867927
+0.902677
+0.912927
+...
+
+Genus 4, degree 10, successive height bounds on hyperplanes:
+
+0.875714
+0.910966
+
+This suggests that we might be able to prove a lower bound of 90% for
+all g>1, using only the values at 2, 1/2, -2, -1/2 as well as -1, 1.
+
+
+Height 2 hyperplanes:
+
+g=1, deg=4:  0.8654560307203
+g=2, deg=6:  0.8895797081797
+g=3, deg=8:  0.9026771975456
+
+Height 3 lyperplanes:
+
+g=1, deg=4:  0.8683463286170
+g=2, deg=6:  0.8916205067882
+g=3, deg=8:  0.9042953876781 
+
+
+deg 6, ht 2: Volume:
+77256349758298059510894967024960483/699657177903484989710310360219648000
+= 1.104202918203e-01 = 1- 0.889580 = 1 - 307 * 6607 * 172312211 *
+1780784736190273257403 / 2^31 * 3^7 * 5^3 * 7^3 * 11 * 13^2 * 17^2 *
+23 * 29 * 31^2 * 41 * 43 * 59 * 97
+
+deg 6, ht 5: Volume:  5024644711706739353240616873926050194268871174305507607503908121631732465396463709655791856715569385810632733748041718515092951535942878910801974014130980153435213317361282683909852226458079027426730734399904210297149327478496032691005884580995
+
+deg 8, ht 2: Volume:
+2190988766094332950773461407648350143269404370100920355725155943003050836972819/22512594282539919071324938451154952953714263549543912205481751535440363520000000
+=   9.732280245434e-02
+= 1 - 0.902677197545660
+denominator =
+2^52 * 3^12 * 5^7 * 7^4 * 11^2 * 13^2 * 17^3 * 19 * 23 * 29 * 31^2 *
+37 * 41 * 43^2 * 61 * 113 * 127^2 * 131 * 223 * 233 * 257 * 281 * 383
+* 787 * 887
