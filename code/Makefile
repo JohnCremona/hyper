@@ -7,6 +7,9 @@ sextic2: sextic2.cc
 xdeg4: xhyper.cc
 	gcc -O4 -DDEGREE=4 xhyper.cc -o xdeg4 -g -lm -lstdc++ -lpari
 
+hdeg4: hhyper.cc
+	gcc -O4 -DDEGREE=4 hhyper.cc -o hdeg4 -g -lm -lstdc++ -lpari
+
 xdeg6: xhyper.cc
 	gcc -O4 -DDEGREE=6 xhyper.cc -o xdeg6 -g -lm -lstdc++ -lpari
 
