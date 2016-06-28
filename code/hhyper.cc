@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <iostream>
+#include <iomanip>
 #include <queue>
 using namespace std;
 
@@ -376,102 +377,6 @@ void QND(int depth, vector<long> co1, vector<long> co2, double& non, double& neg
 
 }
 
-void QND1(queue<pair<vector<long>,vector<long> > >& bq, double& non, double& neg, double& v)
-{
-  int i,j;
-
-  non = 0.0; // on return, holds (lower bound for) non neg def density
-  neg = 0.0; // on return, holds (lower bound for) neg def density
-
-  pair<vector<long>,vector<long> > co1co2 = bq.front(); bq.pop();
-  vector<long> co1 = co1co2.first;
-  vector<long> co2 = co1co2.second;
-  v = volume(co1,co2); // volume of popped box
-  vector<long> co3(ncoeffs); // used for temporary coeff lists
-
-  interleave(co3, co2, co1);         // co2[0], co1[1], co2[2], ...
-
-  // (1) the whole box is neg def iff
-  //
-  // ((co2(x)<0 for all x>0) AND (co3(x)<0 for all x<0))
-  //
-  // since for f in the box,
-  // x>0 => co1(x) < f(x) < co2(x) and
-  // x<0 implies f(x) < co3(x)
-
-  if (    is_neg_def(co2, /* pos_only */ 1, /* neg_only */ 0, 0)
-          &&  is_neg_def(co3, /* pos_only */ 0, /* neg_only */ 1, 0))
-    {
-      neg=1.0; return;
-    }
-
-  interleave(co3, co1, co2);   // co1[0], co2[1], co1[2], ...
-
-  // (2) the whole box is NOT neg def if (but NB not only if)
-  //
-  // ((co1(x)>0 for some x>0) OR (co3(x)>0 for some x<0))
-  //
-  // since for f in the box,
-  // x>0 => co1(x) < f(x) < co2(x) and
-  // x<0 implies co3(x) < f(x)
-
-  if (   !is_neg_def(co1,  /* pos_only */ 1, /* neg_only */ 0, 0)
-         || !is_neg_def(co3,  /* pos_only */ 0, /* neg_only */ 1, 0))
-    {
-      non=1.0; return;
-    }
-
-  // (3) Now this box is not all in and possibly not all out.  We form
-  // two smaller boxes (dividing a longest dimension by 2) and add
-  // them to the queue.  To keep integer coefficients we double all
-  // coordinates if necessary, which does not affect the densities.
-
-  j=0; // index of longest box edge
-  long w; // holds length of longest box edge
-  long w2;
-  // initialise:
-  w=co2[0]-co1[0];
-  // look for a longer edge:
-  for (i=1; i<ncoeffs; i++)
-    {
-      w2=co2[i]-co1[i];
-      if (w2>w) // i'th dimension is greater, so update
-        {
-          w=w2;
-          j=i;
-        }
-    }
-
-  long f=co1[j]+co2[j];
-  // double both co1, co2 unless f is even:
-  vector<long> sco1(ncoeffs); // to store scaled coeff lists
-  vector<long> sco2(ncoeffs); // 
-  assign(sco1, co1);
-  assign(sco2, co2);
-  if (f%2) // f is odd
-    {
-      scale(sco1,2);
-      scale(sco2,2);
-    }
-  else // f is even
-    {
-      f /= 2;
-    }
-  // so now f == (co1[j]+co2[j])/2 and is integral in both cases
-
-  // first sub-box: co3 is the same as co2 except for the j'th entry which is the mean
-  assign(co3, sco2);
-  co3[j] = f;
-  bq.push(pair<vector<long>,vector<long> > (sco1,co3));
-
-  // second sub-box: co3 is the same as co1 except for the j'th entry which is the mean
-  assign(co3, sco1);
-  co3[j] = f;
-  bq.push(pair<vector<long>,vector<long> > (co3,sco2));
-
-  return;
-}
-
 // version using Manjul's scaling trick, only for degree 4 so far
 
 void nonNDdensity_scaled(int maxdepth)
@@ -557,14 +462,128 @@ void nonNDdensity_scaled(int maxdepth)
   cout << "interval width for non-neg def density  = " << err << endl;
 }
 
+int QND1(queue<pair<vector<long>,vector<long> > >& bq, double& non, double& neg)
+{
+  pair<vector<long>,vector<long> > co1co2 = bq.front(); bq.pop();
+  vector<long> co1 = co1co2.first;
+  vector<long> co2 = co1co2.second;
+  double v = volume(co1,co2); // volume of popped box
+  long s = 0; // scaling factor for the box
+  if (co1[0]==co2[0])
+    {
+      s = co1[0];
+    }
+  else
+    {
+      if (co1[1]==co2[1])
+        {
+          s = co1[1];
+        }
+      else
+        {
+          s = co1[2];
+          v/=2;
+        }
+    }
+  v /= (s*s*s*s);
+
+  vector<long> co3(ncoeffs); // used for temporary coeff lists
+
+  interleave(co3, co2, co1);         // co2[0], co1[1], co2[2], ...
+
+  // (1) the whole box is neg def iff
+  //
+  // ((co2(x)<0 for all x>0) AND (co3(x)<0 for all x<0))
+  //
+  // since for f in the box,
+  // x>0 => co1(x) < f(x) < co2(x) and
+  // x<0 implies f(x) < co3(x)
+
+  if (    is_neg_def(co2, /* pos_only */ 1, /* neg_only */ 0, 0)
+          &&  is_neg_def(co3, /* pos_only */ 0, /* neg_only */ 1, 0))
+    {
+      //cout<<"Adding "<<v<<" to neg from box "<<endl;
+      //show_box(co1,co2);
+      neg+=v; return 1;
+    }
+
+  interleave(co3, co1, co2);   // co1[0], co2[1], co1[2], ...
+
+  // (2) the whole box is NOT neg def if (but NB not only if)
+  //
+  // ((co1(x)>0 for some x>0) OR (co3(x)>0 for some x<0))
+  //
+  // since for f in the box,
+  // x>0 => co1(x) < f(x) < co2(x) and
+  // x<0 implies co3(x) < f(x)
+
+  if (   !is_neg_def(co1,  /* pos_only */ 1, /* neg_only */ 0, 0)
+         || !is_neg_def(co3,  /* pos_only */ 0, /* neg_only */ 1, 0))
+    {
+      //cout<<"Adding "<<v<<" to non from box "<<endl;
+      //show_box(co1,co2);
+      non+=v; return 1;
+    }
+
+  // (3) Now this box is not all in and possibly not all out.  We form
+  // two smaller boxes (dividing a longest dimension by 2) and add
+  // them to the queue.  To keep integer coefficients we double all
+  // coordinates if necessary, which does not affect the densities.
+
+  int j=0; // index of longest box edge
+  long w; // holds length of longest box edge
+  long w2;
+  // initialise:
+  w=co2[0]-co1[0];
+  // look for a longer edge:
+  for (int i=1; i<ncoeffs; i++)
+    {
+      w2=co2[i]-co1[i];
+      if (w2>w) // i'th dimension is greater, so update
+        {
+          w=w2;
+          j=i;
+        }
+    }
+
+  long f=co1[j]+co2[j];
+  // double both co1, co2 unless f is even:
+  vector<long> sco1(ncoeffs); // to store scaled coeff lists
+  vector<long> sco2(ncoeffs); // 
+  assign(sco1, co1);
+  assign(sco2, co2);
+  if (f%2) // f is odd
+    {
+      scale(sco1,2);
+      scale(sco2,2);
+    }
+  else // f is even
+    {
+      f /= 2;
+    }
+  // so now f == (co1[j]+co2[j])/2 and is integral in both cases
+
+  // first sub-box: co3 is the same as co2 except for the j'th entry which is the mean
+  assign(co3, sco2);
+  co3[j] = f;
+  bq.push(pair<vector<long>,vector<long> > (sco1,co3));
+
+  // second sub-box: co3 is the same as co1 except for the j'th entry which is the mean
+  assign(co3, sco1);
+  co3[j] = f;
+  bq.push(pair<vector<long>,vector<long> > (co3,sco2));
+
+  return 0;
+}
+
 queue<pair<vector<long>,vector<long> > > box_queue;
 
-void nonNDdensity_inc(int depth)
+void nonNDdensity_inc(int maxsteps=1000)
 {
   // Compute 4 4D volumes
 
-  double nonND = 0;
-  double ND    = 0;
+  double nonND = 30.0;
+  double ND    = 0.0;
   int i;
   vector<long> a(ncoeffs);
   vector<long> b(ncoeffs);
@@ -583,24 +602,18 @@ void nonNDdensity_inc(int depth)
       box_queue.push(pair<vector<long>,vector<long> > (ai,bi));
     }
 
-  double non, neg, v;
+  i=0;
+  int change;
   while (!box_queue.empty()) // which will never happen
     {
-      QND1(box_queue, non, neg, v);
-
-      if ((i==0)||(i==1))
-	{
-	  nonND   += 4*non;
-	  ND      += 4*neg;
-	}
-      else
-	{
-	  nonND   += non;
-	  ND      += neg;
-	}
+      i +=1;
+      change = QND1(box_queue, nonND, ND);
+      if(change) cout << i << "/"<<box_queue.size()<<": \t"
+                      << setw(10) << (nonND/40) << " < non-neg-def density < \t" << (1-ND/40) << endl;
+      if (maxsteps && (i>=maxsteps)) break;
     }
 
-  nonND = (nonND+30)/40;
+  nonND = nonND/40;
   ND    = ND/40;
 
   cout<<"Total after scaling: neg def = "<<ND<<", non = "<<nonND<<endl;
@@ -621,7 +634,18 @@ int main()
   cout << "Density of non-negative definite real polynomials of degree " << DEGREE << endl;
   int depth, simple=1;
   cout << "\nScaled incremental version" << endl;
-  cout << "Input depth of recursion: ";
-  cin >> depth;
-  nonNDdensity_scaled(depth);
+  cout << "Depth-first recursive version? "; cin>>depth;
+  if (depth)
+    {
+      cout << "Input depth of recursion: ";
+      cin >> depth;
+      nonNDdensity_scaled(depth);
+    }
+  else
+    {
+      cout << "Starting breadth-first version" << endl;
+      cout << "Input number of steps (0 for no limit): ";
+      cin >> depth;
+      nonNDdensity_inc(depth);
+    }
 }
