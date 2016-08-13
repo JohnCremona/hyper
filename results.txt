@@ -229,8 +229,10 @@ depth   time            lower bound   upper bound difference
 36      1456m           0.873436      0.87482     0.000692316
 37      2400m           0.873542      0.874711    0.000584326
 38      4095m           0.873691      0.874554    0.000431416
+39                      0.873738      0.874506    0.000383828
+40                      0.873776      0.874468    0.00034625
+41      r
 
-real    4095m23.375s
 
 
 ######################################################################
@@ -284,6 +286,26 @@ lower bound for non-neg def density  = 0.873674
 upper bound for non-neg def density  = 0.928693
 middle value for non-neg def density = 0.901183
 error bound for non-neg def density  = 0.0275091
+
+Rerun 30/6/2016
+
+depth 20 0.854508 0.940993
+depth 25 0.873882 0.922731
+depth 30 0.885038 0.911627
+depth 35 0.891171 0.90542
+depth 40
+
+Scaling version 11/7/16:
+depth time     lower bound      upper bound
+15    5.6s     0.831899         0.965358
+20    2m14s    0.859028         0.942962
+21    4m48s    0.865167         0.937478
+22    7m10s    0.871313         0.930741
+23    13m30s   0.87408          0.928612
+24    27m10s   0.87599          0.927106
+25    47m42s   0.877907         0.925502
+30    854m     0.888818         0.914779
+35    r
 
 ######################################################################
 
@@ -343,6 +365,24 @@ upper bound for non-neg def density  = 0.965943
 middle value for non-neg def density = 0.911616
 error bound for non-neg def density  = 0.0543273
 
+Rerun 1/7/16:
+
+depth 20 0.82748 0.981656
+depth 25 0.857916 0.961839
+depth 30 0.880053 0.944467
+
+Scaling version 11/7/16:
+depth time     lower bound      upper bound
+15    17s      0.803164         0.992016
+16    30s      0.810227         0.990688
+17    1m2s     0.815707         0.989251
+18    1m50s    0.820758         0.9875
+19    3m30s    0.825936         0.985259
+20    6m52s    0.832059         0.982374
+25    173m20s  0.862922         0.964074
+30    3929m    0.885066         0.947709
+32    r
+
 ######################################################################
 
 2. GENUS 4 (degree 10)
@@ -358,6 +398,14 @@ lower bound for non-neg def density  = 0.835325
 upper bound for non-neg def density  = 0.985618
 middle value for non-neg def density = 0.910471
 error bound for non-neg def density  = 0.0751462
+
+Scaling version 13/7/16:  ???
+depth time     lower bound      upper bound
+10    1s       0.758711         1
+15    27s      0.772657         1
+20             0.808547         0.995449
+25    430m29s  0.831469         0.990015
+30    10142m   0.865166         0.975924
 
 #################################
 Lower bounds only using simplified neg def criterion
@@ -462,11 +510,11 @@ g=1, deg=4:  0.8654560307203
 g=2, deg=6:  0.8895797081797
 g=3, deg=8:  0.9026771975456
 
-Height 3 lyperplanes:
+Height 3 hyperplanes:
 
 g=1, deg=4:  0.8683463286170
 g=2, deg=6:  0.8916205067882
-g=3, deg=8:  0.9042953876781 
+g=3, deg=8:  0.9042953876781
 
 
 deg 6, ht 2: Volume:

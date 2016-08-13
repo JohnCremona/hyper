@@ -1,7 +1,5 @@
 //Version using integers only, no doubles, and libpari
 
-// -- using simplified neg def criterion, just f(x)<0 for x = 0, 1, -1, infinity
-
 #include <math.h>
 #include <iostream>
 using namespace std;
@@ -430,118 +428,42 @@ void nonNDdensity_scaled(int maxdepth)
   long *ai = new long[ncoeffs];
   long *bi = new long[ncoeffs];
 
-  // Compute 4 4D volumes
+  // Compute 4D volumes
 
-  // w[0] fix 0th coeff =-1
-  // w[1] fix 1st coeff =-1
-  // w[2] fix 2nd coeff =-1
-  // w[3] fix 2nd coeff =+1
-
-  // total volume is (2*w[0]+4*w[1]+w[2]+w[3])/5
-  double nonND = 0;
+  double nonND = 6*(DEGREE+1);
   double ND    = 0;
-  double unknown = 0;
-  double v;
-  int i;
-  
-  for(i=0; i<4; i++)
+  double non, neg, fac;
+  int i, r;
+
+  for(i=0; i<DEGREE; i++)
     {
       fill_all(ai,-1); fill_all(bi,+1);
       bi[DEGREE]=0;
       bi[0]=0;
       bi[1]=0;
-      if(i==0)
+      if(i<2)
 	{
-	  ai[0]=bi[0]=-1;
+	  ai[i]=bi[i]=-1;
 	}
       else
-	{
-	  if(i==1)
-	    {
-	      ai[1]=bi[1]=-1;
-	    }
-	  else
-	    {
-	      if(i==2)
-		{
-		  ai[2]=bi[2]=-1;
-		}
-	      else
-		{
-		  if(i==3)
-		    {
-		      ai[2]=bi[2]=+1;
-		    }
-		}
-	    }
-	}
+        {
+          r = 1+(i>>1);
+          ai[r]=bi[r]=(i&1?-1:+1);
+        }
 
-      //cout<<"sub-box "<<i<<" (volume "<<volume(ai,bi)<<"):\n";
-      //show_box(ai,bi);
-      //cout<<"--at start of case "<<i<<", total is "<<(nonND+ND+unknown)<<endl;
-      
       // depth starts negative, each recursion increments it or stops when 0
-      double non, neg, rest;
       QND(-maxdepth, ai, bi, non, neg, 0);
-      rest = 1-(non+neg);
-      // cout << "After recursion in sub-box "<<i<<", non = " << non
-      // 	   << ", neg = " << neg
-      // 	   << ", unknown = " << (rest) << endl;
-
-      if (i==0)
-	{
-	  // sub-box 0 is one of 2 with the same density of neg
-	  // defs, and was divided into 4 sub-sub-boxes of volume 4
-	  // of which 2 are the same and the other two have no neg
-	  // defs.
-	  v = 4;
-	  //cout << "adding a total of "<<(2*2*non*v + 2*2*v)+(2*2*neg*v)+(2*2*rest*v)<<endl;
-	  nonND   += 2*2*non*v + 2*2*v;
-	  ND      += 2*2*neg*v;
-	  unknown += 2*2*rest*v;
-	  // total = 8v = 32 = (multiplicity 2)*16
-	}
-      else if (i==1)
-	{
-	  // sub-box 1 is one of 4 with the same density of neg
-	  // defs, and was divided into 4 sub-sub-boxes of volume 4
-	  // of which 3 have no neg defs.
-	  v = 4;
-	  //cout << "adding a total of "<<(4*non*v + 4*3*v)+(4*neg*v)+(4*rest*v)<<endl;
-	  nonND   += 4*non*v + 4*3*v;
-	  ND      += 4*neg*v;
-	  unknown += 4*rest*v;
-	  // total = 16v = 64 = (multiplicity 4)*16
-	}
-      else
-	{
-	  // sub-boxes 2 and 3 are each divided into 8 sub-sub-boxes
-	  // of volume 2, of which 2 are the same and 6 have no neg
-	  // defs.
-	  v = 2;
-	  //cout << "adding a total of "<<(2*non*v + 6*v)+(2*neg*v)+(2*rest*v)<<endl;
-	  nonND   += 2*non*v + 6*v;
-	  ND      += 2*neg*v;
-	  unknown += 2*rest*v;
-	  // total = 8v = 16 = (multiplicity 1)*16
-	}
-      //cout<<"--at end of case "<<i<<", total is "<<(nonND+ND+unknown)<<endl;
+      fac = 2;
+      if (i<2) fac = 4;
+      if (i>(DEGREE-3)) fac = 1;
+      nonND   += fac*non;
+      ND      += fac*neg;
     }
-  
-  // Now allow for the remaining 2 of 10 cases where there is nothing:
 
-  v = 16;
-  nonND += 2*v;
-  // total = 2v = 32 = (multiplicity 2)*16
-  
-  cout<<"Total before scaling: neg def = "<<ND<<", non = "<<nonND<<", unknown = "<<unknown<<endl;
-  cout<<"(sum = "<<ND+nonND+unknown<<")"<<endl;
-  nonND /= 160;
-  ND    /= 160;
-  unknown /=160;
+  nonND /= 8*(DEGREE+1);
+  ND    /= 8*(DEGREE+1);
 
-  cout<<"Total after scaling: neg def = "<<ND<<", non = "<<nonND<<", unknown = "<<unknown<<endl;
-  cout<<"(sum = "<<ND+nonND+unknown<<")"<<endl;
+  cout<<"Total after scaling: neg def = "<<ND<<", non = "<<nonND<<endl;
 
   cout << ND << " <= (neg.def.density) <= " << 1-nonND << endl;
   cout << "lower bound for non-neg def density  = " << nonND << endl;
@@ -558,7 +480,7 @@ int main()
 {
   pari_init(100000000,2);
   cout << "Density of non-negative definite real polynomials of degree " << DEGREE << endl;
-  int maxdepth, simple=1;
+  int maxdepth, simple=0;
   //  cout << "Use full (0) or simplified (1) criterion? ";
   //  cin >> simple;
   cout << "Input depth of recursion: ";
