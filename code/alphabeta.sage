@@ -41,6 +41,23 @@ def initialize_Delta_dicts():
     global Delta_dict
     Delta_dict = {}
 
+# Save to file and restore from file for Gammas and Deltas:
+def save_Deltas(filename="Delta"):
+    save(Delta_dict, filename)
+
+def save_Gammas(filename="Gamma"):
+    save(Gamma_plus_dict, filename+"_plus")
+    save(Gamma_minus_dict, filename+"_minus")
+
+def restore_Deltas(filename="Delta"):
+    global Delta_dict
+    Delta_dict=load(filename)
+
+def restore_Gammas(filename="Gamma"):
+    global Gamma_plus_dict, Gamma_minus_dict
+    Gamma_plus_dict = load(filename+"_plus")
+    Gamma_minus_dict = load(filename+"_minus")
+
 # Initialize dicts to store the alphas and betas but do not reset on reload!
 # The alpha and beta values for subscripts 0,1,2 are known directly.
 try:
@@ -203,6 +220,17 @@ def no_smooth_points(f):
     return all([(not f(x).is_square()) or (f(x)==fd(x)==0)
      for x in f.base_ring()])
 
+def no_smooth_points_mod2(f,h):
+    """Return True iff z^2+h(x)z=f(x) has no smooth (affine) points over F_2
+    """
+    fd=f.derivative()
+    hd=h.derivative()
+    if f(0)==0 and (fd(0),h(0))!=(0,0): return False # (0,0) is smooth
+    if f(1)==0 and (fd(1),h(1))!=(0,0): return False # (1,0) is smooth
+    if f(0)!=h(0) and (fd(0)-hd(0),h(0))!=(0,0): return False # (0,1) is smooth
+    if f(1)!=h(1) and (fd(1)-hd(1),h(1))!=(0,0): return False # (1,1) is smooth
+    return True
+
 def Gamma_plus(d,F=None):
     """ List of monics of degree d with no smooth points.
     """
@@ -216,7 +244,11 @@ def Gamma_plus(d,F=None):
         if F in ZZ:
             F = GF(q)
         print("Computing Gamma_plus({},{})".format(d,F))
-        Gamma_plus_dict[(q,d)] = [f for f in monics(F,d) if no_smooth_points(f)]
+        if q==2:
+            res = [(f,h) for f in monics(F,d,d%2) for h in monics(F,(d+1)//2,(d+1)%2) if no_smooth_points_mod2(f,h)]
+        else:
+            res = [f for f in monics(F,d) if no_smooth_points(f)]
+        Gamma_plus_dict[(q,d)] = res
     return Gamma_plus_dict[(q,d)]
 
 def Gamma_minus(d, F=None):
@@ -230,11 +262,18 @@ def Gamma_minus(d, F=None):
     else:
         q = F.cardinality()
     if not (q,d) in Gamma_minus_dict:
+        if d%2:
+            Gamma_minus_dict[(q,d)] = Gamma_plus(d,F)
+            return Gamma_minus_dict[(q,d)]
         if F in ZZ:
             F = GF(q)
         print("Computing Gamma_minus({},{})".format(d,F))
-        u = a_nonsquare(F)
-        Gamma_minus_dict[(q,d)] = [f for f in monics(F,d,u) if not (u*f).is_square() and no_smooth_points(f)]
+        if q==2:
+            res = [(f,h) for f in monics(F,d,1) for h in monics(F,d//2,1) if no_smooth_points_mod2(f,h)]
+        else:
+            u = a_nonsquare(F)
+            res = [f for f in monics(F,d,u) if not (u*f).is_square() and no_smooth_points(f)]
+        Gamma_minus_dict[(q,d)] = res
     return Gamma_minus_dict[(q,d)]
 
 def show_Gamma(verbose=False):
@@ -302,12 +341,14 @@ def Delta(d,F=None):
     points but not of the form u*h^2.  Includes scalings (the
     condition is invariant under scaling by squares).
     """
-    if F==None or d%2==1 or d<6 or (d==6 and p>11):
+    if F==None or d%2==1 or d<6 :
        return []
     if F in ZZ:
         q = F
     else:
         q = F.cardinality()
+    if (d==6 and q>11):
+        return []
     if not (q,d) in Delta_dict:
         if F in ZZ:
             F = GF(q)
@@ -759,14 +800,14 @@ def alpha_minus(i,p=pp,v=None):
             alpha_minus_dict[(i,p)] = a
     return a
 
-def make_alphas(i, p=pp, verbose=True):
+def make_alphas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 alphas with subscript i
     after first computing all alphas and betas with smaller
     subscripts.
     """
     for j in [3..i-1]:
-        make_alphas(j,p,False)
-        make_betas(j,p,False)
+        make_alphas(j,p)
+        make_betas(j,p)
     a = alpha_plus(i,p)
     if verbose:
         print("alpha_plus({},{}) = {}".format(i,p,a))
@@ -777,14 +818,14 @@ def make_alphas(i, p=pp, verbose=True):
     if verbose:
         print("alpha_0({},{}) = {}".format(i,p,a))
 
-def make_betas(i, p=pp, verbose=True):
+def make_betas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 betas with subscript i
     after first computing all alphas and betas with smaller
     subscripts.
     """
     for j in [3..i-1]:
-        make_alphas(j,p,False)
-        make_betas(j,p,False)
+        make_alphas(j,p)
+        make_betas(j,p)
     b = beta_plus(i,p)
     if verbose:
         print("beta_plus({},{}) = {}".format(i,p,b))
@@ -795,89 +836,80 @@ def make_betas(i, p=pp, verbose=True):
     if verbose:
         print("beta_0({},{}) = {}".format(i,p,b))
 
+def check_value(ab,i,eps,val,p=pp):
+    myval = [alpha_minus,alpha_0,alpha_plus][eps+1](i,p) if ab=="alpha" else [beta_minus,beta_0,beta_plus][eps+1](i,p)
+    sup = ["-","0","+"][eps+1]
+    if myval==val:
+        print("{}_{}^{}({}) OK".format(ab,i,sup,p))
+    else:
+        print("WRONG {}_{}^{}({}) = {}, should be {}".format(ab,i,sup,p,myval,val))
 
 def check3():
     """ Check that all 3 alpha_3^eps are correct for p=3 and p generic.
     """
-    a = alpha_plus(3,3)
-    at = 50246/177147
-    if a==at:
-        print("alpha_3^+(3) OK")
-    else:
-        print("WRONG alpha_3^+(3) = {}, should be {}".format(a,at))
+    make_alphas(3,3)
+    check_value("alpha",3,+1, 50246/177147, 3)
+    check_value("alpha",3,-1, 50246/177147, 3)
+    check_value("alpha",3 ,0, 431/729,3)
 
-    a = alpha_minus(3,3)
-    at = 50246/177147
-    if a==at:
-        print("alpha_3^-(3) OK")
-    else:
-        print("WRONG alpha_3^-(3) = {}, should be {}".format(a,at))
-
-    a = alpha_0(3,3)
-    at = 431/729
-    if a==at:
-        print("alpha_3^0(3) OK")
-    else:
-        print("WRONG alpha_3^0(3) = {}, should be {}".format(a,at))
-
-    a = alpha_plus(3)
-    at = (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8)
-    if a==at:
-        print("alpha_3^+(p) OK")
-    else:
-        print("WRONG alpha_3^+(p) = {}, should be {}".format(a,at))
-
-    a = alpha_minus(3)
-    at = (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8)
-    if a==at:
-        print("alpha_3^-(p) OK")
-    else:
-        print("WRONG alpha_3^-(p) = {}, should be {}".format(a,at))
-
-    a = alpha_0(3)
-    at = (pp**3+pp**2-2*pp+2)/(2*pp**3)
-    if a==at:
-        print("alpha_3^0(p) OK")
-    else:
-        print("WRONG alpha_3^0(p) = {}, should be {}".format(a,at))
+    make_alphas(3)
+    check_value("alpha",3,+1, (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
+    check_value("alpha",3,-1, (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
+    check_value("alpha",3, 0, (pp**3+pp**2-2*pp+2)/(2*pp**3))
 
 def check4():
     """ Check that all 3 alpha_4^eps are correct for p=3, p=5 and p generic.
     """
-    a = alpha_plus(4,3)
-    at = 16600/59049
-    if a==at:
-        print("alpha_4^+(3) OK")
-    else:
-        print("WRONG alpha_4^+(3) = {}, should be {}".format(a,at))
+    make_alphas(4,3)
+    make_alphas(4,5)
+    make_alphas(4)
+    check_value("alpha",4,+1, 16600/59049, 3)
+    check_value("alpha",4,+1, 352624/1953125, 5)
+    check_value("alpha",4,+1, (pp**2+1)*(2*pp**3-pp**2-2*pp+2)/(2*pp**6))
 
-    a = alpha_plus(4,5)
-    at = 352624/1953125
-    if a==at:
-        print("alpha_4^+(5) OK")
-    else:
-        print("WRONG alpha_4^+(5) = {}, should be {}".format(a,at))
+    check_value("alpha",4,-1, (2*pp**10+3*pp**9-pp**5+2*pp**4-2*pp**2-3*pp-1)/(2*(pp+1)**2 *(pp**9-1)))
+    check_value("alpha",4, 0, (4*pp**10+8*pp**9-4*pp**8+4*pp**6-3*pp**4+pp**3-5*pp-5)/(8*(pp+1)*(pp**9-1)))
 
-    a = alpha_plus(4)
-    at = (pp**2+1)*(2*pp**3-pp**2-2*pp+2)/(2*pp**6)
-    if a==at:
-        print("alpha_4^+(p) OK")
-    else:
-        print("WRONG alpha_4^+(p) = {}, should be {}".format(a,at))
+def check5():
+    """ Check that all alpha_5^eps and beta_5^eos are correct for p=3.
+    """
+    make_alphas(5,3)
+    check_value("alpha",5, 0, 1493687989147/2541865828329, 3)
+    check_value("alpha",5,+1, 13670659773280445407/48630661836227715204, 3)
+    check_value("alpha",5,-1, 13670659773280445407/48630661836227715204, 3)
 
-    a = alpha_minus(4)
-    at = (2*pp**10+3*pp**9-p**5+2*pp**4-2*pp**2-3*pp-1)/(2*(pp+1)**2 *(p**9-1))
-    if a==at:
-        print("alpha_4^-(p) OK")
-    else:
-        print("WRONG alpha_4^-(p) = {}, should be {}".format(a,at))
+    make_betas(5,3)
+    check_value("beta",5, 0, 129514464056263/205891132094649, 3)
+    check_value("beta",5,+1, 160260073/172186884, 3)
+    check_value("beta",5,-1, 160260073/172186884, 3)
 
-    a = alpha_0(4)
-    at = (4*pp**10+8*pp**9-4*pp**8+4*pp**6-3*pp**4+pp**3-5*pp-5)/(8*(pp+1)*(p**9-1))
-    if a==at:
-        print("alpha_4^0(p) OK")
+def check6():
+    """ Check that all 3 alpha_6^eps are correct for p=3.
+    """
+    make_alphas(6,3)
+    check_value("alpha",6, 0, 26377476341107224253/44887561041873369600, 3)
+    check_value("alpha",6,+1, 605398279518845051650813/2153584544086426253951538, 3)
+    check_value("alpha",6,-1, 27339928051320364957/97256382257392300800, 3)
+
+    make_betas(6,3)
+    check_value("beta",6, 0, 690037935950003/1098030248972800, 3)
+    check_value("beta",6,+1, 28366779023771/30502389939948, 3)
+    check_value("beta",6,-1, 9541669997405587/10262359634630400, 3)
+
+def check_ab(i=None):
+    if i==3:
+        check3()
+    elif i==4:
+        check4()
+    elif i==5:
+        check5()
+    elif i==6:
+        check6()
+    elif i==None:
+        for i in [3,4,5,6]: check_ab(i)
     else:
-        print("WRONG alpha_4^0(p) = {}, should be {}".format(a,at))
+        raise NotImplementedError("checks only implemented for i=3,4,5,6 so far")
+
 
 # expressions in the formulas (Prop 3.5) linking mu_0 and mu_1 to each other.
 
@@ -916,8 +948,8 @@ def mu01(g,p=pp):
 
     """
     # It is safest to make sure that these are computed at the start in the right order.
-    make_alphas(2*g+2,p, False)
-    make_betas(2*g+2, p, False)
+    make_alphas(2*g+2,p)
+    make_betas(2*g+2, p)
     A = mu0_term_1(g,p)
     B = mu0_term_2(g,p)
     C = mu1_term(g,p)
@@ -983,72 +1015,7 @@ def check_rho(g,p=pp):
         raise NotImplementedError("check_rho only implemented for g = 1, 2 so far")
 
 """
-All alphas and betas for i up to 6 with p=3:
-
-alpha_0:
-        (i,p)=(1, 3): 1
-        (i,p)=(2, 3): 1/2
-        (i,p)=(3, 3): 431/729
-        (i,p)=(4, 3): 23131/39364
-        (i,p)=(5, 3): 1493687989147/2541865828329
-        (i,p)=(6, 3): 26377476341107224253/44887561041873369600
-alpha_plus:
-        (i,p)=(2, 3): 1/3
-        (i,p)=(3, 3): 50246/177147
-        (i,p)=(4, 3): 16600/59049
-        (i,p)=(5, 3): 13670659773280445407/48630661836227715204
-        (i,p)=(6, 3): 605398279518845051650813/2153584544086426253951538
-alpha_minus:
-        (i,p)=(2, 3): 1/4
-        (i,p)=(3, 3): 50246/177147
-        (i,p)=(4, 3): 88519/314912
-        (i,p)=(5, 3): 13670659773280445407/48630661836227715204
-        (i,p)=(6, 3): 27339928051320364957/97256382257392300800
-
-beta_0:
-        (i,p)=(0, 3): 0
-        (i,p)=(1, 3): 1
-        (i,p)=(2, 3): 1/2
-        (i,p)=(3, 3): 4319/6561
-        (i,p)=(4, 3): 6137/9841
-        (i,p)=(5, 3): 129514464056263/205891132094649
-        (i,p)=(6, 3): 690037935950003/1098030248972800
-beta_plus:
-        (i,p)=(0, 3): 1
-        (i,p)=(1, 3): 1
-        (i,p)=(2, 3): 1
-        (i,p)=(3, 3): 26/27
-        (i,p)=(4, 3): 76/81
-        (i,p)=(5, 3): 160260073/172186884
-        (i,p)=(6, 3): 28366779023771/30502389939948
-beta_minus:
-        (i,p)=(0, 3): 0
-        (i,p)=(1, 3): 1
-        (i,p)=(2, 3): 3/4
-        (i,p)=(3, 3): 26/27
-        (i,p)=(4, 3): 288303/314912
-        (i,p)=(5, 3): 160260073/172186884
-        (i,p)=(6, 3): 9541669997405587/10262359634630400
-
-sage: A = mu0_term_1(2,3); A
-681602664875234210093/972563822573923008000
-sage: B = mu0_term_2(2,3); B
-0
-sage: C = mu1_term(2,3); C
-42621034619903398115111/159451838710994677161600
-
-sage: m0_2_3 = mu0(2,3); m0_2_3
-86819540747429135587217/6709242751916468339030400
-sage: m1_2_3 = mu1(2,3); m1_2_3
-7767853960143613115031503/29073385258304696135798400
-
-sage: m0_2_3 == ((3^4-1)/(2*3^7))*A + (B+m1_2_3)/3^7
-True
-sage: m1_2_3 == ((3^7-1)/3^7)*C + m0_2_3/3^7
-True
-sage: rho_2_3 = 1-m0_2_3; rho2_2_3
-6622423211169039203443183/6709242751916468339030400
-
+Space for comments
 
 """
 
