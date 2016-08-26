@@ -49,14 +49,18 @@ def save_Gammas(filename="Gamma"):
     save(Gamma_plus_dict, filename+"_plus")
     save(Gamma_minus_dict, filename+"_minus")
 
+# The restore functions use the update() method so that local values
+# are preserved, but NB if the same key exists locally and on file
+# then the file version will overwrite the local one.
+
 def restore_Deltas(filename="Delta"):
     global Delta_dict
-    Delta_dict=load(filename)
+    Delta_dict.update(load(filename))
 
 def restore_Gammas(filename="Gamma"):
     global Gamma_plus_dict, Gamma_minus_dict
-    Gamma_plus_dict = load(filename+"_plus")
-    Gamma_minus_dict = load(filename+"_minus")
+    Gamma_plus_dict.update(load(filename+"_plus"))
+    Gamma_minus_dict.update(load(filename+"_minus"))
 
 # Initialize dicts to store the alphas and betas but do not reset on reload!
 # The alpha and beta values for subscripts 0,1,2 are known directly.
@@ -197,6 +201,8 @@ def lambda_P(phi, p=pp):
 
 def monics(F, d, u=1):
     """List of all degree d polynomials with leaqding coefficient u.
+
+    NB Use u=1 to get monics, and u=0 to give all polys of degree <d.
     """
     Fx = PolynomialRing(F,'x')
     return [Fx(v.list()+[u]) for v in F^d]
@@ -207,29 +213,77 @@ def a_nonsquare(F):
     for u in F:
     	if not u.is_square():
 	   return u
-    raise ValueError
+    raise ValueError("Field {} has no non-squares!".format(F))
 
-def no_smooth_points(f):
-    """Return True iff y^2=f(x) has no smooth (affine) points over the base (odd finite) field.
+def no_smooth_points(f): 
+    """Return True iff y^2=f(x) has no smooth
+    (affine) points over the base (odd finite) field.
 
     N.B.  y^2=f(x) has no smooth F_p-points if for all x in F_p either
      f(x) is nonsquare or it is 0 and x is a multiple root.
-
     """
     fd = f.derivative()
     return all([(not f(x).is_square()) or (f(x)==fd(x)==0)
      for x in f.base_ring()])
 
+def smooth_points_mod2(f,h):
+    """ Return a list of the smooth affine points on z^2+h(x)z=f(x).
+    """ 
+    if f.parent().ngens()==1:
+        # NB even in char. 2, f'(0) gives the coefficient of x
+	pts = []
+        fd=f.derivative()
+        hd=h.derivative()
+        if f(0)==0 and (fd(0),h(0))!=(0,0):
+	   pts += [[0,0]]
+        if f(1)==0 and (fd(1),h(1))!=(0,0):
+	   pts += [[1,0]]
+        if f(0)!=h(0) and (fd(0)-hd(0),h(0))!=(0,0):
+	   pts += [[0,1]]
+        if f(1)!=h(1) and (fd(1)-hd(1),h(1))!=(0,0):
+	   pts += [[1,1]]
+    	return pts
+    # homogeneous case
+    R1 = PolynomialRing(f.base_ring(),'x')
+    x = R1.gen()
+    f1 = f([x,1])
+    h1 = h([x,1])
+    # first affine points, with y=1:
+    pts = [[P[0],1,P[1]] for P in smooth_points_mod2(f1,h1)]
+    # next, points of the form [1,0,z].  NB cannot have x=y=0.
+    x,y = f.parent().gens()
+    fy = f.derivative(y)
+    hy = h.derivative(y)
+    if f(1,0)==0 and (fy(1,0),h(1,0))!=(0,0):
+       pts += [[1,0,0]]
+    if f(1,0)!=h(1,0) and (fy(1,0)+hy(1,0),h(1,0))!=(0,0):
+       pts += [[1,0,1]]
+    return pts   
+
+def all_points_mod2(f,h):
+    return [P for P in ProjectiveSpace(GF(2),2) if P[2]*(P[2]+h(P[:2]))==f(P[:2])]
+
 def no_smooth_points_mod2(f,h):
-    """Return True iff z^2+h(x)z=f(x) has no smooth (affine) points over F_2
+    """Return True iff z^2+h(x)z=f(x) has no smooth  points over F_2
     """
-    fd=f.derivative()
-    hd=h.derivative()
-    if f(0)==0 and (fd(0),h(0))!=(0,0): return False # (0,0) is smooth
-    if f(1)==0 and (fd(1),h(1))!=(0,0): return False # (1,0) is smooth
-    if f(0)!=h(0) and (fd(0)-hd(0),h(0))!=(0,0): return False # (0,1) is smooth
-    if f(1)!=h(1) and (fd(1)-hd(1),h(1))!=(0,0): return False # (1,1) is smooth
-    return True
+    return len(smooth_points_mod2(f,h))==0
+
+def nfactors_mod2(f,h,abs=False):
+    """Return list of multiplicities of irreducible factors of z^2+h*z-f
+    over GF(2), or over GF(4) if abs=True.  This will be [1] if
+    irreducible, [2] if a square and [1,1] if split.
+    """
+    F = f.base_ring() # GF(2)
+    if abs:
+        F = GF(F.cardinality()**2,'a') # GF(4)
+    if f.parent().ngens()==1: # inhomogeneous case: f,h in GF(2)[x]
+        R2 = PolynomialRing(F,2, ['x','z'])
+        x, z = R2.gens()
+    else:
+        # homogeneous case:  f,h in GF(2)[x,y]
+        R3 = PolynomialRing(F,3,['x','y','z'])
+        x, y, z = R3.gens()
+    return [c[1] for c in (z^2+h*z-f).factor()]
 
 def Gamma_plus(d,F=None):
     """ List of monics of degree d with no smooth points.
@@ -245,7 +299,9 @@ def Gamma_plus(d,F=None):
             F = GF(q)
         print("Computing Gamma_plus({},{})".format(d,F))
         if q==2:
-            res = [(f,h) for f in monics(F,d,d%2) for h in monics(F,(d+1)//2,(d+1)%2) if no_smooth_points_mod2(f,h)]
+            res = [(f,h) for f in monics(F,d,d%2)
+                         for h in monics(F,(d+1)//2,(d+1)%2)
+                   if no_smooth_points_mod2(f,h)]
         else:
             res = [f for f in monics(F,d) if no_smooth_points(f)]
         Gamma_plus_dict[(q,d)] = res
@@ -269,10 +325,13 @@ def Gamma_minus(d, F=None):
             F = GF(q)
         print("Computing Gamma_minus({},{})".format(d,F))
         if q==2:
-            res = [(f,h) for f in monics(F,d,1) for h in monics(F,d//2,1) if no_smooth_points_mod2(f,h)]
+            res = [(f,h) for f in monics(F,d,1)
+                         for h in monics(F,d//2,1)
+             if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
         else:
             u = a_nonsquare(F)
-            res = [f for f in monics(F,d,u) if not (u*f).is_square() and no_smooth_points(f)]
+            res = [f for f in monics(F,d,u) if (not (u*f).is_square())
+                                            and no_smooth_points(f)]
         Gamma_minus_dict[(q,d)] = res
     return Gamma_minus_dict[(q,d)]
 
@@ -350,6 +409,9 @@ def Delta(d,F=None):
     if (d==6 and q>11):
         return []
     if not (q,d) in Delta_dict:
+        if q==2:
+            Delta_dict[(q,d)] = Delta2(d)
+            return Delta_dict[(q,d)]
         if F in ZZ:
             F = GF(q)
         print("Computing Delta({},{})".format(d,F))
@@ -362,6 +424,21 @@ def Delta(d,F=None):
         sq = [F(a)^2 for a in [1..(q-1)//2]]
         Delta_dict[(q,d)] = flatten([[a*f for f in D1+D2] for a in sq])
     return Delta_dict[(q,d)]
+
+def Delta2(d):
+    """Return a list of (f,h) homogeneous of degrees (d,<=(d/2)) with d even,
+    such that z^2+h*z+f has no smooth points and either factors over
+    F_2 with distinct factors or is orrediucible over F_4.
+    """
+    F2 = GF(2)
+    Fxy = PolynomialRing(F2,['x','y'])
+    D = [(f,h) for f in homog(F2,d)+[Fxy(0)] for h in homog(F2,d//2)]
+    #print("{} (f,h) pairs in degree {}".format(len(D),d))
+    D = [fh for fh in D if no_smooth_points_mod2(*fh)]
+    #print("{} (f,h) pairs have no smooth points".format(len(D)))
+    D = [fh for fh in D if nfactors_mod2(*fh,abs=False)==[1,1] or nfactors_mod2(*fh,abs=True)==[1]]
+    #print("{} of those have are abs. irred.  or split over F2".format(len(D)))
+    return D
 
 def show_Delta(verbose=False):
     for k in sorted(Delta_dict.keys()):
@@ -395,6 +472,45 @@ def signed_roots(f):
     if j:
         res = [(infinity,j,1 if j%2==1 or f1.leading_coefficient().is_square() else -1)]
     return res + signed_roots(f1)
+
+def point_multiplicity(f,h,P=[0,0]):
+    r""" returns (i,eps) where i is the multiplcity of P on z^2+h(x)*z=f(x)
+    and (for i even and positive) eps is +1 or -1 according as the
+    point is split or not.
+
+    Here f and h are in GF(2)[x].
+    """
+    x = f.parent().gen()
+    if P[0]==1: # x=1, shift to 0
+        return point_multiplicity(f(x+1),h(x+1),[0,P[1]])
+    if P[1]==1: # z=1, shift to 0
+        return point_multiplicity(f+1+h,h,[P[0],0])
+    # Now P=[0,0]
+    if f[0]: return [0,0]
+    if [f[1],h[0]]!=[0,0]: return [1,0]
+    e=1; m=2
+    while e<=h.degree() or m<=f.degree():
+        c = [f[m],h[e]]
+        if c==[1,1]: return [m,-1]
+        if c==[0,1]: return [m,+1]
+        if c==[1,0]:
+            f += x**(m)+h*x**e
+        assert [f[m],h[e]]==[0,0]
+        m += 1
+        if f[m]: return [m,0]
+        e += 1
+        m += 1
+
+def point_multiplicities(f,h):
+    r""" returns a list of up to 4 (P,[i,eps]) where i>0 is the multiplcity
+    of P on z^2+h(x)*z=f(x) and (for i even) eps is +1 or -1 according
+    as the point is split or not.
+
+    Here f and h are in GF(2)[x].
+    """
+    res = [(P,point_multiplicity(f,h,P)) for P in [[0,0],[1,0],[0,1],[1,1]]]
+    return [m for m in res if m[1][0]]
+
 
 # The R() and r() functions are no longer used in the code but are
 # here since they are defined in the text.  Here we instead loop over
@@ -484,6 +600,21 @@ def f_term(f,p=pp):
         return 0
     return prod([(1-alpha_eps(eps)(j,p)) for a,j,eps in signed_roots(f)])
 
+def fh_term(f,h):
+    """Helper function for beta^+, beta^-, mu_0 in case p=2.  In the paper
+    this is expressed differently, as a double product over j up to
+    the degree and eps, with multiplicities.  Here we just take the
+    product over all roots.
+
+    Note that if there is a root of multiplicity 1 then alpha^eps(1)=1
+    and the result is 0, but this will only be called with f which
+    have no such roots.
+
+    This works equally well in the projective case.
+
+    """
+    return prod([(1-alpha_eps(eps)(j,2)) for P,(j,eps) in point_multiplicities(f,h)])
+
 def phi_term(phi, A_or_P, double, p, v=None):
     """Helper function for beta^0, beta^-, mu_0, mu_1.
 
@@ -547,7 +678,11 @@ def beta_plus(i,p=pp,v=None):
     # use Prop 3.3 (i)
     print("Computing beta_plus({},{})".format(i,p))
     Fp = GF(p) if p in ZZ else None
-    b = 1 - sum([f_term(f,p) for f in Gamma_plus(i,Fp)])/p^i
+    G = Gamma_plus(i,Fp)
+    if p==2:
+        b = 1 - sum([fh_term(f,h) for f,h in G])/p^((3*i+1)//2)
+    else:
+        b = 1 - sum([f_term(f,p) for f in G])/p^i
 
     try:
         b=F(b)
@@ -593,8 +728,15 @@ def beta_minus(i,p=pp,v=None):
     print("Computing beta_minus({},{})".format(i,p))
     i2 = i//2
     Fp = GF(p) if p in ZZ else None
-    b = 1 - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p^i2 - \
-        sum([f_term(f,p) for f in Gamma_minus(i,Fp)]) / p^i
+    G = Gamma_minus(i,Fp)
+    if p==2:
+        b = ( 1
+              - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p^i2
+              - sum([fh_term(f,h) for f,h in G]) / p^((3*i)//2))
+    else:
+        b = ( 1 
+              - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p^i2
+              - sum([f_term(f,p) for f in G]) / p^i)
     try:
         b=F(b)
         print("setting beta_minus({},{})".format(i,p))
@@ -929,8 +1071,43 @@ def mu1_term(g,p=pp):
     """
     return sum([phi_term(phi,"proj",False,p) for phi in Phi(2*g+2)])
 
+def old_AB(g,p=pp):
+    """ Old formula for sum of the above terms with weights
+    """
+    A = mu0_term_1(g,p)
+    B = mu0_term_2(g,p)
+    return (p^(g+2)-1)/(2*p^(2*g+3)) * A + B/p^(2*g+3)
 
-def mu01(g,p=pp):
+def ie(a,b): return 1-(1-a)*(1-b)
+
+def new_AB(g,p=pp):
+    """ New formula for prob sol if f mod p is nonzero.
+    """
+    d=2*g+2
+    def term(i):
+        """ prob. soluble if deg(f mod p)=i
+        """
+        if i%2:
+            return ie(alpha(d-i,p), beta(i,p))
+        else:
+            return (ie(alpha_plus(d-i,p), beta_plus(i,p))+ie(alpha_minus(d-i,p), beta_minus(i,p)))/2
+    # prob sol if f mod p is nonzero
+    t = (p-1)*sum([term(i)*p**i for i in [0..d]])/p**(d+1)
+    return t
+
+def new_C(g,p=pp):
+    """ New formula for prob sol if f is 0 mod p but not mod p^2.
+    """
+    d=2*g+2
+    def term(i):
+        """ prob. soluble if deg(f/p mod p)=i
+        """
+        return ie(alpha_0(d-i,p), beta_0(i,p))
+    # prob sol if f/p mod p is nonzero
+    t = (p-1)*sum([term(i)*p**i for i in [0..d]])/p**(d+1)
+    return t
+
+def old_mu01(g,p=pp):
     """Return the pair mu_0(g), mu_1(g) by solving the linear equations
     expressing each in terms of the other and the three additional
     terms.
@@ -953,9 +1130,10 @@ def mu01(g,p=pp):
     A = mu0_term_1(g,p)
     B = mu0_term_2(g,p)
     C = mu1_term(g,p)
-    ans0 =  ((p^(g+2)-1)/(2*p^(2*g+3)) * A + 1/p^(2*g+3) * B + (p^(2*g+3)-1)/(p^(4*g+6)) * C) / (1-1/p^(4*g+6))
+    e = 3*g+5 if p==2 else 2*g+3
+    ans0 =  ((p^(g+2)-1)/(2*p^(2*g+3)) * A + B/p^e + (p^(2*g+3)-1)/(p^(4*g+6)) * C) / (1-1/p^(4*g+6))
     ans1 =  ((p^(2*g+3)-1) * C + ans0) / p^(2*g+3)
-    assert ans0 == (p^(g+2)-1)/(2*p^(2*g+3)) * A +  (B + ans1) / p^(2*g+3)
+    assert ans0 == (p^(g+2)-1)/(2*p^(2*g+3)) * A +  B/p^e + ans1/p^(2*g+3)
     return ans0, ans1
 
 def mu0(g,p=pp):
@@ -968,7 +1146,7 @@ def mu1(g,p=pp):
     """
     return mu01(g,p)[1]
 
-def rho(g,p=pp):
+def old_rho(g,p=pp):
     """ Return rho(g) for p an odd prime or generic.  This is the local density of soluble hyperelliptic curves of genus g>=1.  The generic formula is correct for sufficiently large p:
 
     all p>2   for g=1;
@@ -976,6 +1154,18 @@ def rho(g,p=pp):
     all p>?   for g=3, etc.
     """
     return 1 - mu0(g,p)
+
+def rho(g,p=pp):
+    """ Return rho(g) for p an odd prime or generic.  This is the local density of soluble hyperelliptic curves of genus g>=1.  The generic formula is correct for sufficiently large p:
+
+    all p>2   for g=1;
+    all p>11  for g=2;
+    all p>?   for g=3, etc.
+    """
+    rho0 = new_AB(g,p)
+    rho1 = new_C(g,p)
+    n = 2*g+3
+    return (rho0+rho1/p**n)*p**(2*n)/(p**(2*n)-1)
 
 def check_rho(g,p=pp):
     """Check that rho_g is correct for g=1,2 and small p.
