@@ -473,6 +473,33 @@ def signed_roots(f):
         res = [(infinity,j,1 if j%2==1 or f1.leading_coefficient().is_square() else -1)]
     return res + signed_roots(f1)
 
+def x_multiplicity(f,h,x0=0):
+    r""" returns (i,eps) where i is the multiplcity of x=x0 on z^2+h(x)*z=f(x)
+    and (for i even and positive) eps is +1 or -1 according as the leading
+    quadratic is split or not.
+
+    Here f and h are in GF(2)[x].
+    """
+    x = f.parent().gen()
+    if x0!=0:
+        return x_multiplicity(f(x+x0),h(x+x0))
+    # Now x0=0
+    e=0; m=0
+    while True:
+        c = [f[m],h[e]]
+        if c==[1,1]: return [m,-1]
+        if c==[0,1]: return [m,+1]
+        if c==[1,0]:
+            f += x**m+h*x**e
+        assert [f[m],h[e]]==[0,0]
+        if f==h==0:
+            return infinity
+        m += 1
+        if f[m]: return [m,+1]
+        e += 1
+        m += 1
+        print(f,h)
+
 def point_multiplicity(f,h,P=[0,0]):
     r""" returns (i,eps) where i is the multiplcity of P on z^2+h(x)*z=f(x)
     and (for i even and positive) eps is +1 or -1 according as the
@@ -497,7 +524,7 @@ def point_multiplicity(f,h,P=[0,0]):
             f += x**(m)+h*x**e
         assert [f[m],h[e]]==[0,0]
         m += 1
-        if f[m]: return [m,0]
+        if f[m]: return [m,+1]
         e += 1
         m += 1
 
@@ -680,7 +707,8 @@ def beta_plus(i,p=pp,v=None):
     Fp = GF(p) if p in ZZ else None
     G = Gamma_plus(i,Fp)
     if p==2:
-        b = 1 - sum([fh_term(f,h) for f,h in G])/p^((3*i+1)//2)
+        e = (3*i+1)//2 if i%2 else 3*i//2
+        b = 1 - sum([fh_term(f,h) for f,h in G])/p^e
     else:
         b = 1 - sum([f_term(f,p) for f in G])/p^i
 
@@ -734,7 +762,7 @@ def beta_minus(i,p=pp,v=None):
               - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p^i2
               - sum([fh_term(f,h) for f,h in G]) / p^((3*i)//2))
     else:
-        b = ( 1 
+        b = ( 1
               - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p^i2
               - sum([f_term(f,p) for f in G]) / p^i)
     try:
@@ -999,6 +1027,12 @@ def check3():
     check_value("alpha",3,-1, (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
     check_value("alpha",3, 0, (pp**3+pp**2-2*pp+2)/(2*pp**3))
 
+    make_alphas(3,2)
+    check_value("alpha",3,+1, 807/2048, 2)
+    check_value("alpha",3,-1, 807/2048, 2)
+    check_value("alpha",3 ,0, 39/64,2)
+
+
 def check4():
     """ Check that all 3 alpha_4^eps are correct for p=3, p=5 and p generic.
     """
@@ -1011,6 +1045,12 @@ def check4():
 
     check_value("alpha",4,-1, (2*pp**10+3*pp**9-pp**5+2*pp**4-2*pp**2-3*pp-1)/(2*(pp+1)**2 *(pp**9-1)))
     check_value("alpha",4, 0, (4*pp**10+8*pp**9-4*pp**8+4*pp**6-3*pp**4+pp**3-5*pp-5)/(8*(pp+1)*(pp**9-1)))
+
+    make_alphas(4,2)
+    check_value("alpha",4,+1, 407079/1048576, 2)
+    check_value("alpha",4,-1, 3569/9198, 2)
+    check_value("alpha",4 ,0, 7369/12264,2)
+
 
 def check5():
     """ Check that all alpha_5^eps and beta_5^eos are correct for p=3.
@@ -1071,42 +1111,6 @@ def mu1_term(g,p=pp):
     """
     return sum([phi_term(phi,"proj",False,p) for phi in Phi(2*g+2)])
 
-def old_AB(g,p=pp):
-    """ Old formula for sum of the above terms with weights
-    """
-    A = mu0_term_1(g,p)
-    B = mu0_term_2(g,p)
-    return (p^(g+2)-1)/(2*p^(2*g+3)) * A + B/p^(2*g+3)
-
-def ie(a,b): return 1-(1-a)*(1-b)
-
-def new_AB(g,p=pp):
-    """ New formula for prob sol if f mod p is nonzero.
-    """
-    d=2*g+2
-    def term(i):
-        """ prob. soluble if deg(f mod p)=i
-        """
-        if i%2:
-            return ie(alpha(d-i,p), beta(i,p))
-        else:
-            return (ie(alpha_plus(d-i,p), beta_plus(i,p))+ie(alpha_minus(d-i,p), beta_minus(i,p)))/2
-    # prob sol if f mod p is nonzero
-    t = (p-1)*sum([term(i)*p**i for i in [0..d]])/p**(d+1)
-    return t
-
-def new_C(g,p=pp):
-    """ New formula for prob sol if f is 0 mod p but not mod p^2.
-    """
-    d=2*g+2
-    def term(i):
-        """ prob. soluble if deg(f/p mod p)=i
-        """
-        return ie(alpha_0(d-i,p), beta_0(i,p))
-    # prob sol if f/p mod p is nonzero
-    t = (p-1)*sum([term(i)*p**i for i in [0..d]])/p**(d+1)
-    return t
-
 def old_mu01(g,p=pp):
     """Return the pair mu_0(g), mu_1(g) by solving the linear equations
     expressing each in terms of the other and the three additional
@@ -1154,6 +1158,35 @@ def old_rho(g,p=pp):
     all p>?   for g=3, etc.
     """
     return 1 - mu0(g,p)
+
+def ie(a,b): return 1-(1-a)*(1-b)
+
+def new_AB(g,p=pp):
+    """ New formula for prob sol if f mod p is nonzero.
+    """
+    d=2*g+2
+    def term(i):
+        """ prob. soluble if deg(f mod p)=i
+        """
+        if i%2:
+            return ie(alpha(d-i,p), beta(i,p))
+        else:
+            return (ie(alpha_plus(d-i,p), beta_plus(i,p))+ie(alpha_minus(d-i,p), beta_minus(i,p)))/2
+    # prob sol if f mod p is nonzero
+    t = (p-1)*sum([term(i)*p**i for i in [0..d]])/p**(d+1)
+    return t
+
+def new_C(g,p=pp):
+    """ New formula for prob sol if f is 0 mod p but not mod p^2.
+    """
+    d=2*g+2
+    def term(i):
+        """ prob. soluble if deg(f/p mod p)=i
+        """
+        return ie(alpha_0(d-i,p), beta_0(i,p))
+    # prob sol if f/p mod p is nonzero
+    t = (p-1)*sum([term(i)*p**i for i in [0..d]])/p**(d+1)
+    return t
 
 def rho(g,p=pp):
     """ Return rho(g) for p an odd prime or generic.  This is the local density of soluble hyperelliptic curves of genus g>=1.  The generic formula is correct for sufficiently large p:
