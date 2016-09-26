@@ -693,6 +693,7 @@ def beta_plus(i,p=pp,v=None):
             b = beta_plus_dict[(i,p)] = 1
             return b
         pass
+    make_betas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "bp_{}_{}".format(i,p)
     if v==None:
@@ -743,6 +744,7 @@ def beta_minus(i,p=pp,v=None):
         print("setting beta_minus({},{})".format(i,p))
         b = beta_minus_dict[(i,p)] = beta_plus(i,p,v)
         return b
+    make_betas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "bm_{}_{}".format(i,p)
     if v==None:
@@ -792,6 +794,7 @@ def beta_0(i,p=pp,v=None):
             print("setting beta_0({},{})".format(i,p))
             b =  beta_0_dict[(i,p)] = [0,1,1/2][i]
             return b
+    make_betas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "b0_{}_{}".format(i,p)
     if v==None:
@@ -840,6 +843,7 @@ def alpha_0(i,p=pp,v=None):
         if v==v0:
             print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
+    make_alphas(i-1,p)
     print("Computing alpha_0({},{})".format(i,p))
     i2 = i-2
     blist = []
@@ -881,6 +885,7 @@ def alpha_plus(i,p=pp,v=None):
             print("setting alpha_plus({},{})".format(i,p))
             a = alpha_plus_dict[(i,p)] = [1,1,1/p][i]
             return a
+    make_alphas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "ap_{}_{}".format(i,p)
     if v==None:
@@ -935,6 +940,7 @@ def alpha_minus(i,p=pp,v=None):
         print("setting alpha_minus({},{})".format(i,p))
         alpha_minus_dict[(i,p)] = alpha_plus(i,p)
         return alpha_minus_dict[(i,p)]
+    make_alphas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "am_{}_{}".format(i,p)
     if v==None:
