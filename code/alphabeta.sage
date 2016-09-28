@@ -200,12 +200,13 @@ def lambda_P(phi, p=pp):
     return lambda_helper(phi, Ndash, p) * (p-1)/ (p**(d+1)-1)
 
 def monics(F, d, u=1):
-    """List of all degree d polynomials with leaqding coefficient u.
+    """Iterate through all degree d polynomials over F with leading coefficient u.
 
     NB Use u=1 to get monics, and u=0 to give all polys of degree <d.
     """
     Fx = PolynomialRing(F,'x')
-    return [Fx(v.list()+[u]) for v in F^d]
+    for v in F^d:
+        yield Fx(v.list()+[u])
 
 def a_nonsquare(F):
     """ The first non-square element of F (an odd finite field).
