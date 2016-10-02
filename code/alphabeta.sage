@@ -208,6 +208,16 @@ def monics(F, d, u=1):
     for v in F^d:
         yield Fx(v.list()+[u])
 
+def monics0(F, d, u=1):
+    """Iterate through all degree d polynomials over F with leading
+    coefficient u and next-to-leading coefficient 0
+
+    NB Use u=1 to get monics, and u=0 to give all polys of degree <d.
+    """
+    Fx = PolynomialRing(F,'x')
+    for v in F^(d-1):
+        yield Fx(v.list()+[0,u])
+
 def a_nonsquare(F):
     """ The first non-square element of F (an odd finite field).
     """
@@ -259,7 +269,7 @@ def smooth_points_mod2(f,h):
        pts += [[1,0,0]]
     if f(1,0)!=h(1,0) and (fy(1,0)+hy(1,0),h(1,0))!=(0,0):
        pts += [[1,0,1]]
-    return pts   
+    return pts
 
 def all_points_mod2(f,h):
     return [P for P in ProjectiveSpace(GF(2),2) if P[2]*(P[2]+h(P[:2]))==f(P[:2])]
@@ -286,6 +296,9 @@ def nfactors_mod2(f,h,abs=False):
         x, y, z = R3.gens()
     return [c[1] for c in (z^2+h*z-f).factor()]
 
+def is_irred_mod2(f,h,abs=False):
+    return nfactors_mod2(f,h,abs)==[1]
+
 def Gamma_plus(d,F=None):
     """ List of monics of degree d with no smooth points.
     """
@@ -304,9 +317,113 @@ def Gamma_plus(d,F=None):
                          for h in monics(F,(d+1)//2,(d+1)%2)
                    if no_smooth_points_mod2(f,h)]
         else:
-            res = [f for f in monics(F,d) if no_smooth_points(f)]
+            res = Gamma_new(d,F,+1)
         Gamma_plus_dict[(q,d)] = res
     return Gamma_plus_dict[(q,d)]
+
+def Gamma_default(d,F,plusorminus):
+    if plusorminus==+1:
+       return Gamma_plus_default(d,F)
+    else:
+       return Gamma_minus_default(d,F)
+
+def Gamma_plus_default(d,F):
+    p = F.cardinality()
+    m = monics if d%p==0 else monics0
+    res = [f for f in m(F,d) if no_smooth_points(f)]
+    if d%p==0:
+       return res
+    x = res[0].parent().gen()
+    return [f(x+b) for b in F for f in res]
+
+def Gamma_minus_default(d,F):
+    p = F.cardinality()
+    u = a_nonsquare(F)
+    m = monics if d%p==0 else monics0
+    res = [f for f in m(F,d,u) if (not (u*f).is_square()) and no_smooth_points(f)]
+    if d%p==0:
+       return res
+    x = res[0].parent().gen()
+    return [f(x+b) for b in F for f in res]
+
+def Gamma_new(d,F,plusorminus):
+    if d<3: return []
+    if d<4 and F.cardinality()>3: return []
+    if d<5 and F.cardinality()>5: return []
+    if d<6 and F.cardinality()>11: return []
+    if d<7 and F.cardinality()>20: return []
+    if d%2==0:
+       return Gamma_new_even(d,F,plusorminus)
+    else:
+       return Gamma_new_odd(d,F,plusorminus)
+
+def Gamma_new_even(d,F,plusorminus):
+    p = F.cardinality()
+    if p<=d-3 or d<=3 or p.divides(d):
+       return Gamma_default(d,F,plusorminus)
+    x = polygen(F)
+    ff0 = prod([x-j for j in range(d-2)])
+    ff  = [f//f(k) for k,f in enumerate([ff0//(x-k) for k in range(d-2)])]
+    assert all([ff[i](j)==F(i==j) for i in range(d-2) for j in range(d-2)])
+    # list of 0 and non-squares:
+    ns = [i for i in F if i.is_zero() or not i.is_square()]
+    p2 = (p+1)//2
+    assert len(ns) == p2
+    rr = range(1,p2)
+    u = ns[1] # first non-square
+    s = ff0[d-3]
+    t = ff0[d-4]-s^2
+    if plusorminus==-1:
+       t*=u
+       u1=u
+       test = lambda f: no_smooth_points(f) and not (u*f).is_square()
+    else:
+       u1=1
+       test = lambda f: no_smooth_points(f)
+
+    def pols(k):
+        """Construct polys of degree d with top 3 coeffs 1,0,k and d-2 non-square values
+        """
+        #print("k={}".format(k))
+        temp = [(u1*x^2-s*u1*x+k-t)*ff0 + sum([w[j]*ff[j] for j in range(d-2)])
+           for w in xmrange_iter([ns for _ in range(d-2)])]
+        assert all([list(f)[-3:] == [k,0,u1] for f in temp])
+        temp = [f for f in temp if test(f)]
+        if k:
+           temp = [f(r*x)/r^d for r in rr for f in temp]
+        return temp
+
+    return [f(x+b) for f in sum([pols(k) for k in [0,1,u]],[]) for b in F]
+
+def Gamma_new_odd(d,F,plusorminus):
+    p = F.cardinality()
+    if p<d or d<=2 or p.divides(d):
+       return Gamma_plus_default(d,F)
+    x = polygen(F)
+    ff0 = prod([x-j for j in range(d-1)])
+    ff  = [f//f(k) for k,f in enumerate([ff0//(x-k) for k in range(d-1)])]
+    ff0 *= (x+sum(range(d-1)))
+    assert all([ff[i](j)==F(i==j) for i in range(d-1) for j in range(d-1)])
+    # list of 0 and non-squares:
+    ns = [i for i in F if i.is_zero() or not i.is_square()]
+    p2 = (p+1)//2
+    assert len(ns) == p2
+    u = ns[1] # first non-square
+    rr = range(1,p2)
+    if plusorminus==-1:
+       u1=u
+       test = lambda f: no_smooth_points(f) and not (u*f).is_square()
+    else:
+       u1=1
+       test = lambda f: no_smooth_points(f)
+
+    # Construct polys of degree d with top 2 coeffs 0,k and d-1 non-square values
+    temp = [u1*ff0 + sum([w[j]*ff[j] for j in range(d-1)])
+           for w in xmrange_iter([ns for _ in range(d-1)])]
+    assert all([list(f)[-2:] == [0,u1] for f in temp])
+    temp = [f for f in temp if test(f)]
+
+    return [f(x+b) for f in temp for b in F]
 
 def Gamma_minus(d, F=None):
     """List of f of degree d, with (fixed) non-square leading coefficient
@@ -331,8 +448,7 @@ def Gamma_minus(d, F=None):
              if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
         else:
             u = a_nonsquare(F)
-            res = [f for f in monics(F,d,u) if (not (u*f).is_square())
-                                            and no_smooth_points(f)]
+            res = Gamma_new(d,F,-1)
         Gamma_minus_dict[(q,d)] = res
     return Gamma_minus_dict[(q,d)]
 
@@ -349,7 +465,16 @@ def one_row(p):
     """ Function to check entries in Table on page 19.
     """
     F = GF(p)
-    return [len(ff) for ff in [Gamma_plus(1,F),
+    table = {}
+    table[3] = [0, 0, 1, 0, 6, 21, 37, 64, 192, 495, 576]
+    table[5] = [0, 0, 0, 0, 5, 47, 145, 250, 1285, 5820, 6440]
+    table[7] = [0, 0, 0, 0, 0, 49, 196, 392, 2992, 18928, 21126]
+    table[11] = [0, 0, 0, 0, 0, 11, 55, 220, 3762, 35442, 43032]
+    table[13] = [0, 0, 0, 0, 0, 0, 0, 104, 2691, 29471, 38064]
+    table[17] = [0, 0, 0, 0, 0, 0, 0, 0, 816, 10404, 15810]
+    table[19] = [0, 0, 0, 0, 0, 0, 0, 0, 171, 5130, 8436]
+
+    res = [len(ff) for ff in [Gamma_plus(1,F),
             Gamma_plus(2,F),
             Gamma_plus(3,F),
             Gamma_minus(4,F),
@@ -360,6 +485,12 @@ def one_row(p):
             Gamma_plus(7,F),
             Gamma_minus(8,F),
             Gamma_plus(8,F)]]
+    if p in table:
+       if res==table[p]:
+          print("p={} OK".format(p))
+       else:
+          print("p={} not OK, table is\n{} but we get\n{}".format(p,table[p],res))
+    return res
 
 def homog(F, d):
     """ List of homogeneous polynomials in F[X,Y] of degree d, up to scaling.
