@@ -332,6 +332,62 @@ def QuarticVolSample(N):
     print("not negative definite: %s" % rpos)
     return res
 
+def GenQuarticVolSample(N):
+    n0=n2=n4=0
+    for i in xrange(N):
+        # coeffs of quartic on RHS:
+        a = RDF.random_element(-1,1)
+        b = RDF.random_element(-1,1)
+        c = RDF.random_element(-1,1)
+        d = RDF.random_element(-1,1)
+        e = RDF.random_element(-1,1)
+
+        # coeffs of cross terms:
+        l = RDF.random_element(-1,1)
+        m = RDF.random_element(-1,1)
+        n = RDF.random_element(-1,1)
+
+        # complete the square:
+        a = 4*a-l*l
+        b = 4*b-2*l*m
+        c = 4*c-m*m-2*l*n
+        d = 4*d-2*m*n
+        e = 4*e-n*n
+
+        D = disc4(a,b,c,d,e)
+        if D<=0:
+            n2+=1
+        else:
+            H = h4(a,b,c,d,e)
+            Q = q4(a,b,c,d,e)
+            if H>=0 or Q<=0:
+                n0 += 1
+            if H<=0 and Q>=0:
+                n4 += 1
+
+    res = [1.0*n/N for n in [n0,n2,n4]]
+    rpos = 1-res[0]/2
+    print("not negative definite: %s" % rpos)
+    return res
+
+# Generalized quartic Montecarlo:
+
+# sage: GenQuarticVolSample(10^4)
+# not negative definite: 0.875200000000000
+# [0.249600000000000, 0.708900000000000, 0.0415000000000000]
+# sage: GenQuarticVolSample(10^5)
+# not negative definite: 0.873305000000000
+# [0.253390000000000, 0.706120000000000, 0.0404900000000000]
+# sage: GenQuarticVolSample(10^6)
+# not negative definite: 0.873861000000000
+# [0.252278000000000, 0.706626000000000, 0.0410960000000000]
+# sage: GenQuarticVolSample(10^7)
+# not negative definite: 0.873775450000000
+# [0.252449100000000, 0.706262900000000, 0.0412880000000000]
+# sage: GenQuarticVolSample(10^8)
+# not negative definite: 0.873742745000000
+# [0.252514510000000, 0.706258520000000, 0.0412269700000000]
+
 # Disc4>0:  (0.0128528225806451, 0.677419354838710), diameter 0.664566532258065
 #           (0.0711827431955645, 0.523114604334678), diameter 0.451931861139113
 #

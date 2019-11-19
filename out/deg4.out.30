@@ -1,0 +1,12 @@
+Density of non-negative definite real polynomials of degree 4
+Input depth of recursion: Use old (0) or new scaled (1) version? 
+Scaled version, depth = 30
+Total before scaling: neg def = 19.8599, non = 139.588, unknown = 0.551746
+(sum = 160)
+Total after scaling: neg def = 0.124124, non = 0.872427, unknown = 0.00344841
+(sum = 1)
+0.124124 <= (neg.def.density) <= 0.127573
+lower bound for non-neg def density  = 0.872427
+upper bound for non-neg def density  = 0.875876
+middle value for non-neg def density = 0.874151
+error bound for non-neg def density  = 0.00172421
