@@ -2,11 +2,15 @@
 
 #include <math.h>
 #include <iostream>
+#include <map>
+
 using namespace std;
 
 #include <pari/pari.h>
 
 //#define DEBUG
+//#define DEBUG_CACHE
+//#define TRAIN # turn on one trick for ND quartics
 
 #ifndef DEGREE
 //#define DEGREE 10
@@ -147,8 +151,79 @@ long pari_sturm(long *ai, int pos_only=0, int neg_only=0)
   return res;
 }
 
+// global caches for results of the is_neg_def() function:
+
+typedef array<long,ncoeffs> poly;
+typedef map<poly,int> poly_cache;
+
+poly make_poly(long* ai)
+{
+  poly f;
+  for (int i=0; i<ncoeffs; i++)
+    f[i] = ai[i];
+  return f;
+}
+
+void print_poly(poly f)
+{
+  for (int i=0; i<ncoeffs; i++)
+    {
+      if(i) cout<<" ";
+      cout<<f[i];
+    }
+}
+
+void print_cache(poly_cache cache)
+{
+  poly_cache::const_iterator res = cache.begin();
+  while (res!=cache.end())
+    {
+      print_poly(res->first);
+      cout << " ---> " << res->second << endl;
+      res++;
+    }
+}
+
+poly_cache ND_cache_all, ND_cache_pos, ND_cache_neg;
+
+int is_neg_def_uncached(long* ai, int pos_only=0, int neg_only=0, int simple_criterion_only=0);
 
 int is_neg_def(long* ai, int pos_only=0, int neg_only=0, int simple_criterion_only=0)
+// Return 1 iff the poly with coeffs ai is negative definite, by default for
+// all x in R; if pos_only==1 then test only for x>=0, and if
+// neg_only=1 then test only for x<=0.  Use global cache, getting the
+// result from the generic code, and storing in the cache, if it's new.
+{
+  poly_cache& cache = (pos_only? ND_cache_pos : (neg_only? ND_cache_neg: ND_cache_all));
+  int v;
+  poly f = make_poly(ai);
+  poly_cache::const_iterator res = cache.find(f);
+  if (res==cache.end())
+    {
+      v = is_neg_def_uncached(ai, pos_only, neg_only);
+      cache[f] = v;
+#ifdef DEBUG_CACHE
+      cout<<"Caching value " << v << " for poly ";
+      print_coeffs(ai);
+      cout<<endl;
+#endif
+    }
+  else
+    {
+      v = res->second;
+#ifdef DEBUG_CACHE
+      cout<<"Found cached value " << v << " for poly ";
+      print_coeffs(ai);
+      cout<<endl;
+#endif
+    }
+#ifdef DEBUG_CACHE
+  print_cache(cache);
+#endif
+  return v;
+}
+
+int is_neg_def_uncached(long* ai, int pos_only, int neg_only, int simple_criterion_only)
 // Return 1 iff the poly with coeffs ai is negative definite, by
 // default for all x in R; if pos_only==1 then test only for x>=0, and
 // if neg_only=1 then test only for x<=0.
@@ -242,6 +317,31 @@ void QND(int depth, long *co1, long *co2, double& non, double& neg, int simple=0
 #endif
     }
 
+#ifdef TRAIN
+  // New condition:  if all (a,b,c,d,e) in the box satisfy
+  // (i)   a<0
+  // (ii)  e<0
+  // (iii) c>0
+  // (iv)  c^2>4ae
+  //
+  // then there exists y=-c/2a>0 such that g(y)=ay^2+cy+e>0 so there
+  // exists x such that f(x)+f(-x)=2g(x^2)>0, so f is not ND.
+
+  // This will hold for all f in the box if
+  // co2[0]<=0, co2[4]<=0
+  // co1[2]>=0
+  // co1[2]^2 >= co1[0]*co1[4]
+
+
+  if ((co2[0]<=0) && (co2[4]<=0) && (co1[2]>=0) && (co1[2]*co1[2]>=4*co1[0]*co1[4]))
+    {
+#ifdef DEBUG
+      cout << "none negative definite (new condition)" << endl;
+#endif
+      non=1.0; return;
+    }
+#endif // TRAIN
+
   interleave(co3, co1, co2);   // co1[0], co2[1], co1[2], ...
 #ifdef DEBUG
   cout << "(c)"<<endl;
@@ -292,19 +392,40 @@ void QND(int depth, long *co1, long *co2, double& non, double& neg, int simple=0
   // double all coordinates if necessary, which does not affect the
   // densities.
 
+
   j=0; // index of longest box edge
   long w; // holds length of longest box edge
   long w2;
-  // initialise:
-  w=co2[0]-co1[0];
-  // look for a longer edge:
-  for (i=1; i<ncoeffs; i++)
+
+#ifdef TRAIN
+  // Nov 2019: split on coeff of x^4 or x^2 or x^0 if the range
+  // includes both positive and negative
+  if ((co2[0]>0) && (0>co1[0]))
     {
-      w2=co2[i]-co1[i];
-      if (w2>w) // i'th dimension is greater, so update
+      j=0;
+    }
+  else if ((co2[2]>0) && (0>co1[2]))
+    {
+      j=2;
+    }
+  else if ((co2[4]>0) && (0>co1[4]))
+    {
+      j=4;
+    }
+  else
+#endif // TRAIN
+    {
+      // initialise:
+      w=co2[0]-co1[0];
+      // look for a longer edge:
+      for (i=1; i<ncoeffs; i++)
         {
-          w=w2;
-          j=i;
+          w2=co2[i]-co1[i];
+          if (w2>w) // i'th dimension is greater, so update
+            {
+              w=w2;
+              j=i;
+            }
         }
     }
 
