@@ -74,6 +74,53 @@ long volume(long* ai, long* bi)
   return v;
 }
 
+// Quartic invariants and covariants and pos/neg def test
+
+long i4(long a, long b, long c, long d, long e)
+{
+  return 12*a*e-3*b*d+c*c;
+}
+
+long j4(long a, long b, long c, long d, long e)
+{
+  return 72*a*c*e+9*b*c*d-27*a*d*d-27*e*b*b-2*c*c*c;
+}
+
+long h4(long a, long b, long c)
+{
+  return 8*a*c-3*b*b;
+}
+
+long q4(long a, long b, long c, long d, long e)
+{
+  return 3*b*b*b*b + 16*(a*a*(c*c+b*d)-a*b*b*c) - 64*a*a*a*e;
+}
+
+long disc4(long a, long b, long c, long d, long e)
+{
+  long i = i4(a,b,c,d,e);
+  long j = j4(a,b,c,d,e);
+  return 4*i*i*i-j*j;
+}
+
+int is_quartic_neg_def(long a, long b, long c, long d, long e)
+{
+  if ((a>=0) || (e>=0) || ((a+b+c+d+e)>=0) or ((a-b+c-d+e)>=0))
+    {return 0;}
+  if (disc4(a,b,c,d,e) <= 0)
+    {return 0;}
+  // now D>0, we require H>0 or Q<0
+  // (since a<0 it cannot be pos def)
+  return (h4(a,b,c) >= 0) || (q4(a,b,c,d,e) <= 0);
+}
+
+long i4(long* ai) {return i4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
+long j4(long* ai) {return j4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
+long h4(long* ai) {return h4(ai[0],ai[1],ai[2]);}
+long q4(long* ai) {return q4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
+long disc4(long* ai) {return disc4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
+long is_quartic_neg_def(long* ai) {return is_quartic_neg_def(ai[0],ai[1],ai[2],ai[3],ai[4]);}
+
 void print_coeffs(long *ai)
 {
   for (int i=0; i<ncoeffs; i++)
@@ -239,6 +286,9 @@ int is_neg_def_uncached(long* ai, int pos_only, int neg_only, int simple_criteri
 }
 #else // generic code for any degree
 {
+  if ((DEGREE==4) && (pos_only==0) && (neg_only==0))
+    return is_quartic_neg_def(ai);
+
   if (ai[0]>=0) return 0;      // f(0)>=0
   if (ai[DEGREE]>=0) return 0; // f(x)>=0 for |x| >>0
   long odds = 0, evens = 0;  // sums of odd/even indexed coefficients
@@ -302,9 +352,11 @@ void QND(int depth, long *co1, long *co2, double& non, double& neg, int simple=0
   // since for f in the box,
   // x>0 => co1(x) < f(x) < co2(x) and
   // x<0 implies f(x) < co3(x)
+  //
+  // Equivalently, iff co2 and co3 are both neg def, which is faster to check
 
-  if (    is_neg_def(co2, /* pos_only */ 1, /* neg_only */ 0, simple)
-          &&  is_neg_def(co3, /* pos_only */ 0, /* neg_only */ 1, simple))
+  if (    is_neg_def(co2, /* pos_only */ 0, /* neg_only */ 0, simple)
+          &&  is_neg_def(co3, /* pos_only */ 0, /* neg_only */ 0, simple))
     {
 #ifdef DEBUG
       cout << "all negative definite" << endl;
