@@ -7,10 +7,18 @@
 
 using namespace std;
 
+#include <eclib/rat.h>
+const rational one(1);
+const rational two(2);
+const rational three(3);
+const rational four(4);
+#define maxprime PARImaxprime
+#define primes PARIprimes
 #include <pari/pari.h>
 
 //#define DEBUG
 //#define DEBUG_CACHE
+//#define USE_CACHE
 //#define TRAIN # turn on one trick for ND quartics
 
 #ifndef DEGREE
@@ -235,8 +243,10 @@ void print_cache(poly_cache cache)
 poly_cache ND_cache_all, ND_cache_pos, ND_cache_neg;
 
 int is_neg_def_uncached(long* ai, int pos_only=0, int neg_only=0, int simple_criterion_only=0);
+int is_neg_def_cached(long* ai, int pos_only=0, int neg_only=0, int simple_criterion_only=0);
+int is_neg_def(long* ai, int pos_only=0, int neg_only=0, int simple_criterion_only=0);
 
-int is_neg_def(long* ai, int pos_only=0, int neg_only=0, int simple_criterion_only=0)
+int is_neg_def_cached(long* ai, int pos_only, int neg_only, int simple_criterion_only)
 // Return 1 iff the poly with coeffs ai is negative definite, by default for
 // all x in R; if pos_only==1 then test only for x>=0, and if
 // neg_only=1 then test only for x<=0.  Use global cache, getting the
@@ -320,7 +330,16 @@ int is_neg_def_uncached(long* ai, int pos_only, int neg_only, int simple_criteri
 }
 #endif
 
-void QND(int depth, long *co1, long *co2, double& non, double& neg, int simple=0)
+int is_neg_def(long* ai, int pos_only, int neg_only, int simple_criterion_only)
+{
+#ifdef USE_CACHE
+  return is_neg_def_cached(ai, pos_only, neg_only);
+#else
+  return is_neg_def_uncached(ai, pos_only, neg_only);
+#endif
+}
+
+void QND(int depth, long *co1, long *co2, rational& non, rational& neg, int simple=0)
 // co1, co2 hold the coefficients of two polynomials at extreme
 // corners, with co1[i]<co2[i] for all i.  Recurse (with depth
 // incremented) unless depth>=0.  non is the fraction of this box
@@ -514,7 +533,7 @@ void QND(int depth, long *co1, long *co2, double& non, double& neg, int simple=0
   // first sub-box: co3 is the same as co2 except for the j'th entry which is the mean
   assign(co3, sco2);
   co3[j] = f;
-  double non1, neg1;
+  rational non1, neg1;
   QND(depth+1, sco1, co3, non1, neg1, simple);
 #ifdef DEBUG
   long vol = volume(sco1,sco2);
@@ -530,7 +549,7 @@ void QND(int depth, long *co1, long *co2, double& non, double& neg, int simple=0
   // second sub-box: co3 is the same as co1 except for the j'th entry which is the mean
   assign(co3, sco1);
   co3[j] = f;
-  double non2, neg2;
+  rational non2, neg2;
   QND(depth+1, co3, sco2, non2, neg2, simple);
 #ifdef DEBUG
   long vol2 = volume(co3,sco2);
@@ -543,8 +562,8 @@ void QND(int depth, long *co1, long *co2, double& non, double& neg, int simple=0
   if (vol2!=vol1) cout<<"!!! (4)"<<endl;
 #endif
 
-  non = (non1+non2)/2.0; // average over two equal subvolumes
-  neg = (neg1+neg2)/2.0; // average over two equal subvolumes
+  non = (non1+non2)/two; // average over two equal subvolumes
+  neg = (neg1+neg2)/two; // average over two equal subvolumes
 
   delete[] co3;
   delete[] sco1;
@@ -559,7 +578,7 @@ void nonNDdensity2(int maxdepth, int simple=0)
   ai[1] = 0;               // switch x and -x; this symmetry halves the relevant box
   bi[0] = bi[DEGREE] = 0;  // 3/4 of the half-box is certainly not ND
                            // since first or last coefficient is >=0
-  double non, neg;
+  rational non, neg;
   // non holds proved non neg def volume proportion
   // neg holds proved neg def volume proportion
   // depth starts negative, each recursion incrememnts it or stops when 0
@@ -569,17 +588,17 @@ void nonNDdensity2(int maxdepth, int simple=0)
     {
       cout << "\nAfter recursion in the quarter box, non = " << non << ", neg = " << neg << endl;
     }
-  double nonND = (3+non)/4, ND = neg/4;
+  rational nonND = (three+non)/four, ND = neg/four;
   if (!simple)
     {
-      cout << ND << " <= (neg.def.density) <= " << 1-nonND << endl;
+      cout << ND << " <= (neg.def.density) <= " << one-nonND << endl;
     }
   cout << "lower bound for non-neg def density  = " << nonND << endl;
   if (!simple)
     {
-      cout << "upper bound for non-neg def density  = " << 1-ND << endl;
-      double mid = (1+nonND-ND)/2;
-      double err = (1-nonND-ND)/2;
+      cout << "upper bound for non-neg def density  = " << one-ND << endl;
+      rational mid = (one+nonND-ND)/two;
+      rational err = (one-nonND-ND)/two;
       cout << "middle value for non-neg def density = " << mid << endl;
       cout << "error bound for non-neg def density  = " << err << endl;
     }
@@ -587,7 +606,7 @@ void nonNDdensity2(int maxdepth, int simple=0)
     {
       double val =  0.813603354745553;
       cout << "exact value = " << val << "\t";
-      if ((nonND<=val) && (val<=1-ND))
+      if ((double(nonND)<=val) && (val<=1-double(ND)))
         cout << "--OK, in interval";
       else
         cout << "--wrong, not in interval!";
@@ -604,9 +623,9 @@ void nonNDdensity_scaled(int maxdepth)
 
   // Compute 4D volumes
 
-  double nonND = 6*(DEGREE+1);
-  double ND    = 0;
-  double non, neg, fac;
+  rational nonND = 6*(DEGREE+1);
+  rational ND    = 0;
+  rational non, neg, fac;
   int i, r;
 
   for(i=0; i<DEGREE; i++)
@@ -639,13 +658,13 @@ void nonNDdensity_scaled(int maxdepth)
 
   cout<<"Total after scaling: neg def = "<<ND<<", non = "<<nonND<<endl;
 
-  cout << ND << " <= (neg.def.density) <= " << 1-nonND << endl;
-  cout << "lower bound for non-neg def density  = " << nonND << endl;
-  cout << "upper bound for non-neg def density  = " << 1-ND << endl;
-  double mid = (1+nonND-ND)/2;
-  double err = (1-nonND-ND)/2;
-  cout << "middle value for non-neg def density = " << mid << endl;
-  cout << "error bound for non-neg def density  = " << err << endl;
+  cout << ND << " <= (neg.def.density) <= " << one-nonND << endl;
+  cout << "lower bound for non-neg def density  = " << nonND << " = " << double(nonND) << endl;
+  cout << "upper bound for non-neg def density  = " << one-ND << " = " << 1-double(ND) << endl;
+  rational mid = (one+nonND-ND)/two;
+  rational err = (one-nonND-ND)/two;
+  cout << "middle value for non-neg def density = " << mid << " = " << double(mid) << endl;
+  cout << "error bound for non-neg def density  = " << err << " = " << double(err) << endl;
   delete [] ai, bi;
 }
 
@@ -653,6 +672,7 @@ void nonNDdensity_scaled(int maxdepth)
 int main()
 {
   pari_init(100000000,2);
+  std::cout.precision(10);
   cout << "Density of non-negative definite real polynomials of degree " << DEGREE << endl;
   int maxdepth, simple=0;
   //  cout << "Use full (0) or simplified (1) criterion? ";
