@@ -1,3 +1,6 @@
+from sage.all import (save, load, divisors, moebius, prod, factorial, flatten, polygen, infinity, xmrange_iter)
+from sage.all import (QQ, ZZ, GF, FunctionField, PolynomialRing, ProjectiveSpace)
+
 Qp = FunctionField(QQ,'p')
 pp = Qp.gen()
 
@@ -9,7 +12,7 @@ def subs(f,p):
     if d:
         return n/d
     else:
-        return sage.all.infinity
+        return infinity
 
 # Initialize dicts to store the Gamma_plus/minus and Delta sets but do
 #  not reset on reload.  The dicts will be initialized if they don't
@@ -46,8 +49,10 @@ def save_Deltas(filename="Delta"):
     save(Delta_dict, filename)
 
 def save_Gammas(filename="Gamma"):
-    save(Gamma_plus_dict, filename+"_plus")
-    save(Gamma_minus_dict, filename+"_minus")
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict], ["plus", "minus"]):
+        f = "_".join([filename, suffix])
+        print("Saving {}".format(f))
+        save(Gdict, f)
 
 # The restore functions use the update() method so that local values
 # are preserved, but NB if the same key exists locally and on file
@@ -59,47 +64,61 @@ def restore_Deltas(filename="Delta"):
 
 def restore_Gammas(filename="Gamma"):
     global Gamma_plus_dict, Gamma_minus_dict
-    Gamma_plus_dict.update(load(filename+"_plus"))
-    Gamma_minus_dict.update(load(filename+"_minus"))
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict], ["plus", "minus"]):
+        f = "_".join([filename, suffix])
+        print("Restoring {}".format(f))
+        Gdict.update(load(f))
 
 # Initialize dicts to store the alphas and betas but do not reset on reload!
 # The alpha and beta values for subscripts 0,1,2 are known directly.
 try:
     n = len(alpha_0_dict)
 except NameError:
+    print("Initializing alpha^0_i for i=0,1,2 to 0,1,1/2")
     alpha_0_dict = {(0,pp):0, (1,pp):1, (2,pp):1/2}
 try:
     n = len(alpha_plus_dict)
 except NameError:
+    print("Initializing alpha^+_i for i=0,1,2 to 1,1,1/p with p={}".format(pp))
     alpha_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1/pp}
 try:
     n = len(alpha_minus_dict)
 except NameError:
+    print("Initializing alpha^-_i for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
     alpha_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
 
 def initialize_alpha_dicts():
     global alpha_0_dict, alpha_plus_dict, alpha_minus_dict
+    print("Initializing alpha^0_i for i=0,1,2 to 0,1,1/2")
     alpha_0_dict =      {(0,pp):0, (1,pp):1, (2,pp):1/2}
+    print("Initializing alpha^+_i for i=0,1,2 to 1,1,1/p with p={}".format(pp))
     alpha_plus_dict =   {(0,pp):1, (1,pp):1, (2,pp):1/pp}
+    print("Initializing alpha^-_i for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
     alpha_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
 
 try:
     n = len(beta_0_dict)
 except NameError:
+    print("Initializing beta^0_i for i=0,1,2 to 0,1,1/2")
     beta_0_dict = {(0,pp):0, (1,pp):1, (2,pp):1/2}
 try:
     n = len(beta_plus_dict)
 except NameError:
+    print("Initializing beta^+_i for i=0,1,2 to 1,1,1")
     beta_plus_dict = {(0,pp):1, (1,pp):1, (2,pp):1}
 try:
     n = len(beta_minus_dict)
 except NameError:
+    print("Initializing beta^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
     beta_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
 
 def initialize_beta_dicts():
     global beta_0_dict, beta_plus_dict, beta_minus_dict
+    print("Initializing beta^0_i for i=0,1,2 to 0,1,1/2")
     beta_0_dict =     {(0,pp):0, (1,pp):1, (2,pp):1/2}
+    print("Initializing beta^+_i for i=0,1,2 to 1,1,1")
     beta_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1}
+    print("Initializing beta^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
     beta_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
 
 def initialize_alpha_beta_dicts():
@@ -160,11 +179,11 @@ def Phi(d, base=[1,1]):
     if d==0:
        yield []
     d0, e0 = base
-    for di in [d0..d]:
-    	e1 = e0 if di==d0 else 1
-	for ei in [e1..d//di]:
-	    for phi in Phi(d-di*ei,[di,ei]):
-	        yield [[di,ei]] + phi
+    for di in range(d0,d+1):
+        e1 = e0 if di==d0 else 1
+        for ei in range(e1,(d//di)+1):
+            for phi in Phi(d-di*ei,[di,ei]):
+                yield [[di,ei]] + phi
 
 def deg_fp(phi):
     """ The degree of the factorization pattern phi.
@@ -185,7 +204,9 @@ def lambda_helper(phi, NN, p=pp):
     """ Helper function for affine and projective factorization probabilities.
     """
     d = deg_fp(phi)
-    return prod([prod([NN(j,p)-i for i in srange(m1(phi,j))])/prod([factorial(m2(phi,[j,i])) for i in [1..d]]) for j in [1..d]])
+    return prod([prod([NN(j,p)-i for i in
+                       range(m1(phi,j))])/prod([factorial(m2(phi,[j,i]))
+                                                for i in range(1,d+1)]) for j in range(1,d+1)])
 
 def lambda_A(phi, p=pp):
     """ The probability that a monic polynomial of degree deg(phi) has factorization pattern phi.
@@ -222,8 +243,8 @@ def a_nonsquare(F):
     """ The first non-square element of F (an odd finite field).
     """
     for u in F:
-    	if not u.is_square():
-	   return u
+        if not u.is_square():
+           return u
     raise ValueError("Field {} has no non-squares!".format(F))
 
 def no_smooth_points(f): 
@@ -242,18 +263,18 @@ def smooth_points_mod2(f,h):
     """ 
     if f.parent().ngens()==1:
         # NB even in char. 2, f'(0) gives the coefficient of x
-	pts = []
+        pts = []
         fd=f.derivative()
         hd=h.derivative()
         if f(0)==0 and (fd(0),h(0))!=(0,0):
-	   pts += [[0,0]]
+           pts += [[0,0]]
         if f(1)==0 and (fd(1),h(1))!=(0,0):
-	   pts += [[1,0]]
+           pts += [[1,0]]
         if f(0)!=h(0) and (fd(0)-hd(0),h(0))!=(0,0):
-	   pts += [[0,1]]
+           pts += [[0,1]]
         if f(1)!=h(1) and (fd(1)-hd(1),h(1))!=(0,0):
-	   pts += [[1,1]]
-    	return pts
+           pts += [[1,1]]
+        return pts
     # homogeneous case
     R1 = PolynomialRing(f.base_ring(),'x')
     x = R1.gen()
@@ -409,7 +430,6 @@ def Gamma_new_odd(d,F,plusorminus):
     p2 = (p+1)//2
     assert len(ns) == p2
     u = ns[1] # first non-square
-    rr = range(1,p2)
     if plusorminus==-1:
        u1=u
        test = lambda f: no_smooth_points(f) and not (u*f).is_square()
@@ -447,7 +467,6 @@ def Gamma_minus(d, F=None):
                          for h in monics(F,d//2,1)
              if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
         else:
-            u = a_nonsquare(F)
             res = Gamma_new(d,F,-1)
         Gamma_minus_dict[(q,d)] = res
     return Gamma_minus_dict[(q,d)]
@@ -502,7 +521,7 @@ def homog(F, d):
     Fxy = PolynomialRing(F,['x','y'])
     x, y = Fxy.gens()
     def homog(f):
-    	return Fxy(y**d * f(x/y))
+        return Fxy(y**d * f(x/y))
     return [homog(Fx(list(v))) for v in ProjectiveSpace(F,d)]
 
 def is_square_homog(f):
@@ -555,8 +574,8 @@ def Delta(d,F=None):
         # consider both f and u*f
         D1 =  [f for f in flist if not is_square_homog(u*f) and no_smooth_points_homog(f)]
         D2 =  [u*f for f in flist if not is_square_homog(f) and no_smooth_points_homog(u*f)]
-        # D1+D2 is the result up to scaling by squares...
-        sq = [F(a)^2 for a in [1..(q-1)//2]]
+        # D1+D2 is the result up to scaling by squares.
+        sq = [F(a)^2 for a in range(1,((q-1)//2)+1)]
         Delta_dict[(q,d)] = flatten([[a*f for f in D1+D2] for a in sq])
     return Delta_dict[(q,d)]
 
@@ -802,7 +821,7 @@ def alpha(i,p=pp,v=None):
     """
     return (alpha_plus(i,p,v)+alpha_minus(i,p,v))/2
 
-def beta_plus(i,p=pp,v=None):
+def beta_plus(i,p=pp,v=None, verbose=False):
     """beta^+_i(p).
 
     Computed values are stored in beta_plus_dict keyed on (i,p).
@@ -821,10 +840,10 @@ def beta_plus(i,p=pp,v=None):
     polynomial in some other variable.
     """
     try:
-	return beta_plus_dict[(i,p)]
+        return beta_plus_dict[(i,p)]
     except KeyError:
         if i<3:
-            print("setting beta_plus({},{})".format(i,p))
+            if verbose: print("setting beta_plus({},{})".format(i,p))
             b = beta_plus_dict[(i,p)] = 1
             return b
         pass
@@ -833,13 +852,13 @@ def beta_plus(i,p=pp,v=None):
     v0 = "bp_{}_{}".format(i,p)
     if v==None:
         v=v0
-        print("Setting "+v0)
+        if verbose: print("Setting "+v0)
     else:
         if v==v0:
-            print("recursion for "+v0)
+            if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     # use Prop 3.3 (i)
-    print("Computing beta_plus({},{})".format(i,p))
+    if verbose: print("Computing beta_plus({},{})".format(i,p))
     Fp = GF(p) if p in ZZ else None
     G = Gamma_plus(i,Fp)
     if p==2:
@@ -850,20 +869,21 @@ def beta_plus(i,p=pp,v=None):
 
     try:
         b=F(b)
-        print("setting beta_plus({},{})".format(i,p))
+        if verbose: print("setting beta_plus({},{})".format(i,p))
         beta_plus_dict[(i,p)] = b
     except (ValueError, TypeError):
         # b is a linear poly in some variable: is it v0?
-        print("{}={}".format(v0,b))
+        if verbose: print("{}={}".format(v0,b))
         if str(b.parent().gen())==v0:
             r,s = b.list()
             b = r/(1-s)
-            print("setting beta_plus({},{})".format(i,p))
-            print("{}={}".format(v0,b))
+            if verbose:
+                print("setting beta_plus({},{})".format(i,p))
+                print("{}={}".format(v0,b))
             beta_plus_dict[(i,p)] = b
     return b
 
-def beta_minus(i,p=pp,v=None):
+def beta_minus(i,p=pp,v=None, verbose=False):
     """beta^-_i(p).
 
     Computed values are stored in beta_minus_dict keyed on (i,p).
@@ -872,11 +892,11 @@ def beta_minus(i,p=pp,v=None):
         return beta_minus_dict[(i,p)]
     except KeyError:
         if i<3:
-            print("setting beta_minus({},{})".format(i,p))
+            if verbose: print("setting beta_minus({},{})".format(i,p))
             b = beta_minus_dict[(i,p)] = [0,1,p/(p+1)][i]
             return b
     if i%2==1:
-        print("setting beta_minus({},{})".format(i,p))
+        if verbose: print("setting beta_minus({},{})".format(i,p))
         b = beta_minus_dict[(i,p)] = beta_plus(i,p,v)
         return b
     make_betas(i-1,p)
@@ -884,13 +904,13 @@ def beta_minus(i,p=pp,v=None):
     v0 = "bm_{}_{}".format(i,p)
     if v==None:
         v=v0
-        print("Setting "+v0)
+        if verbose: print("Setting "+v0)
     else:
         if v==v0:
-            print("recursion for "+v0)
+            if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     # now i is even, use Prop 3.3(ii)
-    print("Computing beta_minus({},{})".format(i,p))
+    if verbose: print("Computing beta_minus({},{})".format(i,p))
     i2 = i//2
     Fp = GF(p) if p in ZZ else None
     G = Gamma_minus(i,Fp)
@@ -904,20 +924,21 @@ def beta_minus(i,p=pp,v=None):
               - sum([f_term(f,p) for f in G]) / p^i)
     try:
         b=F(b)
-        print("setting beta_minus({},{})".format(i,p))
+        if verbose: print("setting beta_minus({},{})".format(i,p))
         beta_minus_dict[(i,p)] = b
     except (ValueError, TypeError):
         # b is a linear poly in some variable: is it v0?
-        print("{}={}".format(v0,b))
+        if verbose: print("{}={}".format(v0,b))
         if str(b.parent().gen())==v0:
             r,s = b.list()
             b = r/(1-s)
-            print("{}={}".format(v0,b))
-            print("setting beta_minus({},{})".format(i,p))
+            if verbose:
+                print("{}={}".format(v0,b))
+                print("setting beta_minus({},{})".format(i,p))
             beta_minus_dict[(i,p)] = b
     return b
 
-def beta_0(i,p=pp,v=None):
+def beta_0(i,p=pp,v=None, verbose=False):
     """beta^0_i(p).
 
     Computed values are stored in beta_0_dict keyed on (i,p).
@@ -926,7 +947,7 @@ def beta_0(i,p=pp,v=None):
         return beta_0_dict[(i,p)]
     except KeyError:
         if i<3:
-            print("setting beta_0({},{})".format(i,p))
+            if verbose: print("setting beta_0({},{})".format(i,p))
             b =  beta_0_dict[(i,p)] = [0,1,1/2][i]
             return b
     make_betas(i-1,p)
@@ -934,30 +955,31 @@ def beta_0(i,p=pp,v=None):
     v0 = "b0_{}_{}".format(i,p)
     if v==None:
         v=v0
-        print("Setting "+v0)
+        if verbose: print("Setting "+v0)
     else:
         if v==v0:
-            print("recursion for "+v0)
+            if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     # use Prop 3.3 (iii)
-    print("Computing beta_0({},{})".format(i,p))
+    if verbose: print("Computing beta_0({},{})".format(i,p))
     b = 1 - sum([phi_term(phi,"affine",False,p,v) for phi in Phi(i)])
     try:
         b=F(b)
-        print("setting beta_0({},{})".format(i,p))
+        if verbose: print("setting beta_0({},{})".format(i,p))
         beta_0_dict[(i,p)] = b
     except (ValueError, TypeError):
         # b is a linear poly in some variable: is it v0?
-        print("{}={}".format(v0,b))
+        if verbose: print("{}={}".format(v0,b))
         if str(b.parent().gen())==v0:
             r,s = b.list()
             b = r/(1-s)
-            print("{}={}".format(v0,b))
-            print("setting beta_0({},{})".format(i,p))
+            if verbose:
+                print("{}={}".format(v0,b))
+                print("setting beta_0({},{})".format(i,p))
             beta_0_dict[(i,p)] = b
     return b
 
-def alpha_0(i,p=pp,v=None):
+def alpha_0(i,p=pp,v=None, verbose=False):
     """ alpha^0_i(p).
 
     Computed values are stored in alpha_0_dict keyed on (i,p).
@@ -966,49 +988,50 @@ def alpha_0(i,p=pp,v=None):
         return alpha_0_dict[(i,p)]
     except KeyError:
         if i<3:
-            print("setting alpha_0({},{})".format(i,p))
+            if verbose: print("setting alpha_0({},{})".format(i,p))
             a = alpha_0_dict[(i,p)] = [0,1,1/2][i]
             return a
     F = Qp if p==pp else QQ
     v0 = "a0_{}_{}".format(i,p)
     if v==None:
         v=v0
-        print("Setting "+v0)
+        if verbose: print("Setting "+v0)
     else:
         if v==v0:
-            print("recursion for "+v0)
+            if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     make_alphas(i-1,p)
-    print("Computing alpha_0({},{})".format(i,p))
+    if verbose: print("Computing alpha_0({},{})".format(i,p))
     i2 = i-2
     blist = []
-    for j in [0..i2]:
+    for j in range(i2+1):
       if j%2==0:
-         blist += [beta(k,p,v) for k in [j,j-1..0]]
+         blist += [beta(k,p,v) for k in range(j,-1,-1)]
       else:
-         blist += [beta_0(k,p,v) for k in [j,j-1..0]]
+         blist += [beta_0(k,p,v) for k in range(j,-1,-1)]
     if i%2==0:
        blist += [beta_0(i,p,v)]
     else:
        blist += [beta(i,p,v)]
-    print("Computing affine({}) with p={}".format(blist,p))
+    if verbose: print("Computing affine({}) with p={}".format(blist,p))
     a = affine(blist,p)
     try:
         a=F(a)
-        print("setting alpha_0({},{})".format(i,p))
+        if verbose: print("setting alpha_0({},{})".format(i,p))
         alpha_0_dict[(i,p)] = a
     except (ValueError, TypeError):
         # a is a linear poly in some variable: is it v0?
-        print("{}={}".format(v0,a))
+        if verbose: print("{}={}".format(v0,a))
         if str(a.parent().gen())==v0:
             r,s = a.list()
             a = r/(1-s)
-            print("{}={}".format(v0,a))
-            print("setting alpha_0({},{})".format(i,p))
+            if verbose:
+                print("{}={}".format(v0,a))
+                print("setting alpha_0({},{})".format(i,p))
             alpha_0_dict[(i,p)] = a
     return a
 
-def alpha_plus(i,p=pp,v=None):
+def alpha_plus(i,p=pp,v=None, verbose=False):
     """ alpha^+_i(p).
 
     Computed values are stored in alpha_plus_dict keyed on (i,p).
@@ -1017,7 +1040,7 @@ def alpha_plus(i,p=pp,v=None):
         return alpha_plus_dict[(i,p)]
     except KeyError:
         if i<3:
-            print("setting alpha_plus({},{})".format(i,p))
+            if verbose: print("setting alpha_plus({},{})".format(i,p))
             a = alpha_plus_dict[(i,p)] = [1,1,1/p][i]
             return a
     make_alphas(i-1,p)
@@ -1025,41 +1048,42 @@ def alpha_plus(i,p=pp,v=None):
     v0 = "ap_{}_{}".format(i,p)
     if v==None:
         v=v0
-        print("Setting "+v0)
+        if verbose: print("Setting "+v0)
     else:
         if v==v0:
-            print("recursion for "+v0)
+            if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
-    print("Computing alpha_plus({},{})".format(i,p))
+    if verbose: print("Computing alpha_plus({},{})".format(i,p))
     i2 = i-2
     blist = []
-    for j in [0..i2]:
+    for j in range(i2+1):
       if j%2==0:
-         blist += [beta_0(k,p,v) for k in [j,j-1..0]]
+         blist += [beta_0(k,p,v) for k in range(j,-1,-1)]
       else:
-         blist += [beta(k,p,v) for k in [j,j-1..0]]
+         blist += [beta(k,p,v) for k in range(j,-1,-1)]
     if i%2==0:
        blist += [beta_plus(i,p,v)]
     else:
        blist += [beta_0(i,p,v)]
-    print("Computing affine({}) with p={}".format(blist,p))
+    if verbose: print("Computing affine({}) with p={}".format(blist,p))
     a = affine(blist,p)
     try:
         a=F(a)
-        print("setting alpha_plus({},{})".format(i,p))
+        if verbose: print("setting alpha_plus({},{})".format(i,p))
         alpha_plus_dict[(i,p)] = a
     except (ValueError, TypeError):
         # a is a linear poly in some variable: is it v0?
-        print("{}={}".format(v0,a))
+        if verbose: print("{}={}".format(v0,a))
         if str(a.parent().gen())==v0:
             r,s = a.list()
             a = r/(1-s)
-            print("{}={}".format(v0,a))
-            print("setting alpha_plus({},{})".format(i,p))
+            if verbose:
+                print("{}={}".format(v0,a))
+                print("setting alpha_plus({},{})".format(i,p))
             alpha_plus_dict[(i,p)] = a
     return a
 
-def alpha_minus(i,p=pp,v=None):
+def alpha_minus(i,p=pp,v=None, verbose=False):
     """ alpha^-_i(p).
 
     Computed values are stored in alpha_minus_dict keyed on (i,p).
@@ -1068,11 +1092,11 @@ def alpha_minus(i,p=pp,v=None):
         return alpha_minus_dict[(i,p)]
     except KeyError:
         if i<3:
-            print("setting alpha_minus({},{})".format(i,p))
+            if verbose: print("setting alpha_minus({},{})".format(i,p))
             a = alpha_minus_dict[(i,p)] = [0,1,1/(p+1)][i]
             return a
     if i%2==1:
-        print("setting alpha_minus({},{})".format(i,p))
+        if verbose: print("setting alpha_minus({},{})".format(i,p))
         alpha_minus_dict[(i,p)] = alpha_plus(i,p)
         return alpha_minus_dict[(i,p)]
     make_alphas(i-1,p)
@@ -1080,34 +1104,35 @@ def alpha_minus(i,p=pp,v=None):
     v0 = "am_{}_{}".format(i,p)
     if v==None:
         v=v0
-        print("Setting "+v0)
+        if verbose: print("Setting "+v0)
     else:
         if v==v0:
-            print("recursion for "+v0)
+            if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
-    print("Computing alpha_minus({},{})".format(i,p))
+    if verbose: print("Computing alpha_minus({},{})".format(i,p))
     i2 = i-2
     blist = []
-    for j in [0..i2]:
+    for j in range(i2+1):
       if j%2==0:
-         blist += [beta_0(k,p,v) for k in [j,j-1..0]]
+         blist += [beta_0(k,p,v) for k in range(j,-1,-1)]
       else:
-         blist += [beta(k,p,v) for k in [j,j-1..0]]
+         blist += [beta(k,p,v) for k in range(j,-1,-1)]
     blist += [beta_minus(i,p,v)]
-    print("Computing affine({}) with p={}".format(blist,p))
+    if verbose: print("Computing affine({}) with p={}".format(blist,p))
     a = affine(blist,p)
     try:
         a=F(a)
-        print("setting alpha_minus({},{})".format(i,p))
+        if verbose: print("setting alpha_minus({},{})".format(i,p))
         alpha_minus_dict[(i,p)] = a
     except (ValueError, TypeError):
         # a is a linear poly in some variable: is it v0?
-        print("{}={}".format(v0,a))
+        if verbose: print("{}={}".format(v0,a))
         if str(a.parent().gen())==v0:
             r,s = a.list()
             a = r/(1-s)
-            print("{}={}".format(v0,a))
-            print("setting alpha_minus({},{})".format(i,p))
+            if verbose:
+                print("{}={}".format(v0,a))
+                print("setting alpha_minus({},{})".format(i,p))
             alpha_minus_dict[(i,p)] = a
     return a
 
@@ -1116,7 +1141,9 @@ def make_alphas(i, p=pp, verbose=False):
     after first computing all alphas and betas with smaller
     subscripts.
     """
-    for j in [3..i-1]:
+    if verbose:
+        print("Making all alpha_{} for p={}".format(i,p))
+    for j in range(3,i):
         make_alphas(j,p)
         make_betas(j,p)
     a = alpha_plus(i,p)
@@ -1134,7 +1161,7 @@ def make_betas(i, p=pp, verbose=False):
     after first computing all alphas and betas with smaller
     subscripts.
     """
-    for j in [3..i-1]:
+    for j in range(3,i):
         make_alphas(j,p)
         make_betas(j,p)
     b = beta_plus(i,p)
@@ -1281,15 +1308,15 @@ def old_mu01(g,p=pp):
     assert ans0 == (p^(g+2)-1)/(2*p^(2*g+3)) * A +  B/p^e + ans1/p^(2*g+3)
     return ans0, ans1
 
-def mu0(g,p=pp):
+def old_mu0(g,p=pp):
     """ Return mu_0(g) for p an odd prime or generic.
     """
-    return mu01(g,p)[0]
+    return old_mu01(g,p)[0]
 
-def mu1(g,p=pp):
+def old_mu1(g,p=pp):
     """ Return mu_1(g) for p an odd prime or generic.
     """
-    return mu01(g,p)[1]
+    return old_mu01(g,p)[1]
 
 def old_rho(g,p=pp):
     """ Return rho(g) for p an odd prime or generic.  This is the local density of soluble hyperelliptic curves of genus g>=1.  The generic formula is correct for sufficiently large p:
@@ -1298,7 +1325,7 @@ def old_rho(g,p=pp):
     all p>11  for g=2;
     all p>?   for g=3, etc.
     """
-    return 1 - mu0(g,p)
+    return 1 - old_mu0(g,p)
 
 def ie(a,b): return 1-(1-a)*(1-b)
 
@@ -1314,7 +1341,7 @@ def new_AB(g,p=pp):
         else:
             return (ie(alpha_plus(d-i,p), beta_plus(i,p))+ie(alpha_minus(d-i,p), beta_minus(i,p)))/2
     # prob sol if f mod p is nonzero
-    t = (p-1)*sum([term(i)*p**i for i in [0..d]])/p**(d+1)
+    t = (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
     return t
 
 def new_C(g,p=pp):
@@ -1326,7 +1353,7 @@ def new_C(g,p=pp):
         """
         return ie(alpha_0(d-i,p), beta_0(i,p))
     # prob sol if f/p mod p is nonzero
-    t = (p-1)*sum([term(i)*p**i for i in [0..d]])/p**(d+1)
+    t = (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
     return t
 
 def rho(g,p=pp):
