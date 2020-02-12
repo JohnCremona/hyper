@@ -28,3 +28,9 @@ xdeg10: xhyper.cc
 
 negdef: negdef.cc
 	gcc $(CFLAGS) negdef.cc -o negdef -g -lm -lstdc++ -lpari
+
+minpoints3: minpoints3.c
+	gcc -O3 -funroll-loops -fopenmp minpoints3.c -lm -o minpoints3
+
+minpoints4: minpoints4.c
+	gcc -O3 -funroll-loops -fopenmp minpoints4.c -lm -o minpoints4

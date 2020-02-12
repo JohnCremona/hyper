@@ -1,0 +1,62 @@
+minpoints3.c and minpoints4.c
+
+minpoints3.c and minpoints4.c were written and donated by Andrew
+Sutherland, based on functions in his smalljac package.  They should be
+compiled with (for example)
+
+   	gcc -O3 -funroll-loops -fopenmp minpoints3.c -lm -o minpoints3
+
+(as in the Makefile) and run with
+
+    ./minpoints3 p
+
+where p is an odd prime (in facto 3<p<64)
+
+What do they do?  They enumerate all monic polynomials of degree 8
+(resp. 10) mod p which are square-free, to find the smallest number of
+affine points on each, outputting the point count and the polynomials
+whwnever the record is broken.  So if a line is output starting with
+0, you know that a smooth curve of genus 3 (or 4) over F_p can have no
+smooth affine points, while if the program terminates before this
+happens then you knpw that there are no such curves, and can also see
+what the least number of affine points is.
+
+How do they do it?  Use efficient C!  The top 2 coefficients are set
+to 1,0, to eliminate translations.  The next is set to 0, 1, u in turn
+where u is a quadratic non-residue, to eliminate scalings.
+Parallelisation is done over all p possibilities for the next
+coefficient.
+
+Output for genus 3:
+
+For all p up to 23 there are pointless curves:
+
+0 pts on y^2=x^8+0*x^6+0*x^5+0*x^4+0*x^3+0*x^2+0*x+2 mod 5
+0 pts on y^2=x^8+0*x^6+0*x^5+0*x^4+0*x^3+6*x^2+0*x+3 mod 7
+0 pts on y^2=x^8+0*x^6+2*x^5+0*x^4+1*x^3+2*x^2+0*x+2 mod 11
+0 pts on y^2=x^8+0*x^6+7*x^5+0*x^4+1*x^3+1*x^2+7*x+7 mod 13
+0 pts on y^2=x^8+0*x^6+7*x^5+0*x^4+3*x^3+11*x^2+7*x+10 mod 17
+0 pts on y^2=x^8+0*x^6+10*x^5+1*x^4+12*x^3+2*x^2+14*x+8 mod 19
+0 pts on y^2=x^8+1*x^6+0*x^5+12*x^4+0*x^3+10*x^2+0*x+14 mod 29
+
+but mod 29, 31, 37 the minima are
+2 pts on y^2=x^8+0*x^6+0*x^5+8*x^4+0*x^3+0*x^2+0*x+1 mod 29 (7.7s)
+2 pts on y^2=x^8+3*x^6+0*x^5+12*x^4+0*x^3+13*x^2+0*x+5 mod 31 (12.3s)
+6 pts on y^2=x^8+1*x^6+13*x^5+1*x^4+30*x^3+28*x^2+15*x+35 mod 37 (43.4s)
+
+Output for genus 4:
+
+For all p up to 37 there are pointless curves:
+
+0 pts on y^2=x^10+0*x^8+0*x^7+0*x^6+0*x^5+0*x^4+0*x^3+4*x^2+0*x+2 mod 5
+0 pts on y^2=x^10+0*x^8+2*x^7+0*x^6+0*x^5+2*x^4+0*x^3+3*x^2+5*x+6 mod 7
+0 pts on y^2=x^10+0*x^8+10*x^7+0*x^6+0*x^5+0*x^4+0*x^3+7*x^2+0*x+10 mod 11
+0 pts on y^2=x^10+0*x^8+8*x^7+0*x^6+0*x^5+1*x^4+0*x^3+7*x^2+5*x+11 mod 13
+0 pts on y^2=x^10+0*x^8+4*x^7+0*x^6+0*x^5+2*x^4+10*x^3+14*x^2+16*x+10 mod 17
+0 pts on y^2=x^10+0*x^8+0*x^7+0*x^6+0*x^5+0*x^4+0*x^3+2*x^2+0*x+12 mod 19
+0 pts on y^2=x^10+0*x^8+12*x^7+0*x^6+1*x^5+3*x^4+11*x^3+17*x^2+10*x+5 mod 23
+0 pts on y^2=x^10+0*x^8+10*x^7+0*x^6+0*x^5+2*x^4+1*x^3+15*x^2+16*x+27 mod 29
+0 pts on y^2=x^10+0*x^8+0*x^7+0*x^6+0*x^5+0*x^4+0*x^3+0*x^2+0*x+12 mod 31
+
+
+[AS] for p=41, 43, 47, 53, 59, 61 the minima are 1,1,2,6, 8, 8.
