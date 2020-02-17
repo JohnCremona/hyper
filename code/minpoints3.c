@@ -20,7 +20,8 @@ int main (int argc, char *argv[])
     int qmap[MAXP*MAXP];
     int xmap[MAXD*MAXP];
     int i, j, p;
-    
+    int u; // will hold the least quadratic nonresidue
+
     if ( argc < 2 ) { puts ("minpoints3 p"); return 0; }
     p = atoi(argv[1]);
     if ( p <= 3 || p > MAXP ) { printf ("p must be in [5,%d]", MAXP); return 0; }
@@ -32,7 +33,11 @@ int main (int argc, char *argv[])
     qmap[0] = 1;
     for ( i = 1 ; i < p ; i++ ) qmap[zmod(i*i,p)] = 2;
     for ( i = 0 ; i < p ; i++ ) for ( j = 1 ; j < p ; j++ ) qmap[j*p+i] = qmap[i];
-    
+
+    // Find the least nonresidue
+    u = 2;
+    while ( qmap[u] ) u++;
+
     // set xmap[MAXD*i+j] = i^(j+1) mod p for i in [0,p-1] and j in [1,MAXD]
     for ( i = 0 ; i < p ; i++ ) { xmap[MAXD*i] = i; for ( j = 1 ; j <= MAXD ; j++ ) xmap[MAXD*i+j] = zmod(i*xmap[MAXD*i+j-1],p); }
 
@@ -47,7 +52,7 @@ int main (int argc, char *argv[])
         f[8] = 1; f[7] = 0;
         f[5] = omp_get_thread_num();
         for ( f[6] = 0 ; f[6] < 3 ; f[6]++ ) {
-        if ( f[6] == 2 ) while ( qmap[f[6]] ) f[6]++; // f[6] ranges over 0,1,c where c is least non-residue
+        if ( f[6] == 2 ) f[6] = u; // f[6] ranges over 0,1,u where u is least non-residue
         for ( f[4] = 0 ; f[4] < p ; f[4]++ ) {
         for ( f[3] = 0 ; f[3] < p ; f[3]++ ) {
         for ( f[2] = 0 ; f[2] < p ; f[2]++ ) {
@@ -57,7 +62,7 @@ int main (int argc, char *argv[])
                 emap[i] = zmod(f[2]*x[2]+f[3]*x[3]+f[4]*x[4]+f[5]*x[5]+f[6]*x[6]+f[7]*x[7]+f[8]*x[8],p);
             }
             for ( f1 = 0 ; f1 < p ; f1++ ) {
-                for ( f0 = (f[1]?0:1) ; f0 < p ; f0++ ) {
+                for ( f0 = (f1?0:1) ; f0 < p ; f0++ ) {
                     for ( cnt = 0, i = 0 ; i < p ; i++ ) cnt += qmap[emap[i]+f1*i+f0];
                     if ( cnt < mincnt ) {
                         f[1] = f1; f[0] = f0;
