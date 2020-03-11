@@ -340,7 +340,7 @@ def Gamma_plus(d,F=None):
         else:
             res = Gamma_new(d,F,+1)
         Gamma_plus_dict[(q,d)] = res
-    print("accessing Gamma^+ with p={}, degree {}".format(q,d))
+    #print("accessing Gamma^+ with p={}, degree {}".format(q,d))
     return Gamma_plus_dict[(q,d)]
 
 def Gamma_default(d,F,plusorminus):
@@ -470,7 +470,7 @@ def Gamma_minus(d, F=None):
         else:
             res = Gamma_new(d,F,-1)
         Gamma_minus_dict[(q,d)] = res
-    print("accessing Gamma^- with p={}, degree {}".format(q,d))
+    #print("accessing Gamma^- with p={}, degree {}".format(q,d))
     return Gamma_minus_dict[(q,d)]
 
 def show_Gamma(verbose=False):
