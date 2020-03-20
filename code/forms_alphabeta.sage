@@ -195,11 +195,6 @@ def phi_term(phi, A_or_P, v=None):
 
     The first two use A_or_P="affine" to use lambda_A while the others
     use "proj" to get lambda_P.
-
-    beta^- and mu_0 have double=True which uses alpha^-(2*e) for (1,e) in phi.
-
-    beta^0 and mu_1 have double=False which uses alpha^0(e) for (1,e) in phi.
-
     """
     lam = lambda_A(phi) if A_or_P=="affine" else lambda_P(phi)
     al = (lambda i: alpha(i,v))
@@ -354,12 +349,16 @@ def check_alphas():
 
 # the overall probability
 
-def rho(d, p=pp):
-    mu = (p-1) * sum(p^i * (1-alpha(d-i,p))*(1-beta(i,p)) for i in range(d+1))
-    return 1 - mu / (p^(d+1) - 1)
+def rho(d):
+    make_alphas(d)
+    mu = (pp-1) * sum(pp^i * (1-alpha(d-i,pp))*(1-beta(i,pp)) for i in range(d+1))
+    return 1 - mu / (pp^(d+1) - 1)
+
+def rho_new(d):
+    make_alphas(d)
+    return 1 - sum([phi_term(phi,"projective") for phi in Phi(d)])
 
 """
 Space for comments
 
 """
-
