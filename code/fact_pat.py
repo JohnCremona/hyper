@@ -1,4 +1,4 @@
-# code for listing factoization patterns of forms and polynomials,
+# code for listing factorization patterns of forms and polynomials,
 # with associated affine and projective density functions
 
 from sage.all import (ZZ, moebius, prod, factorial)
@@ -80,4 +80,3 @@ def split_factorizations(d):
     degree 1.
     """
     return [phi for phi in Phi(d) if all(d==1 for d,e in phi)]
-
