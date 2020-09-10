@@ -32,5 +32,8 @@ negdef: negdef.cc
 minpoints3: minpoints3.c
 	gcc -O3 -funroll-loops -fopenmp minpoints3.c -lm -o minpoints3
 
+minpoints3odd: minpoints3odd.c
+	gcc -O3 -funroll-loops -fopenmp minpoints3odd.c -lm -o minpoints3odd
+
 minpoints4: minpoints4.c
 	gcc -O3 -funroll-loops -fopenmp minpoints4.c -lm -o minpoints4
