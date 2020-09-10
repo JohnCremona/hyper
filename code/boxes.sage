@@ -1,6 +1,8 @@
 # Definition of discriminant and elated functions for quadratics,
 # cubics and quartics:
 
+from sage.all import RIF, RDF, prod, srange, cartesian_product_iterator
+
 def disc2(a,b,c):
     return b*b-4*a*c
 
@@ -85,18 +87,18 @@ def Fvold(d,F,tol,k=2):
     v = 1.0/k^d
     return sum([Fvol(b,F,tol,v) for b in Blist])*k^d/((2^d)*(k^d-1))
 
-def quad_exact():
-    var('a','b','c')
-    assume(a>0)
-    assume(b>0)
-    assume(c>0)
-    assume(a<1)
-    assume(b<1)
-    assume(c<1)
-    r = integral(integral(integral(1,c,b^2/(4*a),1),a,b^2/4,1),b,0,1)
-    r = r.simplify_exp()
-    r = 1-r/2
-    return r
+# def quad_exact():
+#     var('a','b','c')
+#     assume(a>0)
+#     assume(b>0)
+#     assume(c>0)
+#     assume(a<1)
+#     assume(b<1)
+#     assume(c<1)
+#     r = integral(integral(integral(1,c,b^2/(4*a),1),a,b^2/4,1),b,0,1)
+#     r = r.simplify_exp()
+#     r = 1-r/2
+#     return r
 
 def sampleDisc2(N):
     n=0
@@ -109,7 +111,7 @@ def sampleDisc2(N):
     return (1.0*n)/N
 
 def quadratic_non_neg(N):
-    print("exact value is (6*log(2)+113)/144 = %s" % ((6*log(2)+113)/144).n())
+    print("exact value is (6*log(2)+113)/144 = %s" % ((6*(2.0).log()+113)/144).n())
     return (1+sampleDisc2(N))/2
 
 def sampleDisc3(N):
@@ -132,14 +134,14 @@ def show(r):
     print("%s, diameter %s" %(r.endpoints(), r.absolute_diameter()))
 
 def quad_interval(tol):
-    r = Fvol3(F,tol,2)
+    r = Fvold(3,Disc2,tol,2)
     show(r)
     return r
 
 # tol=10^-6 gives (0.623411996023995, 0.631484440394811) 0.00807244437081489
 
 def cubic_interval(tol):
-    r = Fvol4(Disc3,tol,2)
+    r = Fvold(4,Disc3,tol,2)
     show(r)
     return r
 
@@ -310,7 +312,7 @@ def QuarticNDVolC(tol,B=None,v=None):
 
 def QuarticVolSample(N):
     n0=n2=n4=0
-    for i in xrange(N):
+    for i in range(N):
         a = RDF.random_element(-1,1)
         b = RDF.random_element(-1,1)
         c = RDF.random_element(-1,1)
@@ -334,7 +336,7 @@ def QuarticVolSample(N):
 
 def GenQuarticVolSample(N):
     n0=n2=n4=0
-    for i in xrange(N):
+    for i in range(N):
         # coeffs of quartic on RHS:
         a = RDF.random_element(-1,1)
         b = RDF.random_element(-1,1)
@@ -399,35 +401,35 @@ def GenQuarticVolSample(N):
 def quartic_densities(tol):
     B0 = base_box(5)
     r04 = Fvold(5,Disc4,tol)
-    print "0 or 4 real roots:"
+    print("0 or 4 real roots:")
     show(r04)
     r2 = 1-r04
-    print "2 real roots:"
+    print("2 real roots:")
     show(r2)
     r4 = FFvol(B0,[Disc4,negH4,Q4],tol)/32
-    print "4 real roots:"
+    print("4 real roots:")
     show(r4)
     r0 = r04-r4
-    print "0 real roots:"
+    print("0 real roots:")
     show(r0)
     rneg = r0/2 # negative definite
     rpos = 1-rneg # not negative definite
-    print "not negative definite:"
+    print("not negative definite:")
     show(rpos)
     return (rpos,r0,r2,r4)
 
 def quartic_densities2(tol):
     B0 = base_box(5)
     r0, r2, r4 = QuarticVol(B0,tol)/32
-    print "0 real roots:"
+    print("0 real roots:")
     show(r0)
-    print "2 real roots:"
+    print("2 real roots:")
     show(r2)
-    print "4 real roots:"
+    print("4 real roots:")
     show(r4)
     rneg = r0/2 # negative definite
     rpos = 1-rneg # not negative definite
-    print "not negative definite:"
+    print("not negative definite:")
     show(rpos)
     return (rpos,r0,r2,r4)
 
@@ -435,21 +437,21 @@ def quartic_densities3(tol):
     B0 = base_box(5)
     rneg = QuarticNDVol(B0,tol)/32
     rpos = 1-rneg # not negative definite
-    print "not negative definite:"
+    print("not negative definite:")
     show(rpos)
     return rpos
 
 def quartic_densities3C(tol):
     rneg = QuarticNDVolC(R(tol))/32
     rpos = 1-rneg # not negative definite
-    print "not negative definite:"
+    print("not negative definite:")
     show(rpos)
     return rpos
 
 def quartic_densities4(tol):
     rneg = QuarticNDVolShell(tol)/32
     rpos = 1-rneg # not negative definite
-    print "not negative definite:"
+    print("not negative definite:")
     show(rpos)
     return rpos
 
