@@ -1343,44 +1343,91 @@ def old_rho(g,p=pp):
 
 def ie(a,b): return 1-(1-a)*(1-b)
 
-def new_AB(g,p=pp):
-    """ New formula for prob sol if f mod p is nonzero.
+def rho_0(n,p=pp):
+    """Return rho_0(n) for p an odd prime or generic, n even.  This is the
+    *relative* local density of soluble y^2=f(x), restricted to primitive
+    f.
+
+    This is (a rearrangement of) Prop 3.13 of hyper.pdf.
     """
-    d=2*g+2
     def term(i):
         """ prob. soluble if deg(f mod p)=i
         """
         if i%2:
-            return ie(alpha(d-i,p), beta(i,p))
+            return ie(alpha(n-i,p), beta(i,p))
         else:
-            return (ie(alpha_plus(d-i,p), beta_plus(i,p))+ie(alpha_minus(d-i,p), beta_minus(i,p)))/2
-    # prob sol if f mod p is nonzero
-    t = (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
-    return t
+            return (ie(alpha_plus(n-i,p), beta_plus(i,p))+ie(alpha_minus(n-i,p), beta_minus(i,p)))/2
+
+    return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
+
+def rho_1(n,p=pp):
+    """Return rho_1(n) for p an odd prime or generic, n even.  This is the
+    *relative* local density of soluble y^2=f(x), restricted to f with
+    valuation 1.
+
+    This different from the formula give in Prop 3.23 of hyper.pdf,
+    which only involves the alpha's.
+    """
+    def term(i):
+        """ prob. soluble if deg(f/p mod p)=i
+        """
+        return ie(alpha_0(n-i,p), beta_0(i,p))
+    # prob sol if f/p mod p is nonzero
+
+    return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
+
+# def new_AB(g,p=pp):
+#     """ New formula for prob sol if f mod p is nonzero.
+#     """
+#     d=2*g+2
+#     def term(i):
+#         """ prob. soluble if deg(f mod p)=i
+#         """
+#         if i%2:
+#             return ie(alpha(d-i,p), beta(i,p))
+#         else:
+#             return (ie(alpha_plus(d-i,p), beta_plus(i,p))+ie(alpha_minus(d-i,p), beta_minus(i,p)))/2
+#     # prob sol if f mod p is nonzero
+#     t = (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
+#     return t
+
+# def new_C(g,p=pp):
+#     """ New formula for prob sol if f is 0 mod p but not mod p^2.
+#     """
+#     d=2*g+2
+#     def term(i):
+#         """ prob. soluble if deg(f/p mod p)=i
+#         """
+#         return ie(alpha_0(d-i,p), beta_0(i,p))
+#     # prob sol if f/p mod p is nonzero
+
+#     return (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
+
+def new_AB(g,p=pp):
+    """ New formula for prob sol if f mod p is nonzero.
+    """
+    return rho_0(2*g+2, p)
 
 def new_C(g,p=pp):
     """ New formula for prob sol if f is 0 mod p but not mod p^2.
     """
-    d=2*g+2
-    def term(i):
-        """ prob. soluble if deg(f/p mod p)=i
-        """
-        return ie(alpha_0(d-i,p), beta_0(i,p))
-    # prob sol if f/p mod p is nonzero
-    t = (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
-    return t
+    return rho_1(2*g+2, p)
 
 def rho(g,p=pp):
-    """ Return rho(g) for p an odd prime or generic.  This is the local density of soluble hyperelliptic curves of genus g>=1.  The generic formula is correct for sufficiently large p:
+    """Return rho(g) for p an odd prime or generic.  This is the local
+    density of soluble hyperelliptic curves of genus g>=1.  The
+    generic formula is correct for sufficiently large p:
 
     all p>2   for g=1;
     all p>11  for g=2;
     all p>?   for g=3, etc.
+
     """
-    rho0 = new_AB(g,p)
-    rho1 = new_C(g,p)
-    n = 2*g+3
-    return (rho0+rho1/p**n)*p**(2*n)/(p**(2*n)-1)
+    n = 2*g+2
+    r0 = rho_0(n, p)
+    r1 = rho_1(n, p)
+    pn1 = p**(n+1)
+    return (pn1*r0+r1)*pn1/(pn1**2-1)
 
 def check_rho(g,p=pp):
     """Check that rho_g is correct for g=1,2 and small p.
