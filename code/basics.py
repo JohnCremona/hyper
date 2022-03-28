@@ -82,3 +82,12 @@ def affine(L,p):
         return L[0]
     return ((p-1)*L[0]+affine(L[1:],p))/p
 
+def partitions(n, k): # into exactly k non-negative ordered summands
+    if k==0:
+        return []
+    if k==1:
+        return [[n]]
+    if n==0:
+        return [[0 for _ in range(k)]]
+    return sum([[[a]+s for s in partitions(n-a,k-1)] for a in range(n+1)], [])
+
