@@ -69,33 +69,8 @@ def restore_Gammas(filename="Gamma"):
         print("Restoring {}".format(f))
         Gdict.update(load(f))
 
-# Initialize dicts to store the alphas and betas but do not reset on reload!
-# The alpha and beta values for subscripts 0,1,2 are known directly.
-try:
-    n = len(alpha_0_dict)
-except NameError:
-    print("Initializing alpha^0_i for i=0,1,2 to 0,1,1/2")
-    alpha_0_dict = {(0,pp):0, (1,pp):1, (2,pp):1/2}
-try:
-    n = len(alpha_plus_dict)
-except NameError:
-    print("Initializing alpha^+_i for i=0,1,2 to 1,1,1/p with p={}".format(pp))
-    alpha_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1/pp}
-try:
-    n = len(alpha_minus_dict)
-except NameError:
-    print("Initializing alpha^-_i for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
-    alpha_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
-
-def initialize_alpha_dicts():
-    global alpha_0_dict, alpha_plus_dict, alpha_minus_dict
-    print("Initializing alpha^0_i for i=0,1,2 to 0,1,1/2")
-    alpha_0_dict =      {(0,pp):0, (1,pp):1, (2,pp):1/2}
-    print("Initializing alpha^+_i for i=0,1,2 to 1,1,1/p with p={}".format(pp))
-    alpha_plus_dict =   {(0,pp):1, (1,pp):1, (2,pp):1/pp}
-    print("Initializing alpha^-_i for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
-    alpha_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
-
+# Initialize dicts to store the betas and alphas but do not reset on reload!
+# The beta and alpha values for subscripts 0,1,2 are known directly.
 try:
     n = len(beta_0_dict)
 except NameError:
@@ -104,22 +79,47 @@ except NameError:
 try:
     n = len(beta_plus_dict)
 except NameError:
-    print("Initializing beta^+_i for i=0,1,2 to 1,1,1")
-    beta_plus_dict = {(0,pp):1, (1,pp):1, (2,pp):1}
+    print("Initializing beta^+_i for i=0,1,2 to 1,1,1/p with p={}".format(pp))
+    beta_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1/pp}
 try:
     n = len(beta_minus_dict)
 except NameError:
-    print("Initializing beta^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
-    beta_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
+    print("Initializing beta^-_i for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
+    beta_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
 
 def initialize_beta_dicts():
     global beta_0_dict, beta_plus_dict, beta_minus_dict
     print("Initializing beta^0_i for i=0,1,2 to 0,1,1/2")
-    beta_0_dict =     {(0,pp):0, (1,pp):1, (2,pp):1/2}
-    print("Initializing beta^+_i for i=0,1,2 to 1,1,1")
-    beta_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1}
-    print("Initializing beta^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
-    beta_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
+    beta_0_dict =      {(0,pp):0, (1,pp):1, (2,pp):1/2}
+    print("Initializing beta^+_i for i=0,1,2 to 1,1,1/p with p={}".format(pp))
+    beta_plus_dict =   {(0,pp):1, (1,pp):1, (2,pp):1/pp}
+    print("Initializing beta^-_i for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
+    beta_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
+
+try:
+    n = len(alpha_0_dict)
+except NameError:
+    print("Initializing alpha^0_i for i=0,1,2 to 0,1,1/2")
+    alpha_0_dict = {(0,pp):0, (1,pp):1, (2,pp):1/2}
+try:
+    n = len(alpha_plus_dict)
+except NameError:
+    print("Initializing alpha^+_i for i=0,1,2 to 1,1,1")
+    alpha_plus_dict = {(0,pp):1, (1,pp):1, (2,pp):1}
+try:
+    n = len(alpha_minus_dict)
+except NameError:
+    print("Initializing alpha^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
+    alpha_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
+
+def initialize_alpha_dicts():
+    global alpha_0_dict, alpha_plus_dict, alpha_minus_dict
+    print("Initializing alpha^0_i for i=0,1,2 to 0,1,1/2")
+    alpha_0_dict =     {(0,pp):0, (1,pp):1, (2,pp):1/2}
+    print("Initializing alpha^+_i for i=0,1,2 to 1,1,1")
+    alpha_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1}
+    print("Initializing alpha^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
+    alpha_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
 
 def initialize_alpha_beta_dicts():
     initialize_alpha_dicts()
@@ -145,15 +145,15 @@ def show1dict(d,dn):
     for k in sorted(d.keys()):
         print("\t(i,p)={}: {}".format(k,d[k]))
 
-def show_alpha_dicts():
-    show1dict(alpha_0_dict, "alpha_0")
-    show1dict(alpha_plus_dict, "alpha_plus")
-    show1dict(alpha_minus_dict, "alpha_minus")
-
 def show_beta_dicts():
     show1dict(beta_0_dict, "beta_0")
     show1dict(beta_plus_dict, "beta_plus")
     show1dict(beta_minus_dict, "beta_minus")
+
+def show_alpha_dicts():
+    show1dict(alpha_0_dict, "alpha_0")
+    show1dict(alpha_plus_dict, "alpha_plus")
+    show1dict(alpha_minus_dict, "alpha_minus")
 
 def show_dicts():
     show_alpha_dicts()
@@ -759,21 +759,21 @@ def affine(L,p):
         return L[0]
     return ((p-1)*L[0]+affine(L[1:],p))/p
 
-def alpha_eps(eps):
-    """ Return either alpha^_, alpha^0 or alpha^+ according to eps=-1,0,+1.
+def beta_eps(eps):
+    """ Return either beta^_, beta^0 or beta^+ according to eps=-1,0,+1.
     """
     try:
-        return [alpha_minus,alpha_0,alpha_plus][eps+1]
+        return [beta_minus,beta_0,beta_plus][eps+1]
     except IndexError:
-        return alpha
+        return beta
 
 def f_term(f,p=pp):
-    """Helper function for beta^+, beta^-, mu_0.  In the paper this is
+    """Helper function for alpha^+, alpha^-, mu_0.  In the paper this is
     expressed differently, as a double product over j up to the degree
     and eps, with multiplicities.  Here we just take the product over
     all roots.
 
-    Note that if there is a root of multiplicity 1 then alpha^eps(1)=1
+    Note that if there is a root of multiplicity 1 then beta^eps(1)=1
     and the result is 0, but this will only be called with f which
     have no such roots.
 
@@ -781,55 +781,55 @@ def f_term(f,p=pp):
     """
     if p==pp: # will not be called in this case anyway
         return 0
-    return prod([(1-alpha_eps(eps)(j,p)) for a,j,eps in signed_roots(f)])
+    return prod([(1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f)])
 
 def fh_term(f,h):
-    """Helper function for beta^+, beta^-, mu_0 in case p=2.  In the paper
+    """Helper function for alpha^+, alpha^-, mu_0 in case p=2.  In the paper
     this is expressed differently, as a double product over j up to
     the degree and eps, with multiplicities.  Here we just take the
     product over all roots.
 
-    Note that if there is a root of multiplicity 1 then alpha^eps(1)=1
+    Note that if there is a root of multiplicity 1 then beta^eps(1)=1
     and the result is 0, but this will only be called with f which
     have no such roots.
 
     This works equally well in the projective case.
 
     """
-    return prod([(1-alpha_eps(eps)(j,2)) for P,(j,eps) in point_multiplicities(f,h)])
+    return prod([(1-beta_eps(eps)(j,2)) for P,(j,eps) in point_multiplicities(f,h)])
 
 def phi_term(phi, A_or_P, double, p, v=None):
-    """Helper function for beta^0, beta^-, mu_0, mu_1.
+    """Helper function for alpha^0, alpha^-, mu_0, mu_1.
 
     The first two use A_or_P="affine" to use lambda_A while the others
     use "proj" to get lambda_P.
 
-    beta^- and mu_0 have double=True which uses alpha^-(2*e) for (1,e) in phi.
+    alpha^- and mu_0 have double=True which uses beta^-(2*e) for (1,e) in phi.
 
-    beta^0 and mu_1 have double=False which uses alpha^0(e) for (1,e) in phi.
+    alpha^0 and mu_1 have double=False which uses beta^0(e) for (1,e) in phi.
 
     """
     lam = lambda_A(phi,p) if A_or_P=="affine" else lambda_P(phi,p)
-    al = (lambda i: alpha_minus(2*i,p,v)) if double else (lambda i: alpha_0(i,p,v))
+    al = (lambda i: beta_minus(2*i,p,v)) if double else (lambda i: beta_0(i,p,v))
     return lam * prod([1-al(e) for d,e in phi if d==1])
-
-def beta(i,p=pp,v=None):
-    """ Average of beta^+ and beta^-
-    """
-    return (beta_plus(i,p,v)+beta_minus(i,p,v))/2
 
 def alpha(i,p=pp,v=None):
     """ Average of alpha^+ and alpha^-
     """
     return (alpha_plus(i,p,v)+alpha_minus(i,p,v))/2
 
-def beta_plus(i,p=pp,v=None, verbose=False):
-    """beta^+_i(p).
+def beta(i,p=pp,v=None):
+    """ Average of beta^+ and beta^-
+    """
+    return (beta_plus(i,p,v)+beta_minus(i,p,v))/2
 
-    Computed values are stored in beta_plus_dict keyed on (i,p).
+def alpha_plus(i,p=pp,v=None, verbose=False):
+    """alpha^+_i(p).
+
+    Computed values are stored in alpha_plus_dict keyed on (i,p).
 
     For i<3 use precomputed table.  Otherwise use recursion via
-    various alphas and betas.  The internal variable v keeps track of
+    various betas and alphas.  The internal variable v keeps track of
     which of the 6 types was originally asked for so that if the same
     one appears again, instead of creating an infinite loop, the
     variable name itself is returned (as a polynomial in that
@@ -842,14 +842,14 @@ def beta_plus(i,p=pp,v=None, verbose=False):
     polynomial in some other variable.
     """
     try:
-        return beta_plus_dict[(i,p)]
+        return alpha_plus_dict[(i,p)]
     except KeyError:
         if i<3:
-            if verbose: print("setting beta_plus({},{})".format(i,p))
-            b = beta_plus_dict[(i,p)] = 1
+            if verbose: print("setting alpha_plus({},{})".format(i,p))
+            b = alpha_plus_dict[(i,p)] = 1
             return b
         pass
-    make_betas(i-1,p)
+    make_alphas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "bp_{}_{}".format(i,p)
     if v==None:
@@ -860,7 +860,7 @@ def beta_plus(i,p=pp,v=None, verbose=False):
             if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     # use Prop 3.3 (i)
-    if verbose: print("Computing beta_plus({},{})".format(i,p))
+    if verbose: print("Computing alpha_plus({},{})".format(i,p))
     Fp = GF(p) if p in ZZ else None
     G = Gamma_plus(i,Fp)
     if p==2:
@@ -871,8 +871,8 @@ def beta_plus(i,p=pp,v=None, verbose=False):
 
     try:
         b=F(b)
-        if verbose: print("setting beta_plus({},{})".format(i,p))
-        beta_plus_dict[(i,p)] = b
+        if verbose: print("setting alpha_plus({},{})".format(i,p))
+        alpha_plus_dict[(i,p)] = b
     except (ValueError, TypeError):
         # b is a linear poly in some variable: is it v0?
         if verbose: print("{}={}".format(v0,b))
@@ -880,28 +880,28 @@ def beta_plus(i,p=pp,v=None, verbose=False):
             r,s = b.list()
             b = r/(1-s)
             if verbose:
-                print("setting beta_plus({},{})".format(i,p))
+                print("setting alpha_plus({},{})".format(i,p))
                 print("{}={}".format(v0,b))
-            beta_plus_dict[(i,p)] = b
+            alpha_plus_dict[(i,p)] = b
     return b
 
-def beta_minus(i,p=pp,v=None, verbose=False):
-    """beta^-_i(p).
+def alpha_minus(i,p=pp,v=None, verbose=False):
+    """alpha^-_i(p).
 
-    Computed values are stored in beta_minus_dict keyed on (i,p).
+    Computed values are stored in alpha_minus_dict keyed on (i,p).
     """
     try:
-        return beta_minus_dict[(i,p)]
+        return alpha_minus_dict[(i,p)]
     except KeyError:
         if i<3:
-            if verbose: print("setting beta_minus({},{})".format(i,p))
-            b = beta_minus_dict[(i,p)] = [0,1,p/(p+1)][i]
+            if verbose: print("setting alpha_minus({},{})".format(i,p))
+            b = alpha_minus_dict[(i,p)] = [0,1,p/(p+1)][i]
             return b
     if i%2==1:
-        if verbose: print("setting beta_minus({},{})".format(i,p))
-        b = beta_minus_dict[(i,p)] = beta_plus(i,p,v)
+        if verbose: print("setting alpha_minus({},{})".format(i,p))
+        b = alpha_minus_dict[(i,p)] = alpha_plus(i,p,v)
         return b
-    make_betas(i-1,p)
+    make_alphas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "bm_{}_{}".format(i,p)
     if v==None:
@@ -912,7 +912,7 @@ def beta_minus(i,p=pp,v=None, verbose=False):
             if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     # now i is even, use Prop 3.3(ii)
-    if verbose: print("Computing beta_minus({},{})".format(i,p))
+    if verbose: print("Computing alpha_minus({},{})".format(i,p))
     i2 = i//2
     Fp = GF(p) if p in ZZ else None
     G = Gamma_minus(i,Fp)
@@ -926,8 +926,8 @@ def beta_minus(i,p=pp,v=None, verbose=False):
               - sum([f_term(f,p) for f in G]) / p^i)
     try:
         b=F(b)
-        if verbose: print("setting beta_minus({},{})".format(i,p))
-        beta_minus_dict[(i,p)] = b
+        if verbose: print("setting alpha_minus({},{})".format(i,p))
+        alpha_minus_dict[(i,p)] = b
     except (ValueError, TypeError):
         # b is a linear poly in some variable: is it v0?
         if verbose: print("{}={}".format(v0,b))
@@ -936,23 +936,23 @@ def beta_minus(i,p=pp,v=None, verbose=False):
             b = r/(1-s)
             if verbose:
                 print("{}={}".format(v0,b))
-                print("setting beta_minus({},{})".format(i,p))
-            beta_minus_dict[(i,p)] = b
+                print("setting alpha_minus({},{})".format(i,p))
+            alpha_minus_dict[(i,p)] = b
     return b
 
-def beta_0(i,p=pp,v=None, verbose=False):
-    """beta^0_i(p).
+def alpha_0(i,p=pp,v=None, verbose=False):
+    """alpha^0_i(p).
 
-    Computed values are stored in beta_0_dict keyed on (i,p).
+    Computed values are stored in alpha_0_dict keyed on (i,p).
     """
     try:
-        return beta_0_dict[(i,p)]
+        return alpha_0_dict[(i,p)]
     except KeyError:
         if i<3:
-            if verbose: print("setting beta_0({},{})".format(i,p))
-            b =  beta_0_dict[(i,p)] = [0,1,1/2][i]
+            if verbose: print("setting alpha_0({},{})".format(i,p))
+            b =  alpha_0_dict[(i,p)] = [0,1,1/2][i]
             return b
-    make_betas(i-1,p)
+    make_alphas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "b0_{}_{}".format(i,p)
     if v==None:
@@ -963,12 +963,12 @@ def beta_0(i,p=pp,v=None, verbose=False):
             if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     # use Prop 3.3 (iii)
-    if verbose: print("Computing beta_0({},{})".format(i,p))
+    if verbose: print("Computing alpha_0({},{})".format(i,p))
     b = 1 - sum([phi_term(phi,"affine",False,p,v) for phi in Phi(i)])
     try:
         b=F(b)
-        if verbose: print("setting beta_0({},{})".format(i,p))
-        beta_0_dict[(i,p)] = b
+        if verbose: print("setting alpha_0({},{})".format(i,p))
+        alpha_0_dict[(i,p)] = b
     except (ValueError, TypeError):
         # b is a linear poly in some variable: is it v0?
         if verbose: print("{}={}".format(v0,b))
@@ -977,21 +977,21 @@ def beta_0(i,p=pp,v=None, verbose=False):
             b = r/(1-s)
             if verbose:
                 print("{}={}".format(v0,b))
-                print("setting beta_0({},{})".format(i,p))
-            beta_0_dict[(i,p)] = b
+                print("setting alpha_0({},{})".format(i,p))
+            alpha_0_dict[(i,p)] = b
     return b
 
-def alpha_0(i,p=pp,v=None, verbose=False):
-    """ alpha^0_i(p).
+def beta_0(i,p=pp,v=None, verbose=False):
+    """ beta^0_i(p).
 
-    Computed values are stored in alpha_0_dict keyed on (i,p).
+    Computed values are stored in beta_0_dict keyed on (i,p).
     """
     try:
-        return alpha_0_dict[(i,p)]
+        return beta_0_dict[(i,p)]
     except KeyError:
         if i<3:
-            if verbose: print("setting alpha_0({},{})".format(i,p))
-            a = alpha_0_dict[(i,p)] = [0,1,1/2][i]
+            if verbose: print("setting beta_0({},{})".format(i,p))
+            a = beta_0_dict[(i,p)] = [0,1,1/2][i]
             return a
     F = Qp if p==pp else QQ
     v0 = "a0_{}_{}".format(i,p)
@@ -1002,25 +1002,25 @@ def alpha_0(i,p=pp,v=None, verbose=False):
         if v==v0:
             if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
-    make_alphas(i-1,p)
-    if verbose: print("Computing alpha_0({},{})".format(i,p))
+    make_betas(i-1,p)
+    if verbose: print("Computing beta_0({},{})".format(i,p))
     i2 = i-2
     blist = []
     for j in range(i2+1):
       if j%2==0:
-         blist += [beta(k,p,v) for k in range(j,-1,-1)]
+         blist += [alpha(k,p,v) for k in range(j,-1,-1)]
       else:
-         blist += [beta_0(k,p,v) for k in range(j,-1,-1)]
+         blist += [alpha_0(k,p,v) for k in range(j,-1,-1)]
     if i%2==0:
-       blist += [beta_0(i,p,v)]
+       blist += [alpha_0(i,p,v)]
     else:
-       blist += [beta(i,p,v)]
+       blist += [alpha(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
     a = affine(blist,p)
     try:
         a=F(a)
-        if verbose: print("setting alpha_0({},{})".format(i,p))
-        alpha_0_dict[(i,p)] = a
+        if verbose: print("setting beta_0({},{})".format(i,p))
+        beta_0_dict[(i,p)] = a
     except (ValueError, TypeError):
         # a is a linear poly in some variable: is it v0?
         if verbose: print("{}={}".format(v0,a))
@@ -1029,23 +1029,23 @@ def alpha_0(i,p=pp,v=None, verbose=False):
             a = r/(1-s)
             if verbose:
                 print("{}={}".format(v0,a))
-                print("setting alpha_0({},{})".format(i,p))
-            alpha_0_dict[(i,p)] = a
+                print("setting beta_0({},{})".format(i,p))
+            beta_0_dict[(i,p)] = a
     return a
 
-def alpha_plus(i,p=pp,v=None, verbose=False):
-    """ alpha^+_i(p).
+def beta_plus(i,p=pp,v=None, verbose=False):
+    """ beta^+_i(p).
 
-    Computed values are stored in alpha_plus_dict keyed on (i,p).
+    Computed values are stored in beta_plus_dict keyed on (i,p).
     """
     try:
-        return alpha_plus_dict[(i,p)]
+        return beta_plus_dict[(i,p)]
     except KeyError:
         if i<3:
-            if verbose: print("setting alpha_plus({},{})".format(i,p))
-            a = alpha_plus_dict[(i,p)] = [1,1,1/p][i]
+            if verbose: print("setting beta_plus({},{})".format(i,p))
+            a = beta_plus_dict[(i,p)] = [1,1,1/p][i]
             return a
-    make_alphas(i-1,p)
+    make_betas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "ap_{}_{}".format(i,p)
     if v==None:
@@ -1055,24 +1055,24 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
         if v==v0:
             if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
-    if verbose: print("Computing alpha_plus({},{})".format(i,p))
+    if verbose: print("Computing beta_plus({},{})".format(i,p))
     i2 = i-2
     blist = []
     for j in range(i2+1):
       if j%2==0:
-         blist += [beta_0(k,p,v) for k in range(j,-1,-1)]
+         blist += [alpha_0(k,p,v) for k in range(j,-1,-1)]
       else:
-         blist += [beta(k,p,v) for k in range(j,-1,-1)]
+         blist += [alpha(k,p,v) for k in range(j,-1,-1)]
     if i%2==0:
-       blist += [beta_plus(i,p,v)]
+       blist += [alpha_plus(i,p,v)]
     else:
-       blist += [beta_0(i,p,v)]
+       blist += [alpha_0(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
     a = affine(blist,p)
     try:
         a=F(a)
-        if verbose: print("setting alpha_plus({},{})".format(i,p))
-        alpha_plus_dict[(i,p)] = a
+        if verbose: print("setting beta_plus({},{})".format(i,p))
+        beta_plus_dict[(i,p)] = a
     except (ValueError, TypeError):
         # a is a linear poly in some variable: is it v0?
         if verbose: print("{}={}".format(v0,a))
@@ -1081,27 +1081,27 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
             a = r/(1-s)
             if verbose:
                 print("{}={}".format(v0,a))
-                print("setting alpha_plus({},{})".format(i,p))
-            alpha_plus_dict[(i,p)] = a
+                print("setting beta_plus({},{})".format(i,p))
+            beta_plus_dict[(i,p)] = a
     return a
 
-def alpha_minus(i,p=pp,v=None, verbose=False):
-    """ alpha^-_i(p).
+def beta_minus(i,p=pp,v=None, verbose=False):
+    """ beta^-_i(p).
 
-    Computed values are stored in alpha_minus_dict keyed on (i,p).
+    Computed values are stored in beta_minus_dict keyed on (i,p).
     """
     try:
-        return alpha_minus_dict[(i,p)]
+        return beta_minus_dict[(i,p)]
     except KeyError:
         if i<3:
-            if verbose: print("setting alpha_minus({},{})".format(i,p))
-            a = alpha_minus_dict[(i,p)] = [0,1,1/(p+1)][i]
+            if verbose: print("setting beta_minus({},{})".format(i,p))
+            a = beta_minus_dict[(i,p)] = [0,1,1/(p+1)][i]
             return a
     if i%2==1:
-        if verbose: print("setting alpha_minus({},{})".format(i,p))
-        alpha_minus_dict[(i,p)] = alpha_plus(i,p)
-        return alpha_minus_dict[(i,p)]
-    make_alphas(i-1,p)
+        if verbose: print("setting beta_minus({},{})".format(i,p))
+        beta_minus_dict[(i,p)] = beta_plus(i,p)
+        return beta_minus_dict[(i,p)]
+    make_betas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "am_{}_{}".format(i,p)
     if v==None:
@@ -1111,21 +1111,21 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
         if v==v0:
             if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
-    if verbose: print("Computing alpha_minus({},{})".format(i,p))
+    if verbose: print("Computing beta_minus({},{})".format(i,p))
     i2 = i-2
     blist = []
     for j in range(i2+1):
       if j%2==0:
-         blist += [beta_0(k,p,v) for k in range(j,-1,-1)]
+         blist += [alpha_0(k,p,v) for k in range(j,-1,-1)]
       else:
-         blist += [beta(k,p,v) for k in range(j,-1,-1)]
-    blist += [beta_minus(i,p,v)]
+         blist += [alpha(k,p,v) for k in range(j,-1,-1)]
+    blist += [alpha_minus(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
     a = affine(blist,p)
     try:
         a=F(a)
-        if verbose: print("setting alpha_minus({},{})".format(i,p))
-        alpha_minus_dict[(i,p)] = a
+        if verbose: print("setting beta_minus({},{})".format(i,p))
+        beta_minus_dict[(i,p)] = a
     except (ValueError, TypeError):
         # a is a linear poly in some variable: is it v0?
         if verbose: print("{}={}".format(v0,a))
@@ -1134,50 +1134,50 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
             a = r/(1-s)
             if verbose:
                 print("{}={}".format(v0,a))
-                print("setting alpha_minus({},{})".format(i,p))
-            alpha_minus_dict[(i,p)] = a
+                print("setting beta_minus({},{})".format(i,p))
+            beta_minus_dict[(i,p)] = a
     return a
-
-def make_alphas(i, p=pp, verbose=False):
-    """Compute (and optionally display) all 3 alphas with subscript i
-    after first computing all alphas and betas with smaller
-    subscripts.
-    """
-    if verbose:
-        print("Making all alpha_{} for p={}".format(i,p))
-    for j in range(3,i):
-        make_alphas(j,p)
-        make_betas(j,p)
-    a = alpha_plus(i,p)
-    if verbose:
-        print("alpha_plus({},{}) = {}".format(i,p,a))
-    a = alpha_minus(i,p)
-    if verbose:
-        print("alpha_minus({},{}) = {}".format(i,p,a))
-    a = alpha_0(i,p)
-    if verbose:
-        print("alpha_0({},{}) = {}".format(i,p,a))
 
 def make_betas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 betas with subscript i
-    after first computing all alphas and betas with smaller
+    after first computing all betas and alphas with smaller
+    subscripts.
+    """
+    if verbose:
+        print("Making all beta_{} for p={}".format(i,p))
+    for j in range(3,i):
+        make_betas(j,p)
+        make_alphas(j,p)
+    a = beta_plus(i,p)
+    if verbose:
+        print("beta_plus({},{}) = {}".format(i,p,a))
+    a = beta_minus(i,p)
+    if verbose:
+        print("beta_minus({},{}) = {}".format(i,p,a))
+    a = beta_0(i,p)
+    if verbose:
+        print("beta_0({},{}) = {}".format(i,p,a))
+
+def make_alphas(i, p=pp, verbose=False):
+    """Compute (and optionally display) all 3 alphas with subscript i
+    after first computing all betas and alphas with smaller
     subscripts.
     """
     for j in range(3,i):
-        make_alphas(j,p)
         make_betas(j,p)
-    b = beta_plus(i,p)
+        make_alphas(j,p)
+    b = alpha_plus(i,p)
     if verbose:
-        print("beta_plus({},{}) = {}".format(i,p,b))
-    b = beta_minus(i,p)
+        print("alpha_plus({},{}) = {}".format(i,p,b))
+    b = alpha_minus(i,p)
     if verbose:
-        print("beta_minus({},{}) = {}".format(i,p,b))
-    b = beta_0(i,p)
+        print("alpha_minus({},{}) = {}".format(i,p,b))
+    b = alpha_0(i,p)
     if verbose:
-        print("beta_0({},{}) = {}".format(i,p,b))
+        print("alpha_0({},{}) = {}".format(i,p,b))
 
 def check_value(ab,i,eps,val,p=pp):
-    myval = [alpha_minus,alpha_0,alpha_plus][eps+1](i,p) if ab=="alpha" else [beta_minus,beta_0,beta_plus][eps+1](i,p)
+    myval = [beta_minus,beta_0,beta_plus][eps+1](i,p) if ab=="beta" else [alpha_minus,alpha_0,alpha_plus][eps+1](i,p)
     sup = ["-","0","+"][eps+1]
     if myval==val:
         print("{}_{}^{}({}) OK".format(ab,i,sup,p))
@@ -1185,80 +1185,80 @@ def check_value(ab,i,eps,val,p=pp):
         print("WRONG {}_{}^{}({}) = {}, should be {}".format(ab,i,sup,p,myval,val))
 
 def check3():
-    """ Check that all 3 alpha_3^eps are correct for p=3 and p generic.
+    """ Check that all 3 beta_3^eps are correct for p=3 and p generic.
     """
-    make_alphas(3,3)
-    check_value("alpha",3,+1, 50246/177147, 3)
-    check_value("alpha",3,-1, 50246/177147, 3)
-    check_value("alpha",3 ,0, 431/729,3)
+    make_betas(3,3)
+    check_value("beta",3,+1, 50246/177147, 3)
+    check_value("beta",3,-1, 50246/177147, 3)
+    check_value("beta",3 ,0, 431/729,3)
 
-    make_alphas(3)
-    check_value("alpha",3,+1, (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
-    check_value("alpha",3,-1, (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
-    check_value("alpha",3, 0, (pp**3+pp**2-2*pp+2)/(2*pp**3))
+    make_betas(3)
+    check_value("beta",3,+1, (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
+    check_value("beta",3,-1, (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
+    check_value("beta",3, 0, (pp**3+pp**2-2*pp+2)/(2*pp**3))
 
-    make_alphas(3,2)
-    check_value("alpha",3,+1, 807/2048, 2)
-    check_value("alpha",3,-1, 807/2048, 2)
-    check_value("alpha",3 ,0, 39/64,2)
+    make_betas(3,2)
+    check_value("beta",3,+1, 807/2048, 2)
+    check_value("beta",3,-1, 807/2048, 2)
+    check_value("beta",3 ,0, 39/64,2)
 
 
 def check4():
-    """ Check that all 3 alpha_4^eps are correct for p=3, p=5 and p generic.
+    """ Check that all 3 beta_4^eps are correct for p=3, p=5 and p generic.
     """
-    make_alphas(4,3)
-    make_alphas(4,5)
-    make_alphas(4)
-    check_value("alpha",4,+1, 16600/59049, 3)
-    check_value("alpha",4,+1, 352624/1953125, 5)
-    check_value("alpha",4,+1, (pp**2+1)*(2*pp**3-pp**2-2*pp+2)/(2*pp**6))
+    make_betas(4,3)
+    make_betas(4,5)
+    make_betas(4)
+    check_value("beta",4,+1, 16600/59049, 3)
+    check_value("beta",4,+1, 352624/1953125, 5)
+    check_value("beta",4,+1, (pp**2+1)*(2*pp**3-pp**2-2*pp+2)/(2*pp**6))
 
-    check_value("alpha",4,-1, (2*pp**10+3*pp**9-pp**5+2*pp**4-2*pp**2-3*pp-1)/(2*(pp+1)**2 *(pp**9-1)))
-    check_value("alpha",4, 0, (4*pp**10+8*pp**9-4*pp**8+4*pp**6-3*pp**4+pp**3-5*pp-5)/(8*(pp+1)*(pp**9-1)))
+    check_value("beta",4,-1, (2*pp**10+3*pp**9-pp**5+2*pp**4-2*pp**2-3*pp-1)/(2*(pp+1)**2 *(pp**9-1)))
+    check_value("beta",4, 0, (4*pp**10+8*pp**9-4*pp**8+4*pp**6-3*pp**4+pp**3-5*pp-5)/(8*(pp+1)*(pp**9-1)))
 
-    make_alphas(4,2)
-    check_value("alpha",4,+1, 407079/1048576, 2)
-    check_value("alpha",4,-1, 3569/9198, 2)
-    check_value("alpha",4 ,0, 7369/12264,2)
+    make_betas(4,2)
+    check_value("beta",4,+1, 407079/1048576, 2)
+    check_value("beta",4,-1, 3569/9198, 2)
+    check_value("beta",4 ,0, 7369/12264,2)
 
 
 def check5():
-    """ Check that all alpha_5^eps and beta_5^eps are correct for p=3.
+    """ Check that all beta_5^eps and alpha_5^eps are correct for p=3.
     """
-    make_alphas(5,3)
-    check_value("alpha",5, 0, 1493687989147/2541865828329, 3)
-    check_value("alpha",5,+1, 13670659773280445407/48630661836227715204, 3)
-    check_value("alpha",5,-1, 13670659773280445407/48630661836227715204, 3)
-    check_value("alpha",5,+1,(p^26 + 1/2*p^25 - 1/2*p^24 + 1/2*p^23 - 1/2*p^22 + p^20 - 1/2*p^19 - 11/30*p^17 + 2/15*p^16 - 1/12*p^15 + 1/6*p^14 - 3/10*p^13 + 1/5*p^12 + 1/4*p^11 - 1/3*p^7 + 1/6*p^5 - 5/6*p^3 + 3/2*p^2 + p - 1)/(p^27 + p^26))
-    check_value("alpha",5,-1,(p^26 + 1/2*p^25 - 1/2*p^24 + 1/2*p^23 - 1/2*p^22 + p^20 - 1/2*p^19 - 11/30*p^17 + 2/15*p^16 - 1/12*p^15 + 1/6*p^14 - 3/10*p^13 + 1/5*p^12 + 1/4*p^11 - 1/3*p^7 + 1/6*p^5 - 5/6*p^3 + 3/2*p^2 + p - 1)/(p^27 + p^26))
-    check_value("alpha",5,0,(1/2*p^13 + p^12 - 1/2*p^11 + 1/2*p^9 - 1/3*p^7 + 1/6*p^5 - 5/6*p^3 + 3/2*p^2 + p - 1)/(p^13 + p^12))
-
     make_betas(5,3)
-    check_value("beta",5, 0, 129514464056263/205891132094649, 3)
-    check_value("beta",5,+1, 160260073/172186884, 3)
-    check_value("beta",5,-1, 160260073/172186884, 3)
-    check_value("beta",5,+1,1)
-    check_value("beta",5,-1,1)
-    check_value("beta",5,0,  (19/30*p^17 + 19/30*p^16 - 1/12*p^15 + 1/6*p^14 - 3/10*p^13 + 1/5*p^12 + 1/4*p^11 - 1/3*p^7 + 1/6*p^5 - 5/6*p^3 + 3/2*p^2 + p - 1)/(p^17 + p^16))
+    check_value("beta",5, 0, 1493687989147/2541865828329, 3)
+    check_value("beta",5,+1, 13670659773280445407/48630661836227715204, 3)
+    check_value("beta",5,-1, 13670659773280445407/48630661836227715204, 3)
+    check_value("beta",5,+1,(p^26 + 1/2*p^25 - 1/2*p^24 + 1/2*p^23 - 1/2*p^22 + p^20 - 1/2*p^19 - 11/30*p^17 + 2/15*p^16 - 1/12*p^15 + 1/6*p^14 - 3/10*p^13 + 1/5*p^12 + 1/4*p^11 - 1/3*p^7 + 1/6*p^5 - 5/6*p^3 + 3/2*p^2 + p - 1)/(p^27 + p^26))
+    check_value("beta",5,-1,(p^26 + 1/2*p^25 - 1/2*p^24 + 1/2*p^23 - 1/2*p^22 + p^20 - 1/2*p^19 - 11/30*p^17 + 2/15*p^16 - 1/12*p^15 + 1/6*p^14 - 3/10*p^13 + 1/5*p^12 + 1/4*p^11 - 1/3*p^7 + 1/6*p^5 - 5/6*p^3 + 3/2*p^2 + p - 1)/(p^27 + p^26))
+    check_value("beta",5,0,(1/2*p^13 + p^12 - 1/2*p^11 + 1/2*p^9 - 1/3*p^7 + 1/6*p^5 - 5/6*p^3 + 3/2*p^2 + p - 1)/(p^13 + p^12))
+
+    make_alphas(5,3)
+    check_value("alpha",5, 0, 129514464056263/205891132094649, 3)
+    check_value("alpha",5,+1, 160260073/172186884, 3)
+    check_value("alpha",5,-1, 160260073/172186884, 3)
+    check_value("alpha",5,+1,1)
+    check_value("alpha",5,-1,1)
+    check_value("alpha",5,0,  (19/30*p^17 + 19/30*p^16 - 1/12*p^15 + 1/6*p^14 - 3/10*p^13 + 1/5*p^12 + 1/4*p^11 - 1/3*p^7 + 1/6*p^5 - 5/6*p^3 + 3/2*p^2 + p - 1)/(p^17 + p^16))
 
 def check6():
-    """ Check that all alpha_6^eps and beta_6^eps are correct for p=3.
+    """ Check that all beta_6^eps and alpha_6^eps are correct for p=3.
     """
-    make_alphas(6,3)
-    check_value("alpha",6, 0, 26377476341107224253/44887561041873369600, 3)
-    check_value("alpha",6,+1, 605398279518845051650813/2153584544086426253951538, 3)
-    check_value("alpha",6,-1, 27339928051320364957/97256382257392300800, 3)
-    check_value("alpha",6,+1,(p^24 + 1/2*p^23 + 1/2*p^22 + p^21 + p^19 + p^18 + 1/2*p^17 + p^16 - 7/8*p^15 + 2/3*p^14 - 1/2*p^13 + 5/24*p^12 + 1/2*p^11 - 3/2*p^10 + 3/2*p^9 + 1/2*p^8 + 1/2*p^6 + 1/3*p^5 + 1/2*p^4 + 1/6*p^3 + 1/2*p^2 + p - 1)/(p^25 + p^24 + p^23 + p^22 + p^21 + p^20 + p^19 + p^18 + p^17))
-    check_value("alpha",6,-1,(p^28 + 7/2*p^27 + 6*p^26 + 17/2*p^25 + 11*p^24 + 13*p^23 + 16*p^22 + 39/2*p^21 + 45/2*p^20 + 193/8*p^19 + 577/24*p^18 + 24*p^17 + 191/8*p^16 + 583/24*p^15 + 24*p^14 + 23*p^13 + 25*p^12 + 53/2*p^11 + 51/2*p^10 + 73/3*p^9 + 71/3*p^8 + 121/6*p^7 + 37/2*p^6 + 47/3*p^5 + 41/3*p^4 + 55/6*p^3 + 14/3*p^2 + 13/6*p + 2/3)/(p^29 + 4*p^28 + 8*p^27 + 12*p^26 + 16*p^25 + 20*p^24 + 24*p^23 + 28*p^22 + 32*p^21 + 35*p^20 + 36*p^19 + 36*p^18 + 36*p^17 + 36*p^16 + 36*p^15 + 36*p^14 + 36*p^13 + 36*p^12 + 36*p^11 + 36*p^10 + 35*p^9 + 32*p^8 + 28*p^7 + 24*p^6 + 20*p^5 + 16*p^4 + 12*p^3 + 8*p^2 + 4*p + 1))
-    check_value("alpha",6,0,(1/2*p^35 + 5/2*p^34 + 5*p^33 + 7*p^32 + 19/2*p^31 + 25/2*p^30 + 91/6*p^29 + 35/2*p^28 + 20*p^27 + 133/6*p^26 + 22*p^25 + 22*p^24 + 49/2*p^23 + 26*p^22 + 103/4*p^21 + 3775/144*p^20 + 473/18*p^19 + 105/4*p^18 + 3751/144*p^17 + 1907/72*p^16 + 79/3*p^15 + 177/8*p^14 + 439/24*p^13 + 33/2*p^12 + 1003/72*p^11 + 211/18*p^10 + 147/16*p^9 + 56/9*p^8 + 271/72*p^7 + 95/48*p^6 + 11/8*p^5 + 17/24*p^4 - 1/2*p - 1/2)/(p^35 + 4*p^34 + 8*p^33 + 12*p^32 + 16*p^31 + 20*p^30 + 24*p^29 + 28*p^28 + 32*p^27 + 35*p^26 + 36*p^25 + 36*p^24 + 36*p^23 + 36*p^22 + 36*p^21 + 36*p^20 + 36*p^19 + 36*p^18 + 36*p^17 + 36*p^16 + 35*p^15 + 32*p^14 + 28*p^13 + 24*p^12 + 20*p^11 + 16*p^10 + 12*p^9 + 8*p^8 + 4*p^7 + p^6))
-
     make_betas(6,3)
-    check_value("beta",6, 0, 690037935950003/1098030248972800, 3)
-    check_value("beta",6,+1, 28366779023771/30502389939948, 3)
-    check_value("beta",6,-1, 9541669997405587/10262359634630400, 3)
-    check_value("beta",6,+1,1)
-    check_value("beta",6,-1,(p^31 + 4*p^30 + 8*p^29 + 11*p^28 + 13*p^27 + 29/2*p^26 + 103/6*p^25 + 56/3*p^24 + 133/6*p^23 + 68/3*p^22 + 68/3*p^21 + 127/6*p^20 + 62/3*p^19 + 65/3*p^18 + 139/6*p^17 + 193/8*p^16 + 577/24*p^15 + 24*p^14 + 191/8*p^13 + 583/24*p^12 + 23*p^11 + 19*p^10 + 17*p^9 + 31/2*p^8 + 25/2*p^7 + 59/6*p^6 + 15/2*p^5 + 5*p^4 + 7/3*p^3 + 3/2*p^2 + 2*p + 1)/(p^31 + 4*p^30 + 8*p^29 + 12*p^28 + 16*p^27 + 20*p^26 + 24*p^25 + 28*p^24 + 32*p^23 + 35*p^22 + 36*p^21 + 36*p^20 + 36*p^19 + 36*p^18 + 36*p^17 + 36*p^16 + 36*p^15 + 36*p^14 + 36*p^13 + 36*p^12 + 35*p^11 + 32*p^10 + 28*p^9 + 24*p^8 + 20*p^7 + 16*p^6 + 12*p^5 + 8*p^4 + 4*p^3 + p^2))
-    check_value("beta",6,0,(91/144*p^29 + 91/36*p^28 + 5*p^27 + 1075/144*p^26 + 719/72*p^25 + 37/3*p^24 + 117/8*p^23 + 427/24*p^22 + 21*p^21 + 1651/72*p^20 + 218/9*p^19 + 1169/48*p^18 + 427/18*p^17 + 1711/72*p^16 + 1159/48*p^15 + 187/8*p^14 + 545/24*p^13 + 49/2*p^12 + 26*p^11 + 101/4*p^10 + 301/12*p^9 + 95/4*p^8 + 85/4*p^7 + 223/12*p^6 + 33/2*p^5 + 29/2*p^4 + 10*p^3 + 11/2*p^2 + 5/2*p + 1/2)/(p^29 + 4*p^28 + 8*p^27 + 12*p^26 + 16*p^25 + 20*p^24 + 24*p^23 + 28*p^22 + 32*p^21 + 35*p^20 + 36*p^19 + 36*p^18 + 36*p^17 + 36*p^16 + 36*p^15 + 36*p^14 + 36*p^13 + 36*p^12 + 36*p^11 + 36*p^10 + 35*p^9 + 32*p^8 + 28*p^7 + 24*p^6 + 20*p^5 + 16*p^4 + 12*p^3 + 8*p^2 + 4*p + 1))
+    check_value("beta",6, 0, 26377476341107224253/44887561041873369600, 3)
+    check_value("beta",6,+1, 605398279518845051650813/2153584544086426253951538, 3)
+    check_value("beta",6,-1, 27339928051320364957/97256382257392300800, 3)
+    check_value("beta",6,+1,(p^24 + 1/2*p^23 + 1/2*p^22 + p^21 + p^19 + p^18 + 1/2*p^17 + p^16 - 7/8*p^15 + 2/3*p^14 - 1/2*p^13 + 5/24*p^12 + 1/2*p^11 - 3/2*p^10 + 3/2*p^9 + 1/2*p^8 + 1/2*p^6 + 1/3*p^5 + 1/2*p^4 + 1/6*p^3 + 1/2*p^2 + p - 1)/(p^25 + p^24 + p^23 + p^22 + p^21 + p^20 + p^19 + p^18 + p^17))
+    check_value("beta",6,-1,(p^28 + 7/2*p^27 + 6*p^26 + 17/2*p^25 + 11*p^24 + 13*p^23 + 16*p^22 + 39/2*p^21 + 45/2*p^20 + 193/8*p^19 + 577/24*p^18 + 24*p^17 + 191/8*p^16 + 583/24*p^15 + 24*p^14 + 23*p^13 + 25*p^12 + 53/2*p^11 + 51/2*p^10 + 73/3*p^9 + 71/3*p^8 + 121/6*p^7 + 37/2*p^6 + 47/3*p^5 + 41/3*p^4 + 55/6*p^3 + 14/3*p^2 + 13/6*p + 2/3)/(p^29 + 4*p^28 + 8*p^27 + 12*p^26 + 16*p^25 + 20*p^24 + 24*p^23 + 28*p^22 + 32*p^21 + 35*p^20 + 36*p^19 + 36*p^18 + 36*p^17 + 36*p^16 + 36*p^15 + 36*p^14 + 36*p^13 + 36*p^12 + 36*p^11 + 36*p^10 + 35*p^9 + 32*p^8 + 28*p^7 + 24*p^6 + 20*p^5 + 16*p^4 + 12*p^3 + 8*p^2 + 4*p + 1))
+    check_value("beta",6,0,(1/2*p^35 + 5/2*p^34 + 5*p^33 + 7*p^32 + 19/2*p^31 + 25/2*p^30 + 91/6*p^29 + 35/2*p^28 + 20*p^27 + 133/6*p^26 + 22*p^25 + 22*p^24 + 49/2*p^23 + 26*p^22 + 103/4*p^21 + 3775/144*p^20 + 473/18*p^19 + 105/4*p^18 + 3751/144*p^17 + 1907/72*p^16 + 79/3*p^15 + 177/8*p^14 + 439/24*p^13 + 33/2*p^12 + 1003/72*p^11 + 211/18*p^10 + 147/16*p^9 + 56/9*p^8 + 271/72*p^7 + 95/48*p^6 + 11/8*p^5 + 17/24*p^4 - 1/2*p - 1/2)/(p^35 + 4*p^34 + 8*p^33 + 12*p^32 + 16*p^31 + 20*p^30 + 24*p^29 + 28*p^28 + 32*p^27 + 35*p^26 + 36*p^25 + 36*p^24 + 36*p^23 + 36*p^22 + 36*p^21 + 36*p^20 + 36*p^19 + 36*p^18 + 36*p^17 + 36*p^16 + 35*p^15 + 32*p^14 + 28*p^13 + 24*p^12 + 20*p^11 + 16*p^10 + 12*p^9 + 8*p^8 + 4*p^7 + p^6))
+
+    make_alphas(6,3)
+    check_value("alpha",6, 0, 690037935950003/1098030248972800, 3)
+    check_value("alpha",6,+1, 28366779023771/30502389939948, 3)
+    check_value("alpha",6,-1, 9541669997405587/10262359634630400, 3)
+    check_value("alpha",6,+1,1)
+    check_value("alpha",6,-1,(p^31 + 4*p^30 + 8*p^29 + 11*p^28 + 13*p^27 + 29/2*p^26 + 103/6*p^25 + 56/3*p^24 + 133/6*p^23 + 68/3*p^22 + 68/3*p^21 + 127/6*p^20 + 62/3*p^19 + 65/3*p^18 + 139/6*p^17 + 193/8*p^16 + 577/24*p^15 + 24*p^14 + 191/8*p^13 + 583/24*p^12 + 23*p^11 + 19*p^10 + 17*p^9 + 31/2*p^8 + 25/2*p^7 + 59/6*p^6 + 15/2*p^5 + 5*p^4 + 7/3*p^3 + 3/2*p^2 + 2*p + 1)/(p^31 + 4*p^30 + 8*p^29 + 12*p^28 + 16*p^27 + 20*p^26 + 24*p^25 + 28*p^24 + 32*p^23 + 35*p^22 + 36*p^21 + 36*p^20 + 36*p^19 + 36*p^18 + 36*p^17 + 36*p^16 + 36*p^15 + 36*p^14 + 36*p^13 + 36*p^12 + 35*p^11 + 32*p^10 + 28*p^9 + 24*p^8 + 20*p^7 + 16*p^6 + 12*p^5 + 8*p^4 + 4*p^3 + p^2))
+    check_value("alpha",6,0,(91/144*p^29 + 91/36*p^28 + 5*p^27 + 1075/144*p^26 + 719/72*p^25 + 37/3*p^24 + 117/8*p^23 + 427/24*p^22 + 21*p^21 + 1651/72*p^20 + 218/9*p^19 + 1169/48*p^18 + 427/18*p^17 + 1711/72*p^16 + 1159/48*p^15 + 187/8*p^14 + 545/24*p^13 + 49/2*p^12 + 26*p^11 + 101/4*p^10 + 301/12*p^9 + 95/4*p^8 + 85/4*p^7 + 223/12*p^6 + 33/2*p^5 + 29/2*p^4 + 10*p^3 + 11/2*p^2 + 5/2*p + 1/2)/(p^29 + 4*p^28 + 8*p^27 + 12*p^26 + 16*p^25 + 20*p^24 + 24*p^23 + 28*p^22 + 32*p^21 + 35*p^20 + 36*p^19 + 36*p^18 + 36*p^17 + 36*p^16 + 36*p^15 + 36*p^14 + 36*p^13 + 36*p^12 + 36*p^11 + 36*p^10 + 35*p^9 + 32*p^8 + 28*p^7 + 24*p^6 + 20*p^5 + 16*p^4 + 12*p^3 + 8*p^2 + 4*p + 1))
 
 def check_ab(i=None):
     if i==3:
@@ -1311,8 +1311,8 @@ def old_mu01(g,p=pp):
 
     """
     # It is safest to make sure that these are computed at the start in the right order.
-    make_alphas(2*g+2,p)
-    make_betas(2*g+2, p)
+    make_betas(2*g+2,p)
+    make_alphas(2*g+2, p)
     A = mu0_term_1(g,p)
     B = mu0_term_2(g,p)
     C = mu1_term(g,p)
@@ -1354,9 +1354,9 @@ def rho_0(n,p=pp):
         """ prob. soluble if deg(f mod p)=i
         """
         if i%2:
-            return ie(alpha(n-i,p), beta(i,p))
+            return ie(beta(n-i,p), alpha(i,p))
         else:
-            return (ie(alpha_plus(n-i,p), beta_plus(i,p))+ie(alpha_minus(n-i,p), beta_minus(i,p)))/2
+            return (ie(beta_plus(n-i,p), alpha_plus(i,p))+ie(beta_minus(n-i,p), alpha_minus(i,p)))/2
 
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
 
@@ -1366,12 +1366,12 @@ def rho_1(n,p=pp):
     valuation 1.
 
     This different from the formula give in Prop 3.23 of hyper.pdf,
-    which only involves the alpha's.
+    which only involves the beta's.
     """
     def term(i):
         """ prob. soluble if deg(f/p mod p)=i
         """
-        return ie(alpha_0(n-i,p), beta_0(i,p))
+        return ie(beta_0(n-i,p), alpha_0(i,p))
     # prob sol if f/p mod p is nonzero
 
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
@@ -1384,9 +1384,9 @@ def rho_1(n,p=pp):
 #         """ prob. soluble if deg(f mod p)=i
 #         """
 #         if i%2:
-#             return ie(alpha(d-i,p), beta(i,p))
+#             return ie(beta(d-i,p), alpha(i,p))
 #         else:
-#             return (ie(alpha_plus(d-i,p), beta_plus(i,p))+ie(alpha_minus(d-i,p), beta_minus(i,p)))/2
+#             return (ie(beta_plus(d-i,p), alpha_plus(i,p))+ie(beta_minus(d-i,p), alpha_minus(i,p)))/2
 #     # prob sol if f mod p is nonzero
 #     t = (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
 #     return t
@@ -1398,7 +1398,7 @@ def rho_1(n,p=pp):
 #     def term(i):
 #         """ prob. soluble if deg(f/p mod p)=i
 #         """
-#         return ie(alpha_0(d-i,p), beta_0(i,p))
+#         return ie(beta_0(d-i,p), alpha_0(i,p))
 #     # prob sol if f/p mod p is nonzero
 
 #     return (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
@@ -1471,3 +1471,75 @@ Space for comments
 
 """
 
+"""
+    New notation from 22/3/22
+
+(1) alpha and beta labels switched
+(2) superscripts +, -, 0 replaced by second paramater 1, u, p
+
+"""
+def alpha_1(n, p=pp):
+    """
+    alpha(n, 1)
+    """
+    return alpha_plus(n, p)
+
+def beta_1(n, p=pp):
+    """
+    beta(n, 1)
+    """
+    return beta_plus(n, p)
+
+def alpha_u(n, p=pp):
+    """
+    alpha(n, u)
+    """
+    return alpha_minus(n, p)
+
+def beta_u(n, p=pp):
+    """
+    beta(n, u)
+    """
+    return beta_minus(n, p)
+
+def alpha_p(n, p=pp):
+    """
+    alpha(n, p)
+    """
+    return alpha_0(n, p)
+
+def beta_p(n, p=pp):
+    """
+    beta(n, p)
+    """
+    return beta_0(n, p)
+
+def new_alpha(n, p=pp):
+    """
+    alpha(n, p)
+    """
+    return alpha(n, p)
+
+def new_beta(n, p=pp):
+    """
+    beta(n, p)
+    """
+    return beta(n, p)
+
+def new_rho_1(n, p=pp):
+    """
+    rho(n, 1)
+    """
+    r0 = rho_0(n,p)
+    r1 = rho_1(n,p)
+    pn1 = p**(n+1)
+    return (pn1*r0 + r1) / (pn1 + 1)
+
+def new_rho_p(n, p=pp):
+    """
+    rho(n, p)
+    """
+    r0 = rho_0(n,p)
+    r1 = rho_1(n,p)
+    pn1 = p**(n+1)
+    return (pn1*r1 + r0) / (pn1 + 1)
