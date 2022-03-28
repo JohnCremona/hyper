@@ -10,15 +10,15 @@ compiled with (for example)
 
     ./minpoints3 p
 
-where p is an odd prime (in facto 3<p<64)
+where p is an odd prime (in fact 3<p<64)
 
 What do they do?  They enumerate all monic polynomials of degree 8
 (resp. 10) mod p which are square-free, to find the smallest number of
 affine points on each, outputting the point count and the polynomials
-whwnever the record is broken.  So if a line is output starting with
+whenever the record is broken.  So if a line is output starting with
 0, you know that a smooth curve of genus 3 (or 4) over F_p can have no
 smooth affine points, while if the program terminates before this
-happens then you knpw that there are no such curves, and can also see
+happens then you know that there are no such curves, and can also see
 what the least number of affine points is.
 
 How do they do it?  Use efficient C!  The top 2 coefficients are set
@@ -63,6 +63,7 @@ For all p up to 37 there are pointless curves:
 0 pts on y^2=x^10+0*x^8+12*x^7+0*x^6+1*x^5+3*x^4+11*x^3+17*x^2+10*x+5 mod 23
 0 pts on y^2=x^10+0*x^8+10*x^7+0*x^6+0*x^5+2*x^4+1*x^3+15*x^2+16*x+27 mod 29
 0 pts on y^2=x^10+0*x^8+0*x^7+0*x^6+0*x^5+0*x^4+0*x^3+0*x^2+0*x+12 mod 31
+3 pts on y^2=x^10+0*x^8+28*x^7+0*x^6+1*x^5+28*x^4+31*x^3+32*x^2+6*x+13 mod 37
 
 [AS] for p=41, 43, 47, 53, 59, 61 the minima are 1,1,2,6, 8, 8.
 
@@ -74,7 +75,7 @@ min=0 for p up to 19, not for 23
 Application to the Gamma_i sets in the paper:
 
 For p for which these programs prove a positive minimum it does not
-followq that $\Gamma_i^+$ is empty (for i=8 and 10) since here we
+follow that $\Gamma_i^+$ is empty (for i=8 and 10) since here we
 ignore f which are not square-free.  We need a version of these which
 do not include this check.
 
