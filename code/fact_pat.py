@@ -63,11 +63,16 @@ def lambda_helper(phi, NN, p=pp):
                        range(m1(phi,j))])/prod([factorial(m2(phi,[j,i]))
                                                 for i in range(1,d+1)]) for j in range(1,d+1)])
 
+def number_of_monics_with_splitting_type(phi, p=pp):
+    """ The number of monic polynomials of degree deg(phi) with factorization pattern phi.
+    """
+    return lambda_helper(phi, N, p)
+
 def lambda_A(phi, p=pp):
     """ The probability that a monic polynomial of degree deg(phi) has factorization pattern phi.
     """
     d = deg_fp(phi)
-    return lambda_helper(phi, N, p) / p**d
+    return number_of_monics_with_splitting_type(phi, p) / p**d
 
 def lambda_P(phi, p=pp):
     """ The probability that a homogeneous polynomial of degree deg(phi) has factorization pattern phi.
