@@ -134,7 +134,7 @@ int main (int argc, char *argv[])
           }     // end of f1 loop
         }}}} // end of f2, f3, f4, f6 loops (f5 is thread number, f7=0 and f8=1)
     }
-    printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,6), omp_get_wtime()-start);
-    printf ("Gamma(8,1) =  %ld (in %ld orbits) for p = %d\n", xnptless2, xnptless1, p);
-    printf ("Gamma(8,u) =  %ld (in %ld orbits) for p = %d\n", xnptless2u, xnptless1u, p);
+    printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,MAXD-2), omp_get_wtime()-start);
+    printf ("#Gamma(%d,1) =  %ld (in %ld orbits) for p = %d\n", MAXD, xnptless2, xnptless1, p);
+    printf ("#Gamma(%d,u) =  %ld (in %ld orbits) for p = %d\n", MAXD, xnptless2u, xnptless1u, p);
 }
