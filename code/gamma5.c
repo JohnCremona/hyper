@@ -17,7 +17,7 @@ int main (int argc, char *argv[])
     int xmincnt;
     long xnptless1, xnptless2; // 1 is #orbits, 2 is total: y^2=f(x)
     long xnptless1u, xnptless2u; // 1 is #orbits, 2 is total: uy^2=f(x)
-    int orbit_size, p2;
+    int orbit_size, p2, p4, pmod4;
     int qmap[MAXP*MAXP];
     int xmap[MAXD*MAXP];
     int i, j, p;
@@ -30,6 +30,8 @@ int main (int argc, char *argv[])
     start = omp_get_wtime();
 
     p2 = p*(p-1)/2; // size of orbits under affine transformations unless f6==0
+    p4 = p2/2;      // only used when p=1 (mod 4) and we have to split orbits
+    pmod4 = p & 3;
 
     // set qmap[i] = 1 + kron(i,p) for i in [0,p^2]
     memset(qmap,0,sizeof(qmap));
@@ -95,14 +97,36 @@ int main (int argc, char *argv[])
                         if (cnt==0)
                           {
                             xnptless1 ++;
-                            xnptless2 += (f3==0? p: p2);
-                            printf ("[%d,1] [1, 0, %d, %d, %d, %d]\n", p,f3,f2,f1,f0);
+                            if (f3==0)
+                              xnptless2 += p;
+                            else
+                              {
+                                if (pmod4==3)
+                                  xnptless2 += p2;
+                                else
+                                  {
+                                    xnptless2  += p4;
+                                    xnptless2u += p4;
+                                  }
+                              }
+                            //printf ("[%d,1] [1, 0, %d, %d, %d, %d]\n", p,f3,f2,f1,f0);
                           }
                         if (ucnt==0)
                           {
                             xnptless1u ++;
-                            xnptless2u += (f3==0? p: p2);
-                            printf ("[%d,u] [1, 0, %d, %d, %d, %d]\n", p,f3,f2,f1,f0);
+                            if (f3==0)
+                              xnptless2u += p;
+                            else
+                              {
+                                if (pmod4==3)
+                                  xnptless2u += p2;
+                                else
+                                  {
+                                    xnptless2  += p4;
+                                    xnptless2u += p4;
+                                  }
+                              }
+                            //printf ("[%d,u] [1, 0, %d, %d, %d, %d]\n", p,f3,f2,f1,f0);
                           }
                         if ( mincnt < xmincnt) { // update global minimum point count
                           xmincnt = mincnt;

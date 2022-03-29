@@ -17,7 +17,7 @@ int main (int argc, char *argv[])
     int xmincnt;
     long xnptless1, xnptless2; // 1 is #orbits, 2 is total: y^2=f(x)
     long xnptless1u, xnptless2u; // 1 is #orbits, 2 is total: uy^2=f(x)
-    int orbit_size, p2;
+    int orbit_size, p2, p4, pmod4;
     int qmap[MAXP*MAXP];
     int xmap[MAXD*MAXP];
     int i, j, p;
@@ -30,6 +30,9 @@ int main (int argc, char *argv[])
     start = omp_get_wtime();
 
     p2 = p*(p-1)/2; // size of orbits under affine transformations unless f6==0
+    p4 = p2/2;      // only used when p=1 (mod 4) and we have to split orbits
+    pmod4 = p & 3;
+    printf("p = %d = %d (mod 4)\n", p, pmod4);
 
     // set qmap[i] = 1 + kron(i,p) for i in [0,p^2]
     memset(qmap,0,sizeof(qmap));
@@ -64,7 +67,7 @@ int main (int argc, char *argv[])
 
         mincnt = 2*p+1;
         f6 = omp_get_thread_num();
-        df3 = zmod(4*f4, p);
+        df5 = zmod(6*f6, p);
         for ( f7 = 0 ; f7 < 3 ; f7++ ) {
         if ( f7 == 2 ) f7 = u; // f7 ranges over 0,1,u where u is least non-residue
         df6 = zmod(7*f7, p);
@@ -86,7 +89,7 @@ int main (int argc, char *argv[])
           // inner loop over lowest two coefficients, f1 and f0:
           for ( f1 = 0 ; f1 < p ; f1++ ) {
             for ( f0 = 0 ; f0 < p ; f0++ ) {
-              for ( cnt = 0, ucnt = 0, i = 0 ; i < p ; i++ )
+              for ( cnt = 0, ucnt = 0, i = 0 ; i < p && (cnt==0 || ucnt==0); i++ )
                       {
                         ny = qmap[emap[i]+f1*i+f0]; // # of y with y^2=f(i)
                         // if ny==1 we have a zero and need to check that it is not a double zero
@@ -96,35 +99,56 @@ int main (int argc, char *argv[])
                             ucnt += 2-ny;
                           }
                       }
-                    if ( cnt < mincnt || cnt == 0 || ucnt == 0) { // update minimum point count in this thread
-                      if (cnt<mincnt) mincnt = cnt;
+                    if ( cnt < mincnt || cnt == 0 || ucnt == 0)
+                      { // update minimum point count in this thread
+                        if (cnt<mincnt) mincnt = cnt;
 #pragma omp critical(min)
-                      { // critical block, can only be executed by one thread at a time
-                        if (cnt==0)
-                          {
-                            xnptless1 ++;
-                            xnptless2 += (f7==0? p: p2);
-                            printf ("[%d,1] [1, 0, %d, %d, %d, %d, %d, %d, %d, %d]\n", p,f7,f6,f5,f4,f3,f2,f1,f0);
+                        { // critical block, can only be executed by one thread at a time
+                          if (cnt==0)
+                            {
+                              xnptless1 ++;
+                              if (f7==0)
+                                xnptless2 += p;
+                              else
+                                {
+                                  if (pmod4==3)
+                                    xnptless2 += p2;
+                                  else
+                                    {
+                                      xnptless2  += p4;
+                                      xnptless2u += p4;
+                                    }
+                                }
+                              //printf ("[%d,1] [1, 0, %d, %d, %d, %d, %d, %d, %d, %d]\n", p,f7,f6,f5,f4,f3,f2,f1,f0);
+                            }
+                          if (ucnt==0)
+                            {
+                              xnptless1u ++;
+                              if (f7==0)
+                                xnptless2u += p;
+                              else
+                                {
+                                  if (pmod4==3)
+                                    xnptless2u += p2;
+                                  else
+                                    {
+                                      xnptless2  += p4;
+                                      xnptless2u += p4;
+                                    }
+                                }
+                              //printf ("[%d,u] [1, 0, %d, %d, %d, %d, %d, %d, %d, %d]\n", p,f7,f6,f5,f4,f3,f2,f1,f0);
+                            }
+                          if ( mincnt < xmincnt) { // update global minimum point count
+                            xmincnt = mincnt;
+                            /* printf ("%d smooth pts on y^2=x^9+%d*x^7+%d*x^6+%d*x^5+%d*x^4+%d*x^3+%d*x^2+%d*x+%d mod %d\n", xmincnt, f7,f6,f5,f4,f3,f2,f1,f0,p); */
                           }
-                        if (ucnt==0)
-                          {
-                            xnptless1u ++;
-                            xnptless2u += (f7==0? p: p2);
-                            printf ("[%d,u] [1, 0, %d, %d, %d, %d, %d, %d, %d, %d]\n", p,f7,f6,f5,f4,f3,f2,f1,f0);
-                          }
-                        if ( mincnt < xmincnt) { // update global minimum point count
-                          xmincnt = mincnt;
-                          /* printf ("%d smooth pts on y^2=x^9+%d*x^7+%d*x^6+%d*x^5+%d*x^4+%d*x^3+%d*x^2+%d*x+%d mod %d\n", xmincnt, f7,f6,f5,f4,f3,f2,f1,f0,p); */
-                        }
-                      } // end of critical block
-                    }  // end of test for 0 or new record low number of smooth points
-                } // end of f0 loop
+                        } // end of critical block
+                      }  // end of test for 0 or new record low number of smooth points
+            } // end of f0 loop
           }     // end of f1 loop
         }}}}} // end of f2, f3, f4, f5, f7 loops (f6 is thread number, f8=0 and f9=1)
     }
-    printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,6), omp_get_wtime()-start);
-    if (p%4==1)
-      xnptless2 = (xnptless2+xnptless2u)/2;
-    printf ("#Gamma(9,1) = #Gamma(9,u) = %ld (in %ld+%ld=%ld orbits) for p = %d\n",
-            xnptless2, xnptless1, xnptless1u, xnptless1+xnptless1u, p);
+    printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,MAXD-2), omp_get_wtime()-start);
+    printf ("#Gamma(9,1) = = %ld (in %ld orbits) for p = %d\n",  xnptless2, xnptless1, p);
+    printf ("#Gamma(9,u) = = %ld (in %ld orbits) for p = %d\n",  xnptless2u, xnptless1u, p);
 }
