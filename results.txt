@@ -333,6 +333,17 @@ middle value for non-neg def density =
 error bound for non-neg def density  = 359667243357/5629499534213120 =
 0.6388973676e-4
 
+48 407040m12.780s
+
+lower bound for non-neg def density  =
+1967989973755715/2251799813685248 = 0.8739631124
+upper bound for non-neg def density  =
+4920596471678897/5629499534213120 = 0.8740735196
+middle value for non-neg def density =
+19681142812136369/22517998136852480 = 0.874018316
+error bound for non-neg def density  = 1243074579219/22517998136852480
+= 0.5520360077e-4
+
 
 ######################################################################
 
