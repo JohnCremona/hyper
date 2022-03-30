@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
 
     if ( argc < 2 ) { puts ("gamma8 p"); return 0; }
     p = atoi(argv[1]);
-    if ( p <= 3 || p > MAXP ) { printf ("p must be in [5,%d]\n", MAXP); return 0; }
+    if ( p <= 2 || p > MAXP ) { printf ("p must be in [3,%d]\n", MAXP); return 0; }
 
     start = omp_get_wtime();
 
@@ -113,7 +113,7 @@ int main (int argc, char *argv[])
                           {
                             xnptless1 ++;
                             xnptless2 += (f6==0? p: p2);
-                            printf ("[%d,1] [1, 0, %d, %d, %d, %d, %d, %d, %d]\n", p,f6,f5,f4,f3,f2,f1,f0);
+                            //printf ("[%d,1] [1, 0, %d, %d, %d, %d, %d, %d, %d]\n", p,f6,f5,f4,f3,f2,f1,f0);
                           }
                         if (ucnt==0)
                           {
@@ -121,7 +121,7 @@ int main (int argc, char *argv[])
                               {
                                 xnptless1u ++;
                                 xnptless2u += (f6==0? p: p2);
-                                printf ("[%d,u] [1, 0, %d, %d, %d, %d, %d, %d, %d]\n", p,f6,f5,f4,f3,f2,f1,f0);
+                                //printf ("[%d,u] [1, 0, %d, %d, %d, %d, %d, %d, %d]\n", p,f6,f5,f4,f3,f2,f1,f0);
                               }
                           }
                         if ( mincnt < xmincnt) { // update global minimum point count

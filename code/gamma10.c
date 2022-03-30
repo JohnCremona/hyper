@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
 
     if ( argc < 2 ) { puts ("gamma10 p"); return 0; }
     p = atoi(argv[1]);
-    if ( p <= 3 || p > MAXP ) { printf ("p must be in [5,%d]\n", MAXP); return 0; }
+    if ( p <= 2 || p > MAXP || p==5) { printf ("p must be in [3,%d] and not 5\n", MAXP); return 0; }
 
     start = omp_get_wtime();
 
@@ -68,11 +68,11 @@ int main (int argc, char *argv[])
         mincnt = 2*p+1;
         f7 = omp_get_thread_num();
         df6 = zmod(7*f7, p);
-        h2 = half*f7;
+        h2 = zmod(half*f7, p);
         h2h2 = zmod(h2*h2, p);
         for ( f8 = 0 ; f8 < 3 ; f8++ ) {
         if ( f8 == 2 ) f8 = u; // f8 ranges over 0,1,u where u is least non-residue
-        h3 = half*f8;
+        h3 = zmod(half*f8, p);
         h2h3 = zmod(h2*h3, p);
         h3h3 = zmod(h3*h3, p);
         df7 = zmod(8*f8, p);
@@ -84,7 +84,7 @@ int main (int argc, char *argv[])
           f4s = zmod(2*h1*h3+h2h2,p);
         for ( f5 = 0 ; f5 < p ; f5++ ) {
           df4 = zmod(5*f5, p);
-          h0 = zmod(half*(f5-h2h3),p);
+          h0 = zmod(half*f5-h2h3,p);
           f3s = zmod(2*(h0*h3+h1h2),p);
           f2s = zmod(2*h0*h2+h1h1,p);
           f1s = zmod(2*h0*h1,p);

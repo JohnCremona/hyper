@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
 
     if ( argc < 2 ) { puts ("gamma7 p"); return 0; }
     p = atoi(argv[1]);
-    if ( p <= 3 || p > MAXP ) { printf ("p must be in [5,%d]\n", MAXP); return 0; }
+    if ( p <= 2 || p > MAXP || p==3) { printf ("p must be in [3,%d] and not 3\n", MAXP); return 0; }
 
     start = omp_get_wtime();
 
