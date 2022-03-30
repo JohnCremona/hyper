@@ -22,10 +22,12 @@ int main (int argc, char *argv[])
     int xmap[MAXD*MAXP];
     int i, j, p;
     int u; // will hold the least quadratic nonresidue
+    int output_polynomials = 0;
 
     if ( argc < 2 ) { puts ("gamma5 p"); return 0; }
     p = atoi(argv[1]);
     if ( p <= 2 || p > MAXP || p==5) { printf ("p must be in [3,%d] and not 5\n", MAXP); return 0; }
+    if (argc > 2) output_polynomials = atoi(argv[2]);
 
     start = omp_get_wtime();
 
@@ -109,7 +111,8 @@ int main (int argc, char *argv[])
                                     xnptless2u += p4;
                                   }
                               }
-                            //printf ("[%d,1] [1, 0, %d, %d, %d, %d]\n", p,f3,f2,f1,f0);
+                            if (output_polynomials)
+                              printf ("[%d,1] [1, 0, %d, %d, %d, %d]\n", p,f3,f2,f1,f0);
                           }
                         if (ucnt==0)
                           {
@@ -126,7 +129,8 @@ int main (int argc, char *argv[])
                                     xnptless2u += p4;
                                   }
                               }
-                            //printf ("[%d,u] [1, 0, %d, %d, %d, %d]\n", p,f3,f2,f1,f0);
+                            if (output_polynomials)
+                              printf ("[%d,u] [1, 0, %d, %d, %d, %d]\n", p,f3,f2,f1,f0);
                           }
                         if ( mincnt < xmincnt) { // update global minimum point count
                           xmincnt = mincnt;
