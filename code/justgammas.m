@@ -269,7 +269,7 @@ if p eq 13 and i le 10 then assert #ans eq [0,0,0,0,0, 0,0,29471,0,6721403][i]; 
 if p eq 17 and i le 10 then assert #ans eq [0,0,0,0,0, 0,0,10404,0,5592150][i]; end if;
 if p eq 19 and i le 10 then assert #ans eq [0,0,0,0,0, 0,0,5130,0,3793356][i]; end if;
 if p eq 23 and i le 10 then assert #ans eq [0,0,0,0,0, 0,0,506,0,1419330][i]; end if;
-if p eq 29 and i le  9 then assert #ans eq [0,0,0,0,0, 0,0,0,0][i]; end if;
+if p eq 29 and i le 10 then assert #ans eq [0,0,0,0,0, 0,0,0,0,136416][i]; end if;
 
 return ans;
 end function;
