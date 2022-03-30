@@ -56,3 +56,4 @@ gamma9: gamma9.c
 gamma10: gamma10.c
 	gcc -O3 -funroll-loops -fopenmp gamma10.c -lm -o gamma10
 
+gammas: gamma5 gamma6 gamma7 gamma8 gamma9 gamma10
