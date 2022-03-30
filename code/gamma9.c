@@ -122,7 +122,7 @@ int main (int argc, char *argv[])
                                     }
                                 }
                             if (output_polynomials)
-                              printf ("[%d,1] [1, 0, %d, %d, %d, %d, %d, %d, %d, %d]\n", p,f7,f6,f5,f4,f3,f2,f1,f0);
+                              printf ("%d 1 [1,0,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f7,f6,f5,f4,f3,f2,f1,f0);
                             }
                           if (ucnt==0)
                             {
@@ -140,7 +140,7 @@ int main (int argc, char *argv[])
                                     }
                                 }
                             if (output_polynomials)
-                              printf ("[%d,u] [1, 0, %d, %d, %d, %d, %d, %d, %d, %d]\n", p,f7,f6,f5,f4,f3,f2,f1,f0);
+                              printf ("%d u [1,0,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f7,f6,f5,f4,f3,f2,f1,f0);
                             }
                           if ( mincnt < xmincnt) { // update global minimum point count
                             xmincnt = mincnt;
