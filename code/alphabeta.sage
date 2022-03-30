@@ -74,17 +74,17 @@ def restore_Gammas(filename="Gamma"):
 try:
     n = len(beta_0_dict)
 except NameError:
-    print("Initializing beta^0_i for i=0,1,2 to 0,1,1/2")
+    print("Initializing beta(i,p)=beta^0_i for i=0,1,2 to 0,1,1/2")
     beta_0_dict = {(0,pp):0, (1,pp):1, (2,pp):1/2}
 try:
     n = len(beta_plus_dict)
 except NameError:
-    print("Initializing beta^+_i for i=0,1,2 to 1,1,1/p with p={}".format(pp))
+    print("Initializing beta(i,1)=beta^+_i for i=0,1,2 to 1,1,1/p with p={}".format(pp))
     beta_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1/pp}
 try:
     n = len(beta_minus_dict)
 except NameError:
-    print("Initializing beta^-_i for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
+    print("Initializing beta(i,u)=beta^-_i for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
     beta_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
 
 def initialize_beta_dicts():
@@ -99,26 +99,26 @@ def initialize_beta_dicts():
 try:
     n = len(alpha_0_dict)
 except NameError:
-    print("Initializing alpha^0_i for i=0,1,2 to 0,1,1/2")
+    print("Initializing alpha(i,p)=alpha^0_i for i=0,1,2 to 0,1,1/2")
     alpha_0_dict = {(0,pp):0, (1,pp):1, (2,pp):1/2}
 try:
     n = len(alpha_plus_dict)
 except NameError:
-    print("Initializing alpha^+_i for i=0,1,2 to 1,1,1")
+    print("Initializing alpha(i,1)=alpha^+_i for i=0,1,2 to 1,1,1")
     alpha_plus_dict = {(0,pp):1, (1,pp):1, (2,pp):1}
 try:
     n = len(alpha_minus_dict)
 except NameError:
-    print("Initializing alpha^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
+    print("Initializing alpha(i,u)=alpha^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
     alpha_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
 
 def initialize_alpha_dicts():
     global alpha_0_dict, alpha_plus_dict, alpha_minus_dict
-    print("Initializing alpha^0_i for i=0,1,2 to 0,1,1/2")
+    print("Initializing alpha(i,p)=alpha^0_i for i=0,1,2 to 0,1,1/2")
     alpha_0_dict =     {(0,pp):0, (1,pp):1, (2,pp):1/2}
-    print("Initializing alpha^+_i for i=0,1,2 to 1,1,1")
+    print("Initializing alpha(i,1)=alpha^+_i for i=0,1,2 to 1,1,1")
     alpha_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1}
-    print("Initializing alpha^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
+    print("Initializing alpha(i,u)=alpha^-_i for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
     alpha_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
 
 def initialize_alpha_beta_dicts():
@@ -146,14 +146,14 @@ def show1dict(d,dn):
         print("\t(i,p)={}: {}".format(k,d[k]))
 
 def show_beta_dicts():
-    show1dict(beta_0_dict, "beta_0")
-    show1dict(beta_plus_dict, "beta_plus")
-    show1dict(beta_minus_dict, "beta_minus")
+    show1dict(beta_0_dict, "beta(n,p)")
+    show1dict(beta_plus_dict, "beta(n,1)")
+    show1dict(beta_minus_dict, "beta(n,u)")
 
 def show_alpha_dicts():
-    show1dict(alpha_0_dict, "alpha_0")
-    show1dict(alpha_plus_dict, "alpha_plus")
-    show1dict(alpha_minus_dict, "alpha_minus")
+    show1dict(alpha_0_dict, "alpha(n,p)")
+    show1dict(alpha_plus_dict, "alpha(n,1)")
+    show1dict(alpha_minus_dict, "alpha(n,u)")
 
 def show_dicts():
     show_alpha_dicts()
