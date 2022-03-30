@@ -1,4 +1,5 @@
-var('a','b','c')
+from sage.all import var, assume, integral
+a, b, c = var('a','b','c')
 assume(a>0)
 assume(b>0)
 assume(c>0)

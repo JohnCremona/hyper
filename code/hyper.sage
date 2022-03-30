@@ -1,3 +1,5 @@
+from sage.all import file, QQ
+
 def make_vinci_input(degree, depth, prefix):
     n = degree
     out = file("%s.ine" % prefix, mode='w')

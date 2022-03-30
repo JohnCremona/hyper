@@ -70,6 +70,32 @@ def roots(f):
     res = [(infinity,j)] if j else []
     return res + roots(f1)
 
+def eps(f,a,j):
+    """Given the root a of multiplicity j, when j is even returns the
+    sign of the leading coefficient in the series expansion of f about
+    x=a, or +1 when j is odd.
+    """
+    x = f.parent().gen()
+    return +1 if j%2==1 or (f//(x-a)**j)(a).is_square() else -1
+
+def signed_roots(f):
+    """returns list of triples (a,j,eps) where a is a root of
+    multiplicity j>0 and (for even j) eps in [-1,+1] is the quadratic
+    character of (f(x)/(x-a)^j)(a).  In the homogeneous case this will
+    include a=infinity when deg(f(x,1))<deg(f(x,y)).
+    """
+    if f.parent().ngens()==1:
+        return [(a,j,eps(f,a,j)) for a,j in f.roots()]
+    # homogeneous case
+    R1 = PolynomialRing(f.base_ring(),'x')
+    x = R1.gen()
+    f1 = f([x,1])
+    j=f.degree()-f1.degree()
+    res = []
+    if j:
+        res = [(infinity,j,1 if j%2==1 or f1.leading_coefficient().is_square() else -1)]
+    return res + signed_roots(f1)
+
 def affine(L,p):
     """Returns linear combination of elements of the list L of length n,
     with coefficients

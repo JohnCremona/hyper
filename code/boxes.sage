@@ -1,7 +1,7 @@
 # Definition of discriminant and elated functions for quadratics,
 # cubics and quartics:
 
-from sage.all import RIF, RDF, prod, srange, cartesian_product_iterator
+from sage.all import RIF, RDF, prod, srange, cartesian_product_iterator, xrange
 
 def disc2(a,b,c):
     return b*b-4*a*c

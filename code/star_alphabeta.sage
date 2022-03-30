@@ -6,13 +6,6 @@ from fact_pat import (lambda_A, lambda_P, split_factorizations)
 
 # Initialize dicts to store the alphas and betas but do not reset on reload!
 # The alpha and beta values for subscripts 0,1 are known directly.
-try:
-    n = len(alpha_s_dict)
-    n = len(beta_s_dict)
-except NameError:
-    alpha_s_dict = {}
-    beta_s_dict = {}
-    initialize_alpha_s_beta_s_dicts()
 
 def initialize_alpha_s_beta_s_dicts():
     global alpha_s_dict, beta_s_dict
@@ -20,6 +13,14 @@ def initialize_alpha_s_beta_s_dicts():
     alpha_s_dict = {0:1, 1:1}
     print("Initializing beta_s_i for i=0,1 to 1")
     beta_s_dict =     {0:1, 1:1}
+
+try:
+    n = len(alpha_s_dict)
+    n = len(beta_s_dict)
+except NameError:
+    alpha_s_dict = {}
+    beta_s_dict = {}
+    initialize_alpha_s_beta_s_dicts()
 
 def show1dict(d,dn):
     print(dn+":")
