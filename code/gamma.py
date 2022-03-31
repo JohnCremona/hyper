@@ -4,8 +4,9 @@
 #  Re-initialization of the dicts is done by the initialize_dicts()
 #  functions.
 
-from sage.all import ZZ, GF, PolynomialRing, polygen, prod, save, load, flatten, xmrange_iter, ProjectiveSpace
-from basics import monics, monics0, homog
+from sage.all import (ZZ, GF, PolynomialRing, polygen, prod, save, load, flatten,
+                      xmrange_iter, srange, legendre_symbol, ProjectiveSpace)
+from basics import (monics, monics0, homog)
 
 try:
     n = len(Gamma_plus_dict)
@@ -57,14 +58,15 @@ def restore_Gammas(filename="Gamma"):
         Gdict.update(load(f))
 
 def a_nonsquare(F):
-    """ The first non-square element of F (an odd finite field).
+    """ The first non-square element of F (an odd finite field or an odd primes).
     """
-    for u in F:
-        if not u.is_square():
-           return u
-    raise ValueError("Field {} has no non-squares!".format(F))
+    try:
+        p = ZZ(F)
+        return next(a for a in srange(p) if legendre_symbol(a,p)==-1)
+    except TypeError:
+        return next(a for a in F if not a.is_square())
 
-def no_smooth_points(f): 
+def no_smooth_points(f):
     """Return True iff y^2=f(x) has no smooth
     (affine) points over the base (odd finite) field.
 
@@ -132,7 +134,7 @@ def nfactors_mod2(f,h,abs=False):
         # homogeneous case:  f,h in GF(2)[x,y]
         R3 = PolynomialRing(F,3,['x','y','z'])
         x, y, z = R3.gens()
-    return [c[1] for c in (z^2+h*z-f).factor()]
+    return [c[1] for c in (z**2+h*z-f).factor()]
 
 def is_irred_mod2(f,h,abs=False):
     return nfactors_mod2(f,h,abs)==[1]
@@ -357,6 +359,173 @@ def one_row(p):
        else:
           print("p={} not OK, table is\n{} but we get\n{}".format(p,table[p],res))
     return res
+
+"""
+Code to create Gamma sets from the C program output.
+
+For n even output lines look like
+
+13 u [1,0,0,0,0,0,0,0,10,0,12]
+13 1 [1,0,0,12,0,0,0,1,4,8,11]
+or
+13 1 [1,0,1,6,0,0,0,0,8,7,5]
+13 u [1,0,1,6,0,0,0,4,2,10,12]
+or
+13 u [1,0,2,6,0,0,0,8,8,9,9]
+13 1 [1,0,2,11,0,0,0,11,6,0,6]
+
+with a list of coefficients *starting with the leading coefficient 1*
+of a monic polynomial f(x) in Gamma(10,u; 13) or Gamma(10,1; 13). The
+first coefficients are 1,0 c with c in {0,1,u} (so u=2 in the
+example).
+
+To get the full list of Gamma(n,1; p) or Gamma(n,u; p) take lines starting
+"p 1 " or "p u " respectively, and:
+
+ - take the f starting [1,0,0,...] and collect all f(x+b) for b in F_p, i.e. 0<=b<=p-1.
+
+ - take the f starting [1,0,c,...] with c!=0 and collect all
+   f(a*x+b)/a^n for a in F_p^* up to sign, b in F_p, i.e. (a,b) with
+   1<=a<=(p-1)/2 and 0<=b<=p-1/
+
+For n odd (e.g. n=9) output lines look like
+
+13 u [1,0,0,1,0,0,0,0,0,10]
+13 1 [1,0,0,8,0,0,0,0,0,11]
+or
+13 1 [1,0,1,1,0,10,4,11,2,7]
+13 u [1,0,1,9,5,5,10,3,6,3]
+or
+13 u [1,0,2,7,12,10,11,6,0,0]
+13 1 [1,0,2,7,12,11,3,0,4,6]
+
+as before.
+
+To get the full set Gamma(n,1; p) the procedure depends on p mod 4.
+If p=3 (mod 4), so that all squares a 4th powers, proceed exactly as
+for n even, using only lines starting "p 1 ".  When p=1 (mod 4), we
+need to take consider lines starting "p 1 " and "p u ".  For a "p 1 "
+line and f starting [1,0,0,...] just apply p translations as before.
+For a "p 1 "line and f starting [1,0,c,...] with c!=0, apply affine
+transforms (a,b) with a *square* and up to sign.  For a "p u " line
+and f starting [1,0,c,...] with c!=0, apply affine transforms (a,b)
+with a *non-square* and up to sign.  Ignore "p u " lines starting
+[1,0,0,...].
+
+"""
+
+def read_gamma_c_output(n, p, u, fname):
+    """Read an output file from running gamma$n.c on prime p.  Ignore the
+    last three lines which start "Checked" or "#".  All other lines
+    are as above, where the coefficient list has length n+1.
+
+    Returns two lists list_1 and list_u of the coefficient lists
+    starting "p 1 " and "p u " respectively.  The parameters n,p,u are
+    just for consistency checks, u being the least quadratic
+    nonresidue mod p.
+    """
+    list_1 = []
+    list_u = []
+    with open(fname) as infile:
+        for L in infile:
+            if L[0] in ["C", "#", "p"]:
+                print(L.strip())
+                continue
+            pp, c, coeffs = L.split()
+            assert int(pp)==p
+            coeffs = [int(a) for a in coeffs[1:-1].split(",")]
+            assert len(coeffs)==n+1
+            assert c in ["1", "u"]
+            assert coeffs[0]==1
+            assert coeffs[1]==0
+            assert coeffs[2] in [0,1,u]
+            if c=="1":
+                list_1.append(coeffs)
+            else:
+                list_u.append(coeffs)
+    return list_1, list_u
+
+def scale(f,a):
+    """
+    Given f monic in F[x] and a nonzero in F, return the monic f(a*x)/a^deg(f)
+    """
+    x = f.parent().gen()
+    return f(a*x)/a**f.degree()
+
+def x_shift(f,b):
+    """
+    Given f monic in F[x] and b in F, return the monic f(x+b)
+    """
+    x = f.parent().gen()
+    return f(x+b)
+
+def affine_transform(f,a,b):
+    """
+    Given f monic in F[x] and a,b in F with a nonzero, return the monic f(a*(x+b))/a^deg(f)
+    """
+    return x_shift(scale(f,a),b)
+
+def expand1(f, alist):
+    """
+    for f monic in F[x] with next coefficient 0, return all affine (a,b)-transforms with a in alist
+    """
+    n = f.degree()
+    p = f.base_ring().cardinality()
+    if f[n-2]==0:
+        return [x_shift(f,b) for b in range(p)]
+    else:
+        return [affine_transform(f,a,b) for a in alist for b in range(p)]
+
+def make_gammas_even(n,p):
+    """Read from file "gamma{n}_{p}.out" and return the complete sets
+    Gamma(n,1), Gamma(n,u), for n even.
+    """
+    assert n%2==0
+    F = GF(p)
+    Fx = PolynomialRing(F, 'x')
+    u = a_nonsquare(F)
+    l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
+    gam_1 = []
+    gam_u = []
+    p12 = (p+1)//2
+    for coeffs in l1:
+        coeffs.reverse()
+        gam_1 += expand1(Fx(coeffs), range(1,p12))
+    for coeffs in lu:
+        coeffs.reverse()
+        gam_u += [u*f for f in expand1(Fx(coeffs), range(1,p12))]
+    return gam_1, gam_u
+
+def make_gammas_odd(n,p):
+    """Read from file "gamma{n}_{p}.out" and return the complete set
+    Gamma(n,1), for n odd.
+    """
+    assert n%2==1
+    F = GF(p)
+    Fx = PolynomialRing(F, 'x')
+    u = a_nonsquare(F)
+    l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
+    gam_1 = []
+    p12 = (p+1)//2
+    squs = [(a*a)%p for a in range(1,p12)]
+    squs_mod = [a for a in squs if a < p12]
+    if p%4==3:
+        for coeffs in l1:
+            coeffs.reverse()
+            gam_1 += expand1(Fx(coeffs), squs)
+    else:
+        for coeffs in l1:
+            coeffs.reverse()
+            gam_1 += expand1(Fx(coeffs), squs_mod)
+        for coeffs in lu:
+            coeffs.reverse()
+            if coeffs[n-2]:
+                gam_1 += [scale(f,u) for f in expand1(Fx(coeffs), squs_mod)]
+    return gam_1
+
+"""
+Below here is code for the now obsolete Delta sets
+"""
 
 def Delta(d,F=None):
     """Return a list of f of even degree d, homogeneous with no smooth

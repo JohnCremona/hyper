@@ -6,7 +6,7 @@
 # - roots of a polynomial or binary form
 # - affine linear combinations
 
-from sage.all import (FunctionField, QQ, PolynomialRing, ProjectiveSpace, infinity)
+from sage.all import (FunctionField, QQ, PolynomialRing, ProjectiveSpace, VectorSpace, infinity)
 
 Qp = FunctionField(QQ,'p')
 pp = Qp.gen()
@@ -32,7 +32,7 @@ def monics(F, d, u=1):
     NB Use u=1 to get monics, and u=0 to give all polys of degree <d.
     """
     Fx = PolynomialRing(F,'x')
-    for v in F^d:
+    for v in VectorSpace(F,d):
         yield Fx(v.list()+[u])
 
 def monics0(F, d, u=1):
@@ -42,7 +42,7 @@ def monics0(F, d, u=1):
     NB Use u=1 to get monics, and u=0 to give all polys of degree <d.
     """
     Fx = PolynomialRing(F,'x')
-    for v in F^(d-1):
+    for v in VectorSpace(F,d-1):
         yield Fx(v.list()+[0,u])
 
 def homog(F, d):
