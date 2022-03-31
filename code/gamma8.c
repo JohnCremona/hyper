@@ -97,7 +97,7 @@ int main (int argc, char *argv[])
           // inner loop over lowest two coefficients, f1 and f0:
           for ( f1 = 0 ; f1 < p ; f1++ ) {
             for ( f0 = 0 ; f0 < p ; f0++ ) {
-              for ( cnt = 0, ucnt = 0, i = 0 ; i < p ; i++ )
+              for ( cnt = 0, ucnt = 0, i = 0 ; i < p && (cnt==0 || ucnt==0); i++ )
                       {
                         ny = qmap[emap[i]+f1*i+f0]; // # of y with y^2=f(i)
                         // if ny==1 we have a zero and need to check that it is not a double zero
