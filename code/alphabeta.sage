@@ -1,23 +1,76 @@
-from sage.all import (QQ, ZZ, GF, PolynomialRing, prod)
-from basics import Qp,pp, signed_roots, affine, point_multiplicities
-from fact_pat import (initialize_N_dict, lambda_A, lambda_P, Phi)
+from sage.all import (save, load, divisors, moebius, prod, factorial, flatten, polygen, infinity, xmrange_iter)
+from sage.all import (QQ, ZZ, GF, FunctionField, PolynomialRing, ProjectiveSpace)
 
-"""
-Translation into new notation:
+Qp = FunctionField(QQ,'p')
+pp = Qp.gen()
 
-alpha_plus_dict[(n,p)]  = alpha(n,1; p)
-alpha_minus_dict[(n,p)] = alpha(n,u; p)
-alpha_0_dict[(n,p)]     = alpha(n,p; p)
+def subs(f,p):
+    """Substitute p for the variable of the rational function f.
+    """
+    n = f.numerator()(p)
+    d = f.denominator()(p)
+    if d:
+        return n/d
+    else:
+        return infinity
 
-beta_plus_dict[(n,p)]  = beta(n,1; p)
-beta_minus_dict[(n,p)] = beta(n,u; p)
-beta_0_dict[(n,p)]     = beta(n,p; p)
+# Initialize dicts to store the Gamma_plus/minus and Delta sets but do
+#  not reset on reload.  The dicts will be initialized if they don't
+#  exist (e.g. on first loading the file) or have no entries.
+#  Re-initialization of the dicts is done by the initialize_dicts()
+#  functions.
 
-"""
-#################################################################################
+try:
+    n = len(Gamma_plus_dict)
+except NameError:
+    Gamma_plus_dict = {}
+try:
+    n = len(Gamma_minus_dict)
+except NameError:
+    Gamma_minus_dict = {}
+
+def initialize_Gamma_dicts():
+    global Gamma_plus_dict, Gamma_minus_dict
+    Gamma_plus_dict = {}
+    Gamma_minus_dict = {}
+
+# Initialize dicts to store the Delta sets but do not reset on reload!
+try:
+    nd = len(Delta_dict)
+except NameError:
+    Delta_dict = {}
+
+def initialize_Delta_dicts():
+    global Delta_dict
+    Delta_dict = {}
+
+# Save to file and restore from file for Gammas and Deltas:
+def save_Deltas(filename="Delta"):
+    save(Delta_dict, filename)
+
+def save_Gammas(filename="Gamma"):
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict], ["plus", "minus"]):
+        f = "_".join([filename, suffix])
+        print("Saving {}".format(f))
+        save(Gdict, f)
+
+# The restore functions use the update() method so that local values
+# are preserved, but NB if the same key exists locally and on file
+# then the file version will overwrite the local one.
+
+def restore_Deltas(filename="Delta"):
+    global Delta_dict
+    Delta_dict.update(load(filename))
+
+def restore_Gammas(filename="Gamma"):
+    global Gamma_plus_dict, Gamma_minus_dict
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict], ["plus", "minus"]):
+        f = "_".join([filename, suffix])
+        print("Restoring {}".format(f))
+        Gdict.update(load(f))
+
 # Initialize dicts to store the betas and alphas but do not reset on reload!
 # The beta and alpha values for subscripts 0,1,2 are known directly.
-
 try:
     n = len(beta_0_dict)
 except NameError:
@@ -72,99 +125,129 @@ def initialize_alpha_beta_dicts():
     initialize_alpha_dicts()
     initialize_beta_dicts()
 
-#################################################################################
-# Initialize dicts to store the Gamma_plus/minus and Delta sets but do
-#  not reset on reload.  The dicts will be initialized if they don't
-#  exist (e.g. on first loading the file) or have no entries.
-#  Re-initialization of the dicts is done by the initialize_dicts()
-#  functions.
-
-from sage.all import (polygen, save, load,
-                      xmrange_iter, srange, legendre_symbol, ProjectiveSpace)
-from basics import (monics, monics0)
-
-"""
-Warning!  The keys to Gamma_plus_dict and Gamma_minus_dict are pairs (p,n), so
-
-   Gamma_plus_dict[(p,n)] = Gamma(n,1; p)
-   Gamma_minus_dict[(p,n)] = Gamma(n,u; p)
-
-BUT the functions which compute (or look up) the values are
-
-   Gamma_plus(n,p)
-   Gamma_minus(n,p)
-
-with the parameters in the opposite order.
-"""
-
 try:
-    n = len(Gamma_plus_dict)
+    n = len(N_dict)
 except NameError:
-    Gamma_plus_dict = {}
-try:
-    n = len(Gamma_minus_dict)
-except NameError:
-    Gamma_minus_dict = {}
+    N_dict = {}
 
-def initialize_Gamma_dicts():
-    global Gamma_plus_dict, Gamma_minus_dict
-    Gamma_plus_dict = {}
-    Gamma_minus_dict = {}
+def initialize_N_dict():
+    global N_dict
+    N_dict = {}
 
 def initialize_all_dicts():
     initialize_alpha_beta_dicts()
-    #initialize_Delta_dicts()
     initialize_Gamma_dicts()
+    initialize_Delta_dicts()
     initialize_N_dict()
 
-############################ Deltas are no longer needed #############################
-"""
-# Initialize dicts to store the Delta sets but do not reset on reload!
-try:
-    nd = len(Delta_dict)
-except NameError:
-    Delta_dict = {}
+def show1dict(d,dn):
+    print(dn+":")
+    for k in sorted(d.keys()):
+        print("\t(i,p)={}: {}".format(k,d[k]))
 
-def initialize_Delta_dicts():
-    global Delta_dict
-    Delta_dict = {}
+def show_beta_dicts():
+    show1dict(beta_0_dict, "beta(n,p)")
+    show1dict(beta_plus_dict, "beta(n,1)")
+    show1dict(beta_minus_dict, "beta(n,u)")
 
-# Save to file and restore from file for Gammas and Deltas:
-def save_Deltas(filename="Delta"):
-    save(Delta_dict, filename)
+def show_alpha_dicts():
+    show1dict(alpha_0_dict, "alpha(n,p)")
+    show1dict(alpha_plus_dict, "alpha(n,1)")
+    show1dict(alpha_minus_dict, "alpha(n,u)")
 
-def restore_Deltas(filename="Delta"):
-    global Delta_dict
-    Delta_dict.update(load(filename))
-"""
+def show_dicts():
+    show_alpha_dicts()
+    show_beta_dicts()
 
-def save_Gammas(filename="Gamma"):
-    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict], ["plus", "minus"]):
-        f = "_".join([filename, suffix])
-        print("Saving {}".format(f))
-        save(Gdict, f)
+def N(j, p=pp):
+    """The number of degree j monic irreducibles in GF(p)[X].
+    """
+    if not (j,p) in N_dict:
+        N_dict[(j,p)] = sum([moebius(d)*p**(j//d) for d in divisors(j)]) / j
+    return N_dict[(j,p)]
 
-# The restore functions use the update() method so that local values
-# are preserved, but NB if the same key exists locally and on file
-# then the file version will overwrite the local one.
+def Ndash(j, p=pp):
+    """The number of degree j homogeneous irreducibles in GF(p)[X,Y] up to scaling.
+    """
+    return p+1 if j==1 else N(j,p)
 
-def restore_Gammas(filename="Gamma"):
-    global Gamma_plus_dict, Gamma_minus_dict
-    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict], ["plus", "minus"]):
-        f = "_".join([filename, suffix])
-        print("Restoring {}".format(f))
-        Gdict.update(load(f))
+def Phi(d, base=[1,1]):
+    """List of factorization patterns in degree d.  Each is a list of
+    pairs [d_i,e_i] with d_i*e_i summing to d, with repeats allowed
+    but unordered.
+    """
+    if d==0:
+       yield []
+    d0, e0 = base
+    for di in range(d0,d+1):
+        e1 = e0 if di==d0 else 1
+        for ei in range(e1,(d//di)+1):
+            for phi in Phi(d-di*ei,[di,ei]):
+                yield [[di,ei]] + phi
+
+def deg_fp(phi):
+    """ The degree of the factorization pattern phi.
+    """
+    return sum(d*e for d,e in phi)
+
+def m2(phi, jk):
+    """ The number of occurrences of [d,e] in phi with de==[j,k].
+    """
+    return len([de for de in phi if de==jk])
+
+def m1(phi, j):
+    """ The number of occurrences of [d,e] in phi with d==j.
+    """
+    return len([de for de in phi if de[0]==j])
+
+def lambda_helper(phi, NN, p=pp):
+    """ Helper function for affine and projective factorization probabilities.
+    """
+    d = deg_fp(phi)
+    return prod([prod([NN(j,p)-i for i in
+                       range(m1(phi,j))])/prod([factorial(m2(phi,[j,i]))
+                                                for i in range(1,d+1)]) for j in range(1,d+1)])
+
+def lambda_A(phi, p=pp):
+    """ The probability that a monic polynomial of degree deg(phi) has factorization pattern phi.
+    """
+    d = deg_fp(phi)
+    return lambda_helper(phi, N, p) / p**d
+
+def lambda_P(phi, p=pp):
+    """ The probability that a homogeneous polynomial of degree deg(phi) has factorization pattern phi.
+    """
+    d = deg_fp(phi)
+    return lambda_helper(phi, Ndash, p) * (p-1)/ (p**(d+1)-1)
+
+def monics(F, d, u=1):
+    """Iterate through all degree d polynomials over F with leading coefficient u.
+
+    NB Use u=1 to get monics, and u=0 to give all polys of degree <d.
+    """
+    Fx = PolynomialRing(F,'x')
+    for v in F^d:
+        yield Fx(v.list()+[u])
+
+def monics0(F, d, u=1):
+    """Iterate through all degree d polynomials over F with leading
+    coefficient u and next-to-leading coefficient 0
+
+    NB Use u=1 to get monics, and u=0 to give all polys of degree <d.
+    """
+    Fx = PolynomialRing(F,'x')
+    for v in F^(d-1):
+        yield Fx(v.list()+[0,u])
 
 def a_nonsquare(F):
-    """ The first non-square element of F (an odd finite field or an odd primes).
+    """ The first non-square element of F (an odd finite field).
     """
-    try:
-        p = ZZ(F)
-        return next(a for a in srange(p) if legendre_symbol(a,p)==-1)
-    except TypeError:
-        return next(a for a in F if not a.is_square())
+    for u in F:
+        if not u.is_square():
+           return u
+    raise ValueError("Field {} has no non-squares!".format(F))
 
-def no_smooth_points(f):
+def no_smooth_points(f): 
     """Return True iff y^2=f(x) has no smooth
     (affine) points over the base (odd finite) field.
 
@@ -232,35 +315,10 @@ def nfactors_mod2(f,h,abs=False):
         # homogeneous case:  f,h in GF(2)[x,y]
         R3 = PolynomialRing(F,3,['x','y','z'])
         x, y, z = R3.gens()
-    return [c[1] for c in (z**2+h*z-f).factor()]
+    return [c[1] for c in (z^2+h*z-f).factor()]
 
 def is_irred_mod2(f,h,abs=False):
     return nfactors_mod2(f,h,abs)==[1]
-
-def is_square_homog(f):
-    """ Test if f (homogeneous) is a square, by factoring.
-    """
-    if f.degree()%2 ==1:
-       return False
-    F = f.base_ring()
-    f_fac = f.factor()
-    return F(f_fac.unit()).is_square() and all([e%2==0 for g,e in f_fac])
-
-def no_smooth_points_homog(f):
-    """Return True iff z^2=f(x,y) has no smooth (projective) points over the base (odd finite) field.
-
-    N.B.  z^2=f(x,y) has no smooth F_p-points if for all (x:y) in
-     P^1(F_p) either f(x,y) is nonsquare or it is 0 and (x:y) is also
-     a root of both derivatives.  Note that x*fx+y*fy=d*f but we must
-     check that all 3 are zero to correctly handle (0:1), (1:0) and
-     the case p|d.
-    """
-    x,y = f.parent().gens()
-    fx = f.derivative(x)
-    fy = f.derivative(y)
-    P1 = ProjectiveSpace(f.base_ring(),1)
-    return all([(not f(x,y).is_square()) or (fx(x,y)==fy(x,y)==f(x,y)==0)
-     for x,y in P1])
 
 def Gamma_plus(d,F=None):
     """ List of monics of degree d with no smooth points.
@@ -458,310 +516,248 @@ def one_row(p):
           print("p={} not OK, table is\n{} but we get\n{}".format(p,table[p],res))
     return res
 
-"""
-Code to create Gamma sets from the C program output.
-
-For n even output lines look like
-
-13 u [1,0,0,0,0,0,0,0,10,0,12]
-13 1 [1,0,0,12,0,0,0,1,4,8,11]
-or
-13 1 [1,0,1,6,0,0,0,0,8,7,5]
-13 u [1,0,1,6,0,0,0,4,2,10,12]
-or
-13 u [1,0,2,6,0,0,0,8,8,9,9]
-13 1 [1,0,2,11,0,0,0,11,6,0,6]
-
-with a list of coefficients *starting with the leading coefficient 1*
-of a monic polynomial f(x) in Gamma(10,u; 13) or Gamma(10,1; 13). The
-first coefficients are 1,0 c with c in {0,1,u} (so u=2 in the
-example).
-
-To get the full list of Gamma(n,1; p) or Gamma(n,u; p) take lines starting
-"p 1 " or "p u " respectively, and:
-
- - take the f starting [1,0,0,...] and collect all f(x+b) for b in F_p, i.e. 0<=b<=p-1.
-
- - take the f starting [1,0,c,...] with c!=0 and collect all
-   f(a*x+b)/a^n for a in F_p^* up to sign, b in F_p, i.e. (a,b) with
-   1<=a<=(p-1)/2 and 0<=b<=p-1/
-
-For n odd (e.g. n=9) output lines look like
-
-13 u [1,0,0,1,0,0,0,0,0,10]
-13 1 [1,0,0,8,0,0,0,0,0,11]
-or
-13 1 [1,0,1,1,0,10,4,11,2,7]
-13 u [1,0,1,9,5,5,10,3,6,3]
-or
-13 u [1,0,2,7,12,10,11,6,0,0]
-13 1 [1,0,2,7,12,11,3,0,4,6]
-
-as before.
-
-To get the full set Gamma(n,1; p) the procedure depends on p mod 4.
-If p=3 (mod 4), so that all squares a 4th powers, proceed exactly as
-for n even, using only lines starting "p 1 ".  When p=1 (mod 4), we
-need to take consider lines starting "p 1 " and "p u ".  For a "p 1 "
-line and f starting [1,0,0,...] just apply p translations as before.
-For a "p 1 "line and f starting [1,0,c,...] with c!=0, apply affine
-transforms (a,b) with a *square* and up to sign.  For a "p u " line
-and f starting [1,0,c,...] with c!=0, apply affine transforms (a,b)
-with a *non-square* and up to sign.  Ignore "p u " lines starting
-[1,0,0,...].
-
-"""
-
-def read_gamma_c_output(n, p, u, fname):
-    """Read an output file from running gamma$n.c on prime p.  Ignore the
-    last three lines which start "Checked" or "#".  All other lines
-    are as above, where the coefficient list has length n+1.
-
-    Returns two lists list_1 and list_u of the coefficient lists
-    starting "p 1 " and "p u " respectively.  The parameters n,p,u are
-    just for consistency checks, u being the least quadratic
-    nonresidue mod p.
+def homog(F, d):
+    """ List of homogeneous polynomials in F[X,Y] of degree d, up to scaling.
     """
-    list_1 = []
-    list_u = []
-    with open(fname) as infile:
-        for L in infile:
-            if L[0] in ["C", "#", "p"]:
-                print(L.strip())
-                continue
-            pp, c, coeffs = L.split()
-            assert int(pp)==p
-            coeffs = [int(a) for a in coeffs[1:-1].split(",")]
-            assert len(coeffs)==n+1
-            assert c in ["1", "u"]
-            assert coeffs[0]==1
-            assert coeffs[1]==0
-            assert coeffs[2] in [0,1,u]
-            if c=="1":
-                list_1.append(coeffs)
-            else:
-                list_u.append(coeffs)
-    return list_1, list_u
+    Fx = PolynomialRing(F,'x')
+    Fxy = PolynomialRing(F,['x','y'])
+    x, y = Fxy.gens()
+    def homog(f):
+        return Fxy(y**d * f(x/y))
+    return [homog(Fx(list(v))) for v in ProjectiveSpace(F,d)]
 
-def scale(f,a):
+def is_square_homog(f):
+    """ Test if f (homogeneous) is a square, by factoring.
     """
-    Given f monic in F[x] and a nonzero in F, return the monic f(a*x)/a^deg(f)
+    if f.degree()%2 ==1:
+       return False
+    F = f.base_ring()
+    f_fac = f.factor()
+    return F(f_fac.unit()).is_square() and all([e%2==0 for g,e in f_fac])
+
+def no_smooth_points_homog(f):
+    """Return True iff z^2=f(x,y) has no smooth (projective) points over the base (odd finite) field.
+
+    N.B.  z^2=f(x,y) has no smooth F_p-points if for all (x:y) in
+     P^1(F_p) either f(x,y) is nonsquare or it is 0 and (x:y) is also
+     a root of both derivatives.  Note that x*fx+y*fy=d*f but we must
+     check that all 3 are zero to correctly handle (0:1), (1:0) and
+     the case p|d.
+    """
+    x,y = f.parent().gens()
+    fx = f.derivative(x)
+    fy = f.derivative(y)
+    P1 = ProjectiveSpace(f.base_ring(),1)
+    return all([(not f(x,y).is_square()) or (fx(x,y)==fy(x,y)==f(x,y)==0)
+     for x,y in P1])
+
+def Delta(d,F=None):
+    """Return a list of f of even degree d, homogeneous with no smooth
+    points but not of the form u*h^2.  Includes scalings (the
+    condition is invariant under scaling by squares).
+    """
+    if F==None or d%2==1 or d<6 :
+       return []
+    if F in ZZ:
+        q = F
+    else:
+        q = F.cardinality()
+    if (d==6 and q>11):
+        return []
+    if not (q,d) in Delta_dict:
+        if q==2:
+            Delta_dict[(q,d)] = Delta2(d)
+            return Delta_dict[(q,d)]
+        if F in ZZ:
+            F = GF(q)
+        print("Computing Delta({},{})".format(d,F))
+        u = a_nonsquare(F)
+        flist = homog(F,d) # up to scaling
+        # consider both f and u*f
+        D1 =  [f for f in flist if not is_square_homog(u*f) and no_smooth_points_homog(f)]
+        D2 =  [u*f for f in flist if not is_square_homog(f) and no_smooth_points_homog(u*f)]
+        # D1+D2 is the result up to scaling by squares.
+        sq = [F(a)**2 for a in range(1,((q-1)//2)+1)]
+        Delta_dict[(q,d)] = flatten([[a*f for f in D1+D2] for a in sq])
+    return Delta_dict[(q,d)]
+
+def Delta2(d):
+    """Return a list of (f,h) homogeneous of degrees (d,<=(d/2)) with d even,
+    such that z^2+h*z+f has no smooth points and either factors over
+    F_2 with distinct factors or is orrediucible over F_4.
+    """
+    F2 = GF(2)
+    Fxy = PolynomialRing(F2,['x','y'])
+    D = [(f,h) for f in homog(F2,d)+[Fxy(0)] for h in homog(F2,d//2)]
+    #print("{} (f,h) pairs in degree {}".format(len(D),d))
+    D = [fh for fh in D if no_smooth_points_mod2(*fh)]
+    #print("{} (f,h) pairs have no smooth points".format(len(D)))
+    D = [fh for fh in D if nfactors_mod2(*fh,abs=False)==[1,1] or nfactors_mod2(*fh,abs=True)==[1]]
+    #print("{} of those have are abs. irred.  or split over F2".format(len(D)))
+    return D
+
+def show_Delta(verbose=False):
+    for k in sorted(Delta_dict.keys()):
+        if verbose:
+            print("(p,d)={}: {}".format(k,Delta_dict[k]))
+        else:
+            print("(p,d)={}: {} elements".format(k,len(Delta_dict[k])))
+
+def eps(f,a,j):
+    """Given the root a of multiplicity j, when j is even returns the
+    sign of the leading coefficient in the series expansion of f about
+    x=a, or +1 when j is odd.
     """
     x = f.parent().gen()
-    return f(a*x)/a**f.degree()
+    return +1 if j%2==1 or (f//(x-a)**j)(a).is_square() else -1
 
-def x_shift(f,b):
+def signed_roots(f):
+    """returns list of triples (a,j,eps) where a is a root of
+    multiplicity j>0 and (for even j) eps in [-1,+1] is the quadratic
+    character of (f(x)/(x-a)^j)(a).  In the homogeneous case this will
+    include a=infinity when deg(f(x,1))<deg(f(x,y)).
     """
-    Given f monic in F[x] and b in F, return the monic f(x+b)
+    if f.parent().ngens()==1:
+        return [(a,j,eps(f,a,j)) for a,j in f.roots()]
+    # homogeneous case
+    R1 = PolynomialRing(f.base_ring(),'x')
+    x = R1.gen()
+    f1 = f([x,1])
+    j=f.degree()-f1.degree()
+    res = []
+    if j:
+        res = [(infinity,j,1 if j%2==1 or f1.leading_coefficient().is_square() else -1)]
+    return res + signed_roots(f1)
+
+def x_multiplicity(f,h,x0=0):
+    r""" returns (i,eps) where i is the multiplcity of x=x0 on z^2+h(x)*z=f(x)
+    and (for i even and positive) eps is +1 or -1 according as the leading
+    quadratic is split or not.
+
+    Here f and h are in GF(2)[x].
     """
     x = f.parent().gen()
-    return f(x+b)
+    if x0!=0:
+        return x_multiplicity(f(x+x0),h(x+x0))
+    # Now x0=0
+    e=0; m=0
+    while True:
+        c = [f[m],h[e]]
+        if c==[1,1]: return [m,-1]
+        if c==[0,1]: return [m,+1]
+        if c==[1,0]:
+            f += x**m+h*x**e
+        assert [f[m],h[e]]==[0,0]
+        if f==h==0:
+            return infinity
+        m += 1
+        if f[m]: return [m,+1]
+        e += 1
+        m += 1
+        print(f,h)
 
-def affine_transform(f,a,b):
+def point_multiplicity(f,h,P=[0,0]):
+    r""" returns (i,eps) where i is the multiplcity of P on z^2+h(x)*z=f(x)
+    and (for i even and positive) eps is +1 or -1 according as the
+    point is split or not.
+
+    Here f and h are in GF(2)[x].
     """
-    Given f monic in F[x] and a,b in F with a nonzero, return the monic f(a*(x+b))/a^deg(f)
+    x = f.parent().gen()
+    if P[0]==1: # x=1, shift to 0
+        return point_multiplicity(f(x+1),h(x+1),[0,P[1]])
+    if P[1]==1: # z=1, shift to 0
+        return point_multiplicity(f+1+h,h,[P[0],0])
+    # Now P=[0,0]
+    if f[0]: return [0,0]
+    if [f[1],h[0]]!=[0,0]: return [1,0]
+    e=1; m=2
+    while e<=h.degree() or m<=f.degree():
+        c = [f[m],h[e]]
+        if c==[1,1]: return [m,-1]
+        if c==[0,1]: return [m,+1]
+        if c==[1,0]:
+            f += x**(m)+h*x**e
+        assert [f[m],h[e]]==[0,0]
+        m += 1
+        if f[m]: return [m,+1]
+        e += 1
+        m += 1
+
+def point_multiplicities(f,h):
+    r""" returns a list of up to 4 (P,[i,eps]) where i>0 is the multiplcity
+    of P on z^2+h(x)*z=f(x) and (for i even) eps is +1 or -1 according
+    as the point is split or not.
+
+    Here f and h are in GF(2)[x].
     """
-    return x_shift(scale(f,a),b)
+    res = [(P,point_multiplicity(f,h,P)) for P in [[0,0],[1,0],[0,1],[1,1]]]
+    return [m for m in res if m[1][0]]
 
-def expand1(f, alist):
+
+# The R() and r() functions are no longer used in the code but are
+# here since they are defined in the text.  Here we instead loop over
+# all roots (including infinity in the projective case) to compute the
+# f_terms for f in one of the Gamma or Delta sets.
+
+def R(j,f):
+    # set of roots of f of multiplicity j
+    return [a for a,e in f.roots() if e==j]
+
+def r(j,f):
+    if f.parent().ngens()==1: # inhomogeneous case
+        return len(R(j,f))
+    # else homogeneous case
+    x = polygen(f.base_ring())
+    f1 = f([x,1])
+    # the second term is 1 iff infinity has mult j
+    return r(j,f1) + int(f.degree()==j+f1.degree())
+
+def Rplus(j,f):
+    if j%2==1:
+       return R(j,f)
+    x = f.parent().gen()
+    return [a for a in R(j,f) if (f//(x-a)**j)(a).is_square()]
+
+def rplus(j,f):
+    if j%2==1:
+       return r(j,f)
+    if f.parent().ngens()==1:
+        return len(Rplus(j,f))
+    # homogeneous case
+    R1 = PolynomialRing(f.base_ring(),'x')
+    x = R1.gen()
+    f1 = f([x,1])
+    return len(Rplus(j,f1)) + int((f.degree()==j+f1.degree()) and (f1.leading_coefficient().is_square()))
+
+def Rminus(j,f):
+    if j%2==1:
+        return []
+    x = f.parent().gen()
+    return [a for a in R(j,f) if not (f//(x-a)**j)(a).is_square()]
+
+def rminus(j,f):
+    if j%2==1:
+       return 0
+    if f.parent().ngens()==1:
+        return len(Rminus(j,f))
+    # homogeneous case
+    R1 = PolynomialRing(f.base_ring(),'x')
+    x = R1.gen()
+    f1 = f([x,1])
+    return len(Rminus(j,f1)) + int((f.degree()==j+f1.degree()) and not (f1.leading_coefficient().is_square()))
+
+def affine(L,p):
+    """Returns linear combination of elements of the list L of length n,
+    with coefficients
+
+    [1-1/p, 1/p-1/p^2, ..., 1/p^(n-2)-1/p^(n-1), 1/p^(n-1)].
+
+    Works recursively according to the definition in section 3.4.
     """
-    for f monic in F[x] with next coefficient 0, return all affine (a,b)-transforms with a in alist
-    """
-    n = f.degree()
-    p = f.base_ring().cardinality()
-    if f[n-2]==0:
-        return [x_shift(f,b) for b in range(p)]
-    else:
-        return [affine_transform(f,a,b) for a in alist for b in range(p)]
-
-def make_gammas_even(n,p, restricted=False):
-    """Read from file "gamma{n}_{p}.out" and return the complete sets
-    Gamma(n,1), Gamma(n,u), for n even (when restricted=False), or
-    just the reduced ones when restricted=True.
-
-    Restricted means f = x^n+0*x^{n-1}+c*x^{n-2}+... with c in
-    {0,1,u}, representing an affine orbit of size p, p(p-1)/1,
-    p(p-1)/2 respectively.
-
-    """
-    assert n%2==0
-    assert n%p!=0 # not yet implemented
-    F = GF(p)
-    Fx = PolynomialRing(F, 'x')
-    u = a_nonsquare(F)
-    l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
-    gam_1 = []
-    gam_u = []
-    p12 = (p+1)//2
-    for coeffs in l1:
-        coeffs.reverse()
-        f = Fx(coeffs)
-        if restricted:
-            gam_1.append(f)
-        else:
-            gam_1 += expand1(f, range(1,p12))
-    for coeffs in lu:
-        coeffs.reverse()
-        f = Fx(coeffs)
-        if restricted:
-            gam_u.append(u*f)
-        else:
-            gam_u += [u*f1 for f1 in expand1(f, range(1,p12))]
-    return gam_1, gam_u
-
-def make_gammas_odd(n,p, restricted=False):
-    """Read from file "gamma{n}_{p}.out" and return the complete sets
-    Gamma(n,1), Gamma(n,u) for n odd.
-
-    Restricted means f = u*(x^n+0*x^{n-1}+c*x^{n-2}+...) with:
-
-    p=3 (mod 4): c in {0,1,u}, representing an affine orbit of size p, p(p-1)/1,
-    p(p-1)/2 respectively;
-
-    p=1 (mod 4): c in {0,1,u,u^2,u^3}, representing an affine orbit of size p, p(p-1)/4,
-    p(p-1)/4, p(p-1)/4, p(p-1)/4 respectively.
-
-    """
-    assert n%2==1
-    assert n%p!=0 # not yet implemented
-    F = GF(p)
-    Fx = PolynomialRing(F, 'x')
-    u = a_nonsquare(F)
-    l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
-    gam_1 = []
-    gam_u = []
-    p12 = (p+1)//2
-    squs = [(a*a)%p for a in range(1,p12)]
-    squs_mod = [a for a in squs if a < p12]
-    if p%4==3:
-        for coeffs in l1:
-            coeffs.reverse()
-            f = Fx(coeffs)
-            if restricted:
-                gam_1.append(u*f)
-            else:
-                gam_1 += [u*f1 for f1 in expand1(f, squs)]
-        for coeffs in lu:
-            coeffs.reverse()
-            f = Fx(coeffs)
-            if restricted:
-                gam_u.append(u*f)
-            else:
-                gam_u += [u*f1 for f1 in expand1(f, squs)]
-    else:
-        for coeffs in l1:
-            coeffs.reverse()
-            f = Fx(coeffs)
-            if restricted:
-                gam_1.append(u*f)
-                if coeffs[n-2]:
-                    gam_u.append(u*scale(f,u))
-            else:
-                flist = expand1(f, squs_mod)
-                gam_1 += flist
-                if coeffs[n-2]:
-                    gam_u += [u*scale(f1,u) for f1 in flist]
-        for coeffs in lu:
-            coeffs.reverse()
-            f = Fx(coeffs)
-            if restricted:
-                gam_u.append(u*f)
-                if coeffs[n-2]:
-                    gam_1.append(u*scale(f,u))
-            else:
-                flist = expand1(f, squs_mod)
-                gam_u += flist
-                if coeffs[n-2]:
-                    gam_1 += [u*scale(f1,u) for f1 in flist]
-    return gam_1, gam_u
-
-####################################################################################
-"""
-Below here is code for the now obsolete Delta sets
-"""
-#from sage.all import flatten
-#from basics import homog
-
-# def Delta(d,F=None):
-#     """Return a list of f of even degree d, homogeneous with no smooth
-#     points but not of the form u*h^2.  Includes scalings (the
-#     condition is invariant under scaling by squares).
-#     """
-#     if F==None or d%2==1 or d<6 :
-#        return []
-#     if F in ZZ:
-#         q = F
-#     else:
-#         q = F.cardinality()
-#     if (d==6 and q>11):
-#         return []
-#     if not (q,d) in Delta_dict:
-#         if q==2:
-#             Delta_dict[(q,d)] = Delta2(d)
-#             return Delta_dict[(q,d)]
-#         if F in ZZ:
-#             F = GF(q)
-#         print("Computing Delta({},{})".format(d,F))
-#         u = a_nonsquare(F)
-#         flist = homog(F,d) # up to scaling
-#         # consider both f and u*f
-#         D1 =  [f for f in flist if not is_square_homog(u*f) and no_smooth_points_homog(f)]
-#         D2 =  [u*f for f in flist if not is_square_homog(f) and no_smooth_points_homog(u*f)]
-#         # D1+D2 is the result up to scaling by squares.
-#         sq = [F(a)**2 for a in range(1,((q-1)//2)+1)]
-#         Delta_dict[(q,d)] = flatten([[a*f for f in D1+D2] for a in sq])
-#     return Delta_dict[(q,d)]
-
-# def Delta2(d):
-#     """Return a list of (f,h) homogeneous of degrees (d,<=(d/2)) with d even,
-#     such that z^2+h*z+f has no smooth points and either factors over
-#     F_2 with distinct factors or is orrediucible over F_4.
-#     """
-#     F2 = GF(2)
-#     Fxy = PolynomialRing(F2,['x','y'])
-#     D = [(f,h) for f in homog(F2,d)+[Fxy(0)] for h in homog(F2,d//2)]
-#     #print("{} (f,h) pairs in degree {}".format(len(D),d))
-#     D = [fh for fh in D if no_smooth_points_mod2(*fh)]
-#     #print("{} (f,h) pairs have no smooth points".format(len(D)))
-#     D = [fh for fh in D if nfactors_mod2(*fh,abs=False)==[1,1] or nfactors_mod2(*fh,abs=True)==[1]]
-#     #print("{} of those have are abs. irred.  or split over F2".format(len(D)))
-#     return D
-
-# def show_Delta(verbose=False):
-#     for k in sorted(Delta_dict.keys()):
-#         if verbose:
-#             print("(p,d)={}: {}".format(k,Delta_dict[k]))
-#         else:
-#             print("(p,d)={}: {} elements".format(k,len(Delta_dict[k])))
-
-###############################################################################################
-"""
-Utilities for displaying the dicts:
-"""
-
-def show1dict(d,dn):
-    print(dn+":")
-    for k in sorted(d.keys()):
-        print("\t(i,p)={}: {}".format(k,d[k]))
-
-def show_beta_dicts():
-    show1dict(beta_0_dict, "beta(n,p)")
-    show1dict(beta_plus_dict, "beta(n,1)")
-    show1dict(beta_minus_dict, "beta(n,u)")
-
-def show_alpha_dicts():
-    show1dict(alpha_0_dict, "alpha(n,p)")
-    show1dict(alpha_plus_dict, "alpha(n,1)")
-    show1dict(alpha_minus_dict, "alpha(n,u)")
-
-def show_dicts():
-    show_alpha_dicts()
-    show_beta_dicts()
-    show_Gamma()
-
-"""
-Helper functions
-"""
+    if len(L)==1:
+        return L[0]
+    return ((p-1)*L[0]+affine(L[1:],p))/p
 
 def beta_eps(eps):
     """ Return the function beta(-,u), beta(-,p) or beta(-,1) according to eps=-1,0,+1.
@@ -827,10 +823,6 @@ def beta(i,p=pp,v=None):
     """
     return (beta_plus(i,p,v)+beta_minus(i,p,v))/2
 
-"""
-The main recursive function to compute alpha_plus, i.e. alpha(n,1; p)
-"""
-
 def alpha_plus(i,p=pp,v=None, verbose=False):
     """alpha(i,1; p).
 
@@ -893,10 +885,6 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
             alpha_plus_dict[(i,p)] = b
     return b
 
-"""
-The main recursive function to compute alpha_minus, i.e. alpha(n,u; p)
-"""
-
 def alpha_minus(i,p=pp,v=None, verbose=False):
     """alpha(i,u; p).
 
@@ -952,10 +940,6 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
             alpha_minus_dict[(i,p)] = b
     return b
 
-"""
-The main recursive function to compute alpha_0, i.e. alpha(n,p; p)
-"""
-
 def alpha_0(i,p=pp,v=None, verbose=False):
     """alpha(i,p; p).
 
@@ -996,10 +980,6 @@ def alpha_0(i,p=pp,v=None, verbose=False):
                 print("setting alpha_0({},{})".format(i,p))
             alpha_0_dict[(i,p)] = b
     return b
-
-"""
-The main recursive function to compute beta_0, i.e. beta(n,p; p)
-"""
 
 def beta_0(i,p=pp,v=None, verbose=False):
     """ beta(i,p; p).
@@ -1053,10 +1033,6 @@ def beta_0(i,p=pp,v=None, verbose=False):
             beta_0_dict[(i,p)] = a
     return a
 
-"""
-The main recursive function to compute beta_plus, i.e. beta(n,1; p)
-"""
-
 def beta_plus(i,p=pp,v=None, verbose=False):
     """ beta(i,1; p).
 
@@ -1108,10 +1084,6 @@ def beta_plus(i,p=pp,v=None, verbose=False):
                 print("setting beta_plus({},{})".format(i,p))
             beta_plus_dict[(i,p)] = a
     return a
-
-"""
-The main recursive function to compute beta_minus, i.e. beta(n,u; p)
-"""
 
 def beta_minus(i,p=pp,v=None, verbose=False):
     """ beta(i,u; p).
@@ -1166,9 +1138,25 @@ def beta_minus(i,p=pp,v=None, verbose=False):
             beta_minus_dict[(i,p)] = a
     return a
 
-"""
-Compute and cache all alpha(n,eps; p).  Recursively computes or looks up alpha(m,eps'; p) and beta(m,eps'; p) for m<n
-"""
+def make_betas(i, p=pp, verbose=False):
+    """Compute (and optionally display) all 3 betas with subscript i
+    after first computing all betas and alphas with smaller
+    subscripts.
+    """
+    if verbose:
+        print("Making all beta_{} for p={}".format(i,p))
+    for j in range(3,i):
+        make_betas(j,p)
+        make_alphas(j,p)
+    a = beta_plus(i,p)
+    if verbose:
+        print("beta_plus({},{}) = {}".format(i,p,a))
+    a = beta_minus(i,p)
+    if verbose:
+        print("beta_minus({},{}) = {}".format(i,p,a))
+    a = beta_0(i,p)
+    if verbose:
+        print("beta_0({},{}) = {}".format(i,p,a))
 
 def make_alphas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 alphas with subscript i
@@ -1188,37 +1176,11 @@ def make_alphas(i, p=pp, verbose=False):
     if verbose:
         print("alpha_0({},{}) = {}".format(i,p,b))
 
-"""
-Compute and cache all beta(n,eps; p).  Recursively computes or looks up alpha(m,eps'; p) and beta(m,eps'; p) for m<n
-"""
-
-def make_betas(i, p=pp, verbose=False):
-    """Compute (and optionally display) all 3 betas with subscript i
-    after first computing all betas and alphas with smaller
-    subscripts.
-    """
-    if verbose:
-        print("Making all beta({},eps) for p={}".format(i,p))
-    for j in range(3,i):
-        make_betas(j,p)
-        make_alphas(j,p)
-    a = beta_plus(i,p)
-    if verbose:
-        print("beta({},1; {}) = {}".format(i,p,a))
-    a = beta_minus(i,p)
-    if verbose:
-        print("beta(({},u; {}) = {}".format(i,p,a))
-    a = beta_0(i,p)
-    if verbose:
-        print("beta({}, p;{}) = {}".format(i,p,a))
-
-"""
-Utilities for checking any alpha or beta value against expected (i.e. previously computed and written in here)
-"""
-
 def check_value(ab,i,eps,val,p=pp):
     myval = [beta_minus,beta_0,beta_plus][eps+1](i,p) if ab=="beta" else [alpha_minus,alpha_0,alpha_plus][eps+1](i,p)
+    oldsup = ["-","0","+"][eps+1]
     sup = ["u","p","1"][eps+1]
+    oldsymb = "{}_{}^{}({})".format(ab,i,oldsup,p)
     symb = "{}({},{}; {})".format(ab,i,sup,p)
     if myval==val:
         print("{} OK".format(symb, p))
@@ -1315,20 +1277,85 @@ def check_ab(i=None):
     else:
         raise NotImplementedError("checks only implemented for i=3,4,5,6 so far")
 
-"""
-    Computing rho from alphas and betas
-"""
+
+# expressions in the formulas (Prop 3.5) linking mu_0 and mu_1 to each other.
+
+def mu0_term_1(g,p=pp):
+    """ The first term in the expression for mu_0(g).
+    """
+    return sum([phi_term(phi,"proj",True,p) for phi in Phi(g+1)])
+
+def mu0_term_2(g,p=pp):
+    """ The second term in the expression for mu_0(g).
+    """
+    F = GF(p) if p in ZZ else None
+    return sum([f_term(f,p) for f in Delta(2*g+2,F)])
+
+def mu1_term(g,p=pp):
+    """ The first term in the expression for mu_1(g).
+    """
+    return sum([phi_term(phi,"proj",False,p) for phi in Phi(2*g+2)])
+
+def old_mu01(g,p=pp):
+    """Return the pair mu_0(g), mu_1(g) by solving the linear equations
+    expressing each in terms of the other and the three additional
+    terms.
+
+    if A = mu0_term_1, B = mu0_term_2, C = mu1_term
+
+    then (Prop. 3.5)
+
+    mu0 = (p^(g+2)-1)/(2*p^(2*g+3)) * A + 1/p^(2*g+3) * (B + mu1)
+    mu1 = (p^(2*g+3)-1)/(p^(2*g+3)) * C + 1/p^(2*g+3) * mu0
+
+    so
+
+    mu0 * (1-1/p^(4*g+6)) = (p^(g+2)-1)/(2*p^(2*g+3)) * A + 1/p^(2*g+3) * B + (p^(2*g+3)-1)/(p^(4*g+6)) * C
+
+    """
+    # It is safest to make sure that these are computed at the start in the right order.
+    make_betas(2*g+2,p)
+    make_alphas(2*g+2, p)
+    A = mu0_term_1(g,p)
+    B = mu0_term_2(g,p)
+    C = mu1_term(g,p)
+    e = 3*g+5 if p==2 else 2*g+3
+    ans0 =  ((p**(g+2)-1)/(2*p**(2*g+3)) * A + B/p**e + (p**(2*g+3)-1)/(p**(4*g+6)) * C) / (1-1/p**(4*g+6))
+    ans1 =  ((p**(2*g+3)-1) * C + ans0) / p**(2*g+3)
+    assert ans0 == (p**(g+2)-1)/(2*p**(2*g+3)) * A +  B/p**e + ans1/p**(2*g+3)
+    return ans0, ans1
+
+def old_mu0(g,p=pp):
+    """ Return mu_0(g) for p an odd prime or generic.
+    """
+    return old_mu01(g,p)[0]
+
+def old_mu1(g,p=pp):
+    """ Return mu_1(g) for p an odd prime or generic.
+    """
+    return old_mu01(g,p)[1]
+
+def old_rho(g,p=pp):
+    """ Return rho(g) for p an odd prime or generic.  This is the local density of soluble hyperelliptic curves of genus g>=1.  The generic formula is correct for sufficiently large p:
+
+    all p>2   for g=1;
+    all p>11  for g=2;
+    all p>?   for g=3, etc.
+    """
+    return 1 - old_mu0(g,p)
 
 def ie(a,b): return 1-(1-a)*(1-b)
 
 def rho_0(n,p=pp):
-    """Return rho(n,1; p) for p an odd prime or generic, n even.  This is the
+    """Return rho_0(n) for p an odd prime or generic, n even.  This is the
     *relative* local density of soluble y^2=f(x), restricted to primitive
     f.
 
     This is (a rearrangement of) Prop 3.13 of hyper.pdf.
     """
-    def term(i): # prob. soluble if deg(f mod p)=i
+    def term(i):
+        """ prob. soluble if deg(f mod p)=i
+        """
         if i%2:
             return ie(beta(n-i,p), alpha(i,p))
         else:
@@ -1337,14 +1364,57 @@ def rho_0(n,p=pp):
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
 
 def rho_1(n,p=pp):
-    """Return rho(n,u; p) for p an odd prime or generic, n even.  This is the
+    """Return rho_1(n) for p an odd prime or generic, n even.  This is the
     *relative* local density of soluble y^2=f(x), restricted to f with
     valuation 1.
+
+    This different from the formula give in Prop 3.23 of hyper.pdf,
+    which only involves the beta's.
     """
-    def term(i): # prob. soluble if deg(f/p mod p)=i
+    def term(i):
+        """ prob. soluble if deg(f/p mod p)=i
+        """
         return ie(beta_0(n-i,p), alpha_0(i,p))
+    # prob sol if f/p mod p is nonzero
 
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
+
+# def new_AB(g,p=pp):
+#     """ New formula for prob sol if f mod p is nonzero.
+#     """
+#     d=2*g+2
+#     def term(i):
+#         """ prob. soluble if deg(f mod p)=i
+#         """
+#         if i%2:
+#             return ie(beta(d-i,p), alpha(i,p))
+#         else:
+#             return (ie(beta_plus(d-i,p), alpha_plus(i,p))+ie(beta_minus(d-i,p), alpha_minus(i,p)))/2
+#     # prob sol if f mod p is nonzero
+#     t = (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
+#     return t
+
+# def new_C(g,p=pp):
+#     """ New formula for prob sol if f is 0 mod p but not mod p^2.
+#     """
+#     d=2*g+2
+#     def term(i):
+#         """ prob. soluble if deg(f/p mod p)=i
+#         """
+#         return ie(beta_0(d-i,p), alpha_0(i,p))
+#     # prob sol if f/p mod p is nonzero
+
+#     return (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
+
+def new_AB(g,p=pp):
+    """ New formula for prob sol if f mod p is nonzero.
+    """
+    return rho_0(2*g+2, p)
+
+def new_C(g,p=pp):
+    """ New formula for prob sol if f is 0 mod p but not mod p^2.
+    """
+    return rho_1(2*g+2, p)
 
 def rho(g,p=pp):
     """Return rho(g) for p an odd prime or generic.  This is the local
