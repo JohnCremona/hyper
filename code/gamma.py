@@ -8,6 +8,20 @@ from sage.all import (ZZ, GF, PolynomialRing, polygen, prod, save, load, flatten
                       xmrange_iter, srange, legendre_symbol, ProjectiveSpace)
 from basics import (monics, monics0, homog)
 
+"""
+Warning!  The keys to Gamma_plus_dict and Gamma_minus_dict are pairs (p,n), so
+
+   Gamma_plus_dict[(p,n)] = Gamma(n,1; p)
+   Gamma_minus_dict[(p,n)] = Gamma(n,u; p)
+
+BUT the functions which compute (or look up) the values are
+
+   Gamma_plus(n,p)
+   Gamma_minus(n,p)
+
+with the parameters in the opposite order.
+"""
+
 try:
     n = len(Gamma_plus_dict)
 except NameError:
@@ -476,11 +490,18 @@ def expand1(f, alist):
     else:
         return [affine_transform(f,a,b) for a in alist for b in range(p)]
 
-def make_gammas_even(n,p):
+def make_gammas_even(n,p, restricted=False):
     """Read from file "gamma{n}_{p}.out" and return the complete sets
-    Gamma(n,1), Gamma(n,u), for n even.
+    Gamma(n,1), Gamma(n,u), for n even (when restricted=False), or
+    just the reduced ones when restricted=True.
+
+    Restricted means f = x^n+0*x^{n-1}+c*x^{n-2}+... with c in
+    {0,1,u}, representing an affine orbit of size p, p(p-1)/1,
+    p(p-1)/2 respectively.
+
     """
     assert n%2==0
+    assert n%p!=0 # not yet implemented
     F = GF(p)
     Fx = PolynomialRing(F, 'x')
     u = a_nonsquare(F)
@@ -490,38 +511,85 @@ def make_gammas_even(n,p):
     p12 = (p+1)//2
     for coeffs in l1:
         coeffs.reverse()
-        gam_1 += expand1(Fx(coeffs), range(1,p12))
+        f = Fx(coeffs)
+        if restricted:
+            gam_1.append(f)
+        else:
+            gam_1 += expand1(f, range(1,p12))
     for coeffs in lu:
         coeffs.reverse()
-        gam_u += [u*f for f in expand1(Fx(coeffs), range(1,p12))]
+        f = Fx(coeffs)
+        if restricted:
+            gam_u.append(u*f)
+        else:
+            gam_u += [u*f1 for f1 in expand1(f, range(1,p12))]
     return gam_1, gam_u
 
-def make_gammas_odd(n,p):
-    """Read from file "gamma{n}_{p}.out" and return the complete set
-    Gamma(n,1), for n odd.
+def make_gammas_odd(n,p, restricted=False):
+    """Read from file "gamma{n}_{p}.out" and return the complete sets
+    Gamma(n,1), Gamma(n,u) for n odd.
+
+    Restricted means f = u*(x^n+0*x^{n-1}+c*x^{n-2}+...) with:
+
+    p=3 (mod 4): c in {0,1,u}, representing an affine orbit of size p, p(p-1)/1,
+    p(p-1)/2 respectively;
+
+    p=1 (mod 4): c in {0,1,u,u^2,u^3}, representing an affine orbit of size p, p(p-1)/4,
+    p(p-1)/4, p(p-1)/4, p(p-1)/4 respectively.
+
     """
     assert n%2==1
+    assert n%p!=0 # not yet implemented
     F = GF(p)
     Fx = PolynomialRing(F, 'x')
     u = a_nonsquare(F)
     l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
     gam_1 = []
+    gam_u = []
     p12 = (p+1)//2
     squs = [(a*a)%p for a in range(1,p12)]
     squs_mod = [a for a in squs if a < p12]
     if p%4==3:
         for coeffs in l1:
             coeffs.reverse()
-            gam_1 += expand1(Fx(coeffs), squs)
+            f = Fx(coeffs)
+            if restricted:
+                gam_1.append(u*f)
+            else:
+                gam_1 += [u*f1 for f1 in expand1(f, squs)]
+        for coeffs in lu:
+            coeffs.reverse()
+            f = Fx(coeffs)
+            if restricted:
+                gam_u.append(u*f)
+            else:
+                gam_u += [u*f1 for f1 in expand1(f, squs)]
     else:
         for coeffs in l1:
             coeffs.reverse()
-            gam_1 += expand1(Fx(coeffs), squs_mod)
+            f = Fx(coeffs)
+            if restricted:
+                gam_1.append(u*f)
+                if coeffs[n-2]:
+                    gam_u.append(u*scale(f,u))
+            else:
+                flist = expand1(f, squs_mod)
+                gam_1 += flist
+                if coeffs[n-2]:
+                    gam_u += [u*scale(f1,u) for f1 in flist]
         for coeffs in lu:
             coeffs.reverse()
-            if coeffs[n-2]:
-                gam_1 += [scale(f,u) for f in expand1(Fx(coeffs), squs_mod)]
-    return gam_1
+            f = Fx(coeffs)
+            if restricted:
+                gam_u.append(u*f)
+                if coeffs[n-2]:
+                    gam_1.append(u*scale(f,u))
+            else:
+                flist = expand1(f, squs_mod)
+                gam_u += flist
+                if coeffs[n-2]:
+                    gam_1 += [u*scale(f1,u) for f1 in flist]
+    return gam_1, gam_u
 
 """
 Below here is code for the now obsolete Delta sets

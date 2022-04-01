@@ -1,11 +1,24 @@
-from sage.all import (prod, polygen, infinity)
-from sage.all import (QQ, ZZ, GF, PolynomialRing)
-from basics import Qp,pp, signed_roots, affine
+from sage.all import (QQ, ZZ, GF, PolynomialRing, prod)
+from basics import Qp,pp, signed_roots, affine, point_multiplicities
 from fact_pat import (initialize_N_dict, lambda_A, lambda_P, Phi)
 from gamma import initialize_Gamma_dicts, Gamma_plus, Gamma_minus
 
+"""
+Translation into new notation:
+
+alpha_plus_dict[(n,p)]  = alpha(n,1; p)
+alpha_minus_dict[(n,p)] = alpha(n,u; p)
+alpha_0_dict[(n,p)]     = alpha(n,p; p)
+
+beta_plus_dict[(n,p)]  = beta(n,1; p)
+beta_minus_dict[(n,p)] = beta(n,u; p)
+beta_0_dict[(n,p)]     = beta(n,p; p)
+
+"""
+
 # Initialize dicts to store the betas and alphas but do not reset on reload!
 # The beta and alpha values for subscripts 0,1,2 are known directly.
+
 try:
     n = len(beta_0_dict)
 except NameError:
@@ -66,6 +79,10 @@ def initialize_all_dicts():
     initialize_Gamma_dicts()
     initialize_N_dict()
 
+"""
+Utilities for displaying the dicts:
+"""
+
 def show1dict(d,dn):
     print(dn+":")
     for k in sorted(d.keys()):
@@ -85,123 +102,9 @@ def show_dicts():
     show_alpha_dicts()
     show_beta_dicts()
 
-def x_multiplicity(f,h,x0=0):
-    r""" returns (i,eps) where i is the multiplcity of x=x0 on z^2+h(x)*z=f(x)
-    and (for i even and positive) eps is +1 or -1 according as the leading
-    quadratic is split or not.
-
-    Here f and h are in GF(2)[x].
-    """
-    x = f.parent().gen()
-    if x0!=0:
-        return x_multiplicity(f(x+x0),h(x+x0))
-    # Now x0=0
-    e=0; m=0
-    while True:
-        c = [f[m],h[e]]
-        if c==[1,1]: return [m,-1]
-        if c==[0,1]: return [m,+1]
-        if c==[1,0]:
-            f += x**m+h*x**e
-        assert [f[m],h[e]]==[0,0]
-        if f==h==0:
-            return infinity
-        m += 1
-        if f[m]: return [m,+1]
-        e += 1
-        m += 1
-        print(f,h)
-
-def point_multiplicity(f,h,P=[0,0]):
-    r""" returns (i,eps) where i is the multiplcity of P on z^2+h(x)*z=f(x)
-    and (for i even and positive) eps is +1 or -1 according as the
-    point is split or not.
-
-    Here f and h are in GF(2)[x].
-    """
-    x = f.parent().gen()
-    if P[0]==1: # x=1, shift to 0
-        return point_multiplicity(f(x+1),h(x+1),[0,P[1]])
-    if P[1]==1: # z=1, shift to 0
-        return point_multiplicity(f+1+h,h,[P[0],0])
-    # Now P=[0,0]
-    if f[0]: return [0,0]
-    if [f[1],h[0]]!=[0,0]: return [1,0]
-    e=1; m=2
-    while e<=h.degree() or m<=f.degree():
-        c = [f[m],h[e]]
-        if c==[1,1]: return [m,-1]
-        if c==[0,1]: return [m,+1]
-        if c==[1,0]:
-            f += x**(m)+h*x**e
-        assert [f[m],h[e]]==[0,0]
-        m += 1
-        if f[m]: return [m,+1]
-        e += 1
-        m += 1
-
-def point_multiplicities(f,h):
-    r""" returns a list of up to 4 (P,[i,eps]) where i>0 is the multiplcity
-    of P on z^2+h(x)*z=f(x) and (for i even) eps is +1 or -1 according
-    as the point is split or not.
-
-    Here f and h are in GF(2)[x].
-    """
-    res = [(P,point_multiplicity(f,h,P)) for P in [[0,0],[1,0],[0,1],[1,1]]]
-    return [m for m in res if m[1][0]]
-
-
-# The R() and r() functions are no longer used in the code but are
-# here since they are defined in the text.  Here we instead loop over
-# all roots (including infinity in the projective case) to compute the
-# f_terms for f in one of the Gamma sets.
-
-def R(j,f):
-    # set of roots of f of multiplicity j
-    return [a for a,e in f.roots() if e==j]
-
-def r(j,f):
-    if f.parent().ngens()==1: # inhomogeneous case
-        return len(R(j,f))
-    # else homogeneous case
-    x = polygen(f.base_ring())
-    f1 = f([x,1])
-    # the second term is 1 iff infinity has mult j
-    return r(j,f1) + int(f.degree()==j+f1.degree())
-
-def Rplus(j,f):
-    if j%2==1:
-       return R(j,f)
-    x = f.parent().gen()
-    return [a for a in R(j,f) if (f//(x-a)**j)(a).is_square()]
-
-def rplus(j,f):
-    if j%2==1:
-       return r(j,f)
-    if f.parent().ngens()==1:
-        return len(Rplus(j,f))
-    # homogeneous case
-    R1 = PolynomialRing(f.base_ring(),'x')
-    x = R1.gen()
-    f1 = f([x,1])
-    return len(Rplus(j,f1)) + int((f.degree()==j+f1.degree()) and (f1.leading_coefficient().is_square()))
-
-def Rminus(j,f):
-    if j%2==1:
-        return []
-    x = f.parent().gen()
-    return [a for a in R(j,f) if not (f//(x-a)**j)(a).is_square()]
-
-def rminus(j,f):
-    if j%2==1:
-       return 0
-    if f.parent().ngens()==1:
-        return len(Rminus(j,f))
-    # homogeneous case
-    R1 = PolynomialRing(f.base_ring(),'x')
-    x = R1.gen()
-    f1 = f([x,1])
-    return len(Rminus(j,f1)) + int((f.degree()==j+f1.degree()) and not (f1.leading_coefficient().is_square()))
+"""
+Helper functions
+"""
 
 def beta_eps(eps):
     """ Return the function beta(-,u), beta(-,p) or beta(-,1) according to eps=-1,0,+1.
@@ -267,6 +170,10 @@ def beta(i,p=pp,v=None):
     """
     return (beta_plus(i,p,v)+beta_minus(i,p,v))/2
 
+"""
+The main recursive function to compute alpha_plus, i.e. alpha(n,1; p)
+"""
+
 def alpha_plus(i,p=pp,v=None, verbose=False):
     """alpha(i,1; p).
 
@@ -329,6 +236,10 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
             alpha_plus_dict[(i,p)] = b
     return b
 
+"""
+The main recursive function to compute alpha_minus, i.e. alpha(n,u; p)
+"""
+
 def alpha_minus(i,p=pp,v=None, verbose=False):
     """alpha(i,u; p).
 
@@ -384,6 +295,10 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
             alpha_minus_dict[(i,p)] = b
     return b
 
+"""
+The main recursive function to compute alpha_0, i.e. alpha(n,p; p)
+"""
+
 def alpha_0(i,p=pp,v=None, verbose=False):
     """alpha(i,p; p).
 
@@ -424,6 +339,10 @@ def alpha_0(i,p=pp,v=None, verbose=False):
                 print("setting alpha_0({},{})".format(i,p))
             alpha_0_dict[(i,p)] = b
     return b
+
+"""
+The main recursive function to compute beta_0, i.e. beta(n,p; p)
+"""
 
 def beta_0(i,p=pp,v=None, verbose=False):
     """ beta(i,p; p).
@@ -477,6 +396,10 @@ def beta_0(i,p=pp,v=None, verbose=False):
             beta_0_dict[(i,p)] = a
     return a
 
+"""
+The main recursive function to compute beta_plus, i.e. beta(n,1; p)
+"""
+
 def beta_plus(i,p=pp,v=None, verbose=False):
     """ beta(i,1; p).
 
@@ -528,6 +451,10 @@ def beta_plus(i,p=pp,v=None, verbose=False):
                 print("setting beta_plus({},{})".format(i,p))
             beta_plus_dict[(i,p)] = a
     return a
+
+"""
+The main recursive function to compute beta_minus, i.e. beta(n,u; p)
+"""
 
 def beta_minus(i,p=pp,v=None, verbose=False):
     """ beta(i,u; p).
@@ -582,6 +509,32 @@ def beta_minus(i,p=pp,v=None, verbose=False):
             beta_minus_dict[(i,p)] = a
     return a
 
+"""
+Compute and cache all alpha(n,eps; p).  Recursively computes or looks up alpha(m,eps'; p) and beta(m,eps'; p) for m<n
+"""
+
+def make_alphas(i, p=pp, verbose=False):
+    """Compute (and optionally display) all 3 alphas with subscript i
+    after first computing all betas and alphas with smaller
+    subscripts.
+    """
+    for j in range(3,i):
+        make_betas(j,p)
+        make_alphas(j,p)
+    b = alpha_plus(i,p)
+    if verbose:
+        print("alpha_plus({},{}) = {}".format(i,p,b))
+    b = alpha_minus(i,p)
+    if verbose:
+        print("alpha_minus({},{}) = {}".format(i,p,b))
+    b = alpha_0(i,p)
+    if verbose:
+        print("alpha_0({},{}) = {}".format(i,p,b))
+
+"""
+Compute and cache all beta(n,eps; p).  Recursively computes or looks up alpha(m,eps'; p) and beta(m,eps'; p) for m<n
+"""
+
 def make_betas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 betas with subscript i
     after first computing all betas and alphas with smaller
@@ -602,29 +555,13 @@ def make_betas(i, p=pp, verbose=False):
     if verbose:
         print("beta_0({},{}) = {}".format(i,p,a))
 
-def make_alphas(i, p=pp, verbose=False):
-    """Compute (and optionally display) all 3 alphas with subscript i
-    after first computing all betas and alphas with smaller
-    subscripts.
-    """
-    for j in range(3,i):
-        make_betas(j,p)
-        make_alphas(j,p)
-    b = alpha_plus(i,p)
-    if verbose:
-        print("alpha_plus({},{}) = {}".format(i,p,b))
-    b = alpha_minus(i,p)
-    if verbose:
-        print("alpha_minus({},{}) = {}".format(i,p,b))
-    b = alpha_0(i,p)
-    if verbose:
-        print("alpha_0({},{}) = {}".format(i,p,b))
+"""
+Utilities for checking any alpha or beta value against expected (i.e. previously computed and written in here)
+"""
 
 def check_value(ab,i,eps,val,p=pp):
     myval = [beta_minus,beta_0,beta_plus][eps+1](i,p) if ab=="beta" else [alpha_minus,alpha_0,alpha_plus][eps+1](i,p)
-    #oldsup = ["-","0","+"][eps+1]
     sup = ["u","p","1"][eps+1]
-    #oldsymb = "{}_{}^{}({})".format(ab,i,oldsup,p)
     symb = "{}({},{}; {})".format(ab,i,sup,p)
     if myval==val:
         print("{} OK".format(symb, p))
@@ -721,86 +658,20 @@ def check_ab(i=None):
     else:
         raise NotImplementedError("checks only implemented for i=3,4,5,6 so far")
 
-
-# expressions in the formulas (Prop 3.5) linking mu_0 and mu_1 to each other.
-
-def mu0_term_1(g,p=pp):
-    """ The first term in the expression for mu_0(g).
-    """
-    return sum([phi_term(phi,"proj",True,p) for phi in Phi(g+1)])
-
-def mu0_term_2(g,p=pp):
-    """ The second term in the expression for mu_0(g).
-    """
-    F = GF(p) if p in ZZ else None
-    from gamma import Delta
-    return sum([f_term(f,p) for f in Delta(2*g+2,F)])
-
-def mu1_term(g,p=pp):
-    """ The first term in the expression for mu_1(g).
-    """
-    return sum([phi_term(phi,"proj",False,p) for phi in Phi(2*g+2)])
-
-def old_mu01(g,p=pp):
-    """Return the pair mu_0(g), mu_1(g) by solving the linear equations
-    expressing each in terms of the other and the three additional
-    terms.
-
-    if A = mu0_term_1, B = mu0_term_2, C = mu1_term
-
-    then (Prop. 3.5)
-
-    mu0 = (p^(g+2)-1)/(2*p^(2*g+3)) * A + 1/p^(2*g+3) * (B + mu1)
-    mu1 = (p^(2*g+3)-1)/(p^(2*g+3)) * C + 1/p^(2*g+3) * mu0
-
-    so
-
-    mu0 * (1-1/p^(4*g+6)) = (p^(g+2)-1)/(2*p^(2*g+3)) * A + 1/p^(2*g+3) * B + (p^(2*g+3)-1)/(p^(4*g+6)) * C
-
-    """
-    # It is safest to make sure that these are computed at the start in the right order.
-    make_betas(2*g+2,p)
-    make_alphas(2*g+2, p)
-    A = mu0_term_1(g,p)
-    B = mu0_term_2(g,p)
-    C = mu1_term(g,p)
-    e = 3*g+5 if p==2 else 2*g+3
-    ans0 =  ((p**(g+2)-1)/(2*p**(2*g+3)) * A + B/p**e + (p**(2*g+3)-1)/(p**(4*g+6)) * C) / (1-1/p**(4*g+6))
-    ans1 =  ((p**(2*g+3)-1) * C + ans0) / p**(2*g+3)
-    assert ans0 == (p**(g+2)-1)/(2*p**(2*g+3)) * A +  B/p**e + ans1/p**(2*g+3)
-    return ans0, ans1
-
-def old_mu0(g,p=pp):
-    """ Return mu_0(g) for p an odd prime or generic.
-    """
-    return old_mu01(g,p)[0]
-
-def old_mu1(g,p=pp):
-    """ Return mu_1(g) for p an odd prime or generic.
-    """
-    return old_mu01(g,p)[1]
-
-def old_rho(g,p=pp):
-    """ Return rho(g) for p an odd prime or generic.  This is the local density of soluble hyperelliptic curves of genus g>=1.  The generic formula is correct for sufficiently large p:
-
-    all p>2   for g=1;
-    all p>11  for g=2;
-    all p>?   for g=3, etc.
-    """
-    return 1 - old_mu0(g,p)
+"""
+    Computing rho from alphas and betas
+"""
 
 def ie(a,b): return 1-(1-a)*(1-b)
 
 def rho_0(n,p=pp):
-    """Return rho_0(n) for p an odd prime or generic, n even.  This is the
+    """Return rho(n,1; p) for p an odd prime or generic, n even.  This is the
     *relative* local density of soluble y^2=f(x), restricted to primitive
     f.
 
     This is (a rearrangement of) Prop 3.13 of hyper.pdf.
     """
-    def term(i):
-        """ prob. soluble if deg(f mod p)=i
-        """
+    def term(i): # prob. soluble if deg(f mod p)=i
         if i%2:
             return ie(beta(n-i,p), alpha(i,p))
         else:
@@ -809,57 +680,14 @@ def rho_0(n,p=pp):
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
 
 def rho_1(n,p=pp):
-    """Return rho_1(n) for p an odd prime or generic, n even.  This is the
+    """Return rho(n,u; p) for p an odd prime or generic, n even.  This is the
     *relative* local density of soluble y^2=f(x), restricted to f with
     valuation 1.
-
-    This different from the formula give in Prop 3.23 of hyper.pdf,
-    which only involves the beta's.
     """
-    def term(i):
-        """ prob. soluble if deg(f/p mod p)=i
-        """
+    def term(i): # prob. soluble if deg(f/p mod p)=i
         return ie(beta_0(n-i,p), alpha_0(i,p))
-    # prob sol if f/p mod p is nonzero
 
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
-
-# def new_AB(g,p=pp):
-#     """ New formula for prob sol if f mod p is nonzero.
-#     """
-#     d=2*g+2
-#     def term(i):
-#         """ prob. soluble if deg(f mod p)=i
-#         """
-#         if i%2:
-#             return ie(beta(d-i,p), alpha(i,p))
-#         else:
-#             return (ie(beta_plus(d-i,p), alpha_plus(i,p))+ie(beta_minus(d-i,p), alpha_minus(i,p)))/2
-#     # prob sol if f mod p is nonzero
-#     t = (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
-#     return t
-
-# def new_C(g,p=pp):
-#     """ New formula for prob sol if f is 0 mod p but not mod p^2.
-#     """
-#     d=2*g+2
-#     def term(i):
-#         """ prob. soluble if deg(f/p mod p)=i
-#         """
-#         return ie(beta_0(d-i,p), alpha_0(i,p))
-#     # prob sol if f/p mod p is nonzero
-
-#     return (p-1)*sum([term(i)*p**i for i in range(d+1)])/p**(d+1)
-
-def new_AB(g,p=pp):
-    """ New formula for prob sol if f mod p is nonzero.
-    """
-    return rho_0(2*g+2, p)
-
-def new_C(g,p=pp):
-    """ New formula for prob sol if f is 0 mod p but not mod p^2.
-    """
-    return rho_1(2*g+2, p)
 
 def rho(g,p=pp):
     """Return rho(g) for p an odd prime or generic.  This is the local

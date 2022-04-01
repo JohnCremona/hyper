@@ -117,3 +117,68 @@ def partitions(n, k): # into exactly k non-negative ordered summands
         return [[0 for _ in range(k)]]
     return sum([[[a]+s for s in partitions(n-a,k-1)] for a in range(n+1)], [])
 
+def x_multiplicity(f,h,x0=0):
+    r""" returns (i,eps) where i is the multiplcity of x=x0 on z^2+h(x)*z=f(x)
+    and (for i even and positive) eps is +1 or -1 according as the leading
+    quadratic is split or not.
+
+    Here f and h are in GF(2)[x].
+    """
+    x = f.parent().gen()
+    if x0!=0:
+        return x_multiplicity(f(x+x0),h(x+x0))
+    # Now x0=0
+    e=0; m=0
+    while True:
+        c = [f[m],h[e]]
+        if c==[1,1]: return [m,-1]
+        if c==[0,1]: return [m,+1]
+        if c==[1,0]:
+            f += x**m+h*x**e
+        assert [f[m],h[e]]==[0,0]
+        if f==h==0:
+            return infinity
+        m += 1
+        if f[m]: return [m,+1]
+        e += 1
+        m += 1
+        print(f,h)
+
+def point_multiplicity(f,h,P=[0,0]):
+    r""" returns (i,eps) where i is the multiplcity of P on z^2+h(x)*z=f(x)
+    and (for i even and positive) eps is +1 or -1 according as the
+    point is split or not.
+
+    Here f and h are in GF(2)[x].
+    """
+    x = f.parent().gen()
+    if P[0]==1: # x=1, shift to 0
+        return point_multiplicity(f(x+1),h(x+1),[0,P[1]])
+    if P[1]==1: # z=1, shift to 0
+        return point_multiplicity(f+1+h,h,[P[0],0])
+    # Now P=[0,0]
+    if f[0]: return [0,0]
+    if [f[1],h[0]]!=[0,0]: return [1,0]
+    e=1; m=2
+    while e<=h.degree() or m<=f.degree():
+        c = [f[m],h[e]]
+        if c==[1,1]: return [m,-1]
+        if c==[0,1]: return [m,+1]
+        if c==[1,0]:
+            f += x**(m)+h*x**e
+        assert [f[m],h[e]]==[0,0]
+        m += 1
+        if f[m]: return [m,+1]
+        e += 1
+        m += 1
+
+def point_multiplicities(f,h):
+    r""" returns a list of up to 4 (P,[i,eps]) where i>0 is the multiplcity
+    of P on z^2+h(x)*z=f(x) and (for i even) eps is +1 or -1 according
+    as the point is split or not.
+
+    Here f and h are in GF(2)[x].
+    """
+    res = [(P,point_multiplicity(f,h,P)) for P in [[0,0],[1,0],[0,1],[1,1]]]
+    return [m for m in res if m[1][0]]
+
