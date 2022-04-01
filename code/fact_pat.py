@@ -16,9 +16,10 @@ def initialize_N_dict():
 def N(j, p=pp):
     """The number of degree j monic irreducibles in GF(p)[X].
     """
+    global N_dict
     j = ZZ(j)
     if not j in N_dict:
-        N_dict[j] = sum([moebius(d)*p**(j//d) for d in j.divisors()]) / j
+        N_dict[j] = sum([moebius(d)*p**(j//d) for d in j.divisors()]) // j
     return N_dict[j]
 
 def Ndash(j, p=pp):
@@ -60,7 +61,7 @@ def lambda_helper(phi, NN, p=pp):
     """
     d = deg_fp(phi)
     return prod([prod([NN(j, p)-i for i in
-                       range(m1(phi,j))])/prod([factorial(m2(phi,[j,i]))
+                       range(m1(phi,j))])//prod([factorial(m2(phi,[j,i]))
                                                 for i in range(1,d+1)]) for j in range(1,d+1)])
 
 def number_of_monics_with_splitting_type(phi, p=pp):
@@ -72,13 +73,13 @@ def lambda_A(phi, p=pp):
     """ The probability that a monic polynomial of degree deg(phi) has factorization pattern phi.
     """
     d = deg_fp(phi)
-    return number_of_monics_with_splitting_type(phi, p) / p**d
+    return number_of_monics_with_splitting_type(phi, p) // p**d
 
 def lambda_P(phi, p=pp):
     """ The probability that a homogeneous polynomial of degree deg(phi) has factorization pattern phi.
     """
     d = deg_fp(phi)
-    return lambda_helper(phi, Ndash, p) * (p-1)/ (p**(d+1)-1)
+    return lambda_helper(phi, Ndash, p) * (p-1)// (p**(d+1)-1)
 
 def split_factorizations(d):
     """List of factorization patterns in degree d in which all factors are
