@@ -107,6 +107,7 @@ int main (int argc, char *argv[])
                                   xnptless2 += p2;
                                 else
                                   {
+                                    xnptless1u ++;
                                     xnptless2  += p4;
                                     xnptless2u += p4;
                                   }
@@ -125,6 +126,7 @@ int main (int argc, char *argv[])
                                   xnptless2u += p2;
                                 else
                                   {
+                                    xnptless1 ++;
                                     xnptless2  += p4;
                                     xnptless2u += p4;
                                   }
