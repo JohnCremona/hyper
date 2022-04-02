@@ -1254,6 +1254,7 @@ def read_gamma_c_output(n, p, u, fname):
             assert coeffs[0]==1
             assert coeffs[1]==0
             assert coeffs[2] in [0,1,u]
+            coeffs.reverse()
             if c=="1":
                 list_1.append(coeffs)
             else:
@@ -1311,19 +1312,11 @@ def make_gammas_even(n,p, restricted=False):
     gam_u = []
     p12 = (p+1)//2
     for coeffs in l1:
-        coeffs.reverse()
         f = Fx(coeffs)
-        if restricted:
-            gam_1.append(f)
-        else:
-            gam_1 += expand1(f, range(1,p12))
+        gam_1 += ([f] if restricted else expand1(f, range(1,p12)))
     for coeffs in lu:
-        coeffs.reverse()
         f = Fx(coeffs)
-        if restricted:
-            gam_u.append(u*f)
-        else:
-            gam_u += [u*f1 for f1 in expand1(f, range(1,p12))]
+        gam_u += ([u*f] if restricted else [u*f1 for f1 in expand1(f, range(1,p12))])
     return gam_1, gam_u
 
 def make_gammas_odd(n,p, restricted=False):
@@ -1345,51 +1338,31 @@ def make_gammas_odd(n,p, restricted=False):
     Fx = PolynomialRing(F, 'x')
     u = a_nonsquare(F)
     l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
+    l1 = [Fx(coeffs) for coeffs in l1]
+    lu = [Fx(coeffs) for coeffs in lu]
     gam_1 = []
     gam_u = []
     p12 = (p+1)//2
     squs = [(a*a)%p for a in range(1,p12)]
     squs_mod = [a for a in squs if a < p12]
     if p%4==3:
-        for coeffs in l1:
-            coeffs.reverse()
-            f = Fx(coeffs)
-            if restricted:
-                gam_1.append(u*f)
-            else:
-                gam_1 += [u*f1 for f1 in expand1(f, squs)]
-        for coeffs in lu:
-            coeffs.reverse()
-            f = Fx(coeffs)
-            if restricted:
-                gam_u.append(u*f)
-            else:
-                gam_u += [u*f1 for f1 in expand1(f, squs)]
+        for f in l1:
+            flist = [f] if restricted else expand1(f, squs)
+            gam_1 += flist
+        for f in lu:
+            flist = [f] if restricted else expand1(f, squs)
+            gam_u += [u*f1 for f1 in flist]
     else:
-        for coeffs in l1:
-            coeffs.reverse()
-            f = Fx(coeffs)
-            if restricted:
-                gam_1.append(u*f)
-                if coeffs[n-2]:
-                    gam_u.append(u*scale(f,u))
-            else:
-                flist = expand1(f, squs_mod)
-                gam_1 += flist
-                if coeffs[n-2]:
-                    gam_u += [u*scale(f1,u) for f1 in flist]
-        for coeffs in lu:
-            coeffs.reverse()
-            f = Fx(coeffs)
-            if restricted:
-                gam_u.append(u*f)
-                if coeffs[n-2]:
-                    gam_1.append(u*scale(f,u))
-            else:
-                flist = expand1(f, squs_mod)
-                gam_u += flist
-                if coeffs[n-2]:
-                    gam_1 += [u*scale(f1,u) for f1 in flist]
+        for f in l1:
+            flist = [f] if restricted else expand1(f, squs_mod)
+            gam_1 += flist
+            if f[n-2]:
+                gam_u += [u*scale(f1,u) for f1 in flist]
+        for f in lu:
+            flist = [f] if restricted else expand1(f, squs_mod)
+            gam_u += [u*f1 for f1 in flist]
+            if f[n-2]:
+                gam_1 += [scale(f1,u) for f1 in flist]
     return gam_1, gam_u
 
 
