@@ -501,7 +501,7 @@ def beta_eps(eps):
         return beta
 
 def f_term(f,p=pp):
-    """Helper function for alpha(-,eps), mu_0.  In the paper this is
+    """Helper function for alpha(-,eps).  In the paper this is
     expressed differently, as a double product over j up to the degree
     and eps, with multiplicities.  Here we just take the product over
     all roots.
@@ -514,10 +514,18 @@ def f_term(f,p=pp):
     """
     if p==pp: # will not be called in this case anyway
         return 0
-    return prod([(1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f)])
+    return prod((1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f))
+
+def sum_f_terms(flist, p=pp):
+    """
+    Sum of f_term(f,p) over f in flist
+    """
+    if p==pp: # will not be called in this case anyway
+        return 0
+    return sum(f_term(f, p) for f in flist)
 
 def fh_term(f,h):
-    """Helper function for alpha(-,eps), mu_0 in case p=2.  In the paper
+    """Helper function for alpha(-,eps) in case p=2.  In the paper
     this is expressed differently, as a double product over j up to
     the degree and eps, with multiplicities.  Here we just take the
     product over all roots.
@@ -531,20 +539,26 @@ def fh_term(f,h):
     """
     return prod([(1-beta_eps(eps)(j,2)) for P,(j,eps) in point_multiplicities(f,h)])
 
-def phi_term(phi, A_or_P, double, p, v=None):
-    """Helper function for alpha(-,p), alpha(-,u), mu_0, mu_1.
+def sum_fh_terms(fhlist):
+    """
+    Sum of fh_term(f,h) over (f,h) in fhlist
+    """
+    return sum(fh_term(f,h) for f,h in fhlist)
 
-    The first two use A_or_P="affine" to use lambda_A while the others
-    use "proj" to get lambda_P.
+def phi_term(phi, double, p, v=None):
+    """Helper function for alpha(-,p), alpha(-,u).
 
-    alpha(-,u) and mu_0 have double=True which uses beta(2*e,u) for (1,e) in phi.
+    alpha(-,u) has double=True which uses beta(2*e,u) for (1,e) in phi.
 
-    alpha(-,p) and mu_1 have double=False which uses beta(e,p) for (1,e) in phi.
+    alpha(-,p) has double=False which uses beta(e,p) for (1,e) in phi.
 
     """
-    lam = lambda_A(phi,p) if A_or_P=="affine" else lambda_P(phi,p)
-    al = (lambda i: beta_minus(2*i,p,v)) if double else (lambda i: beta_0(i,p,v))
-    return lam * prod([1-al(e) for d,e in phi if d==1])
+    be = (lambda i: beta_minus(2*i,p,v)) if double else (lambda i: beta_0(i,p,v))
+    return lambda_A(phi,p) * prod(1-be(e) for d,e in phi if d==1)
+
+def sum_phi_terms(i, double, p, v):
+    j = i//2 if double else i
+    return sum(phi_term(phi, double, p, v) for phi in Phi(j))
 
 def alpha(i,p=pp,v=None):
     """ Average of alpha(i,1) and alpha(i,u)
@@ -584,7 +598,7 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
         pass
     make_alphas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "bp_{}_{}".format(i,p)
+    v0 = "ap_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -598,25 +612,25 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
     G = Gamma_plus(i,Fp)
     if p==2:
         e = (3*i+1)//2 if i%2 else 3*i//2
-        b = 1 - sum([fh_term(f,h) for f,h in G])/p**e
+        a = 1 - sum_fh_terms(G)/p**e
     else:
-        b = 1 - sum([f_term(f,p) for f in G])/p**i
+        a = 1 - sum_f_terms(G,p)/p**i
 
     try:
-        b=F(b)
+        a = F(a)
         if verbose: print("setting alpha_plus({},{})".format(i,p))
-        alpha_plus_dict[(i,p)] = b
+        alpha_plus_dict[(i,p)] = a
     except (ValueError, TypeError):
-        # b is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,b))
-        if str(b.parent().gen())==v0:
-            r,s = b.list()
-            b = r/(1-s)
+        # a is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,a))
+        if str(a.parent().gen())==v0:
+            r,s = a.list()
+            a = r/(1-s)
             if verbose:
                 print("setting alpha_plus({},{})".format(i,p))
-                print("{}={}".format(v0,b))
-            alpha_plus_dict[(i,p)] = b
-    return b
+                print("{}={}".format(v0,a))
+            alpha_plus_dict[(i,p)] = a
+    return a
 
 def alpha_minus(i,p=pp,v=None, verbose=False):
     """alpha(i,u; p).
@@ -628,15 +642,15 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
     except KeyError:
         if i<3:
             if verbose: print("setting alpha_minus({},{})".format(i,p))
-            b = alpha_minus_dict[(i,p)] = [0,1,p/(p+1)][i]
-            return b
+            a = alpha_minus_dict[(i,p)] = [0,1,p/(p+1)][i]
+            return a
     if i%2==1:
         if verbose: print("setting alpha_minus({},{})".format(i,p))
-        b = alpha_minus_dict[(i,p)] = alpha_plus(i,p,v)
-        return b
+        a = alpha_minus_dict[(i,p)] = alpha_plus(i,p,v)
+        return a
     make_alphas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "bm_{}_{}".format(i,p)
+    v0 = "am_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -649,29 +663,26 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
     i2 = i//2
     Fp = GF(p) if p in ZZ else None
     G = Gamma_minus(i,Fp)
+    a = 1 - sum_phi_terms(i,True,p,v) / p**i2
     if p==2:
-        b = ( 1
-              - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p**i2
-              - sum([fh_term(f,h) for f,h in G]) / p**((3*i)//2))
+        a = a - sum_fh_terms(G) / p**(3*i2)
     else:
-        b = ( 1
-              - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p**i2
-              - sum([f_term(f,p) for f in G]) / p**i)
+        a = a - sum_f_terms(G,p) / p**i
     try:
-        b=F(b)
+        a = F(a)
         if verbose: print("setting alpha_minus({},{})".format(i,p))
-        alpha_minus_dict[(i,p)] = b
+        alpha_minus_dict[(i,p)] = a
     except (ValueError, TypeError):
-        # b is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,b))
-        if str(b.parent().gen())==v0:
-            r,s = b.list()
-            b = r/(1-s)
+        # a is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,a))
+        if str(a.parent().gen())==v0:
+            r,s = a.list()
+            a = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,b))
+                print("{}={}".format(v0,a))
                 print("setting alpha_minus({},{})".format(i,p))
-            alpha_minus_dict[(i,p)] = b
-    return b
+            alpha_minus_dict[(i,p)] = a
+    return a
 
 def alpha_0(i,p=pp,v=None, verbose=False):
     """alpha(i,p; p).
@@ -683,11 +694,11 @@ def alpha_0(i,p=pp,v=None, verbose=False):
     except KeyError:
         if i<3:
             if verbose: print("setting alpha_0({},{})".format(i,p))
-            b =  alpha_0_dict[(i,p)] = [0,1,1/2][i]
-            return b
+            a =  alpha_0_dict[(i,p)] = [0,1,1/2][i]
+            return a
     make_alphas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "b0_{}_{}".format(i,p)
+    v0 = "a0_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -697,22 +708,22 @@ def alpha_0(i,p=pp,v=None, verbose=False):
             return PolynomialRing(F,v0).gen()
     # use Prop 3.3 (iii)
     if verbose: print("Computing alpha_0({},{})".format(i,p))
-    b = 1 - sum([phi_term(phi,"affine",False,p,v) for phi in Phi(i)])
+    a = 1 - sum_phi_terms(i,False,p,v)
     try:
-        b=F(b)
+        a = F(a)
         if verbose: print("setting alpha_0({},{})".format(i,p))
-        alpha_0_dict[(i,p)] = b
+        alpha_0_dict[(i,p)] = a
     except (ValueError, TypeError):
-        # b is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,b))
-        if str(b.parent().gen())==v0:
-            r,s = b.list()
-            b = r/(1-s)
+        # a is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,a))
+        if str(a.parent().gen())==v0:
+            r,s = a.list()
+            a = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,b))
+                print("{}={}".format(v0,a))
                 print("setting alpha_0({},{})".format(i,p))
-            alpha_0_dict[(i,p)] = b
-    return b
+            alpha_0_dict[(i,p)] = a
+    return a
 
 def beta_0(i,p=pp,v=None, verbose=False):
     """ beta(i,p; p).
@@ -727,7 +738,7 @@ def beta_0(i,p=pp,v=None, verbose=False):
             a = beta_0_dict[(i,p)] = [0,1,1/2][i]
             return a
     F = Qp if p==pp else QQ
-    v0 = "a0_{}_{}".format(i,p)
+    v0 = "b0_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -749,22 +760,22 @@ def beta_0(i,p=pp,v=None, verbose=False):
     else:
        blist += [alpha(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
-    a = affine(blist,p)
+    b = affine(blist,p)
     try:
-        a=F(a)
+        b = F(b)
         if verbose: print("setting beta_0({},{})".format(i,p))
-        beta_0_dict[(i,p)] = a
+        beta_0_dict[(i,p)] = b
     except (ValueError, TypeError):
-        # a is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,a))
-        if str(a.parent().gen())==v0:
-            r,s = a.list()
-            a = r/(1-s)
+        # b is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,b))
+        if str(b.parent().gen())==v0:
+            r,s = b.list()
+            b = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,a))
+                print("{}={}".format(v0,b))
                 print("setting beta_0({},{})".format(i,p))
-            beta_0_dict[(i,p)] = a
-    return a
+            beta_0_dict[(i,p)] = b
+    return b
 
 def beta_plus(i,p=pp,v=None, verbose=False):
     """ beta(i,1; p).
@@ -776,11 +787,11 @@ def beta_plus(i,p=pp,v=None, verbose=False):
     except KeyError:
         if i<3:
             if verbose: print("setting beta_plus({},{})".format(i,p))
-            a = beta_plus_dict[(i,p)] = [1,1,1/p][i]
-            return a
+            b = beta_plus_dict[(i,p)] = [1,1,1/p][i]
+            return b
     make_betas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "ap_{}_{}".format(i,p)
+    v0 = "bp_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -801,22 +812,22 @@ def beta_plus(i,p=pp,v=None, verbose=False):
     else:
        blist += [alpha_0(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
-    a = affine(blist,p)
+    b = affine(blist,p)
     try:
-        a=F(a)
+        b = F(b)
         if verbose: print("setting beta_plus({},{})".format(i,p))
-        beta_plus_dict[(i,p)] = a
+        beta_plus_dict[(i,p)] = b
     except (ValueError, TypeError):
-        # a is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,a))
-        if str(a.parent().gen())==v0:
-            r,s = a.list()
-            a = r/(1-s)
+        # b is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,b))
+        if str(b.parent().gen())==v0:
+            r,s = b.list()
+            b = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,a))
+                print("{}={}".format(v0,b))
                 print("setting beta_plus({},{})".format(i,p))
-            beta_plus_dict[(i,p)] = a
-    return a
+            beta_plus_dict[(i,p)] = b
+    return b
 
 def beta_minus(i,p=pp,v=None, verbose=False):
     """ beta(i,u; p).
@@ -828,15 +839,15 @@ def beta_minus(i,p=pp,v=None, verbose=False):
     except KeyError:
         if i<3:
             if verbose: print("setting beta_minus({},{})".format(i,p))
-            a = beta_minus_dict[(i,p)] = [0,1,1/(p+1)][i]
-            return a
+            b = beta_minus_dict[(i,p)] = [0,1,1/(p+1)][i]
+            return b
     if i%2==1:
         if verbose: print("setting beta_minus({},{})".format(i,p))
         beta_minus_dict[(i,p)] = beta_plus(i,p)
         return beta_minus_dict[(i,p)]
     make_betas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "am_{}_{}".format(i,p)
+    v0 = "bm_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -854,22 +865,22 @@ def beta_minus(i,p=pp,v=None, verbose=False):
          blist += [alpha(k,p,v) for k in range(j,-1,-1)]
     blist += [alpha_minus(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
-    a = affine(blist,p)
+    b = affine(blist,p)
     try:
-        a=F(a)
+        b = F(b)
         if verbose: print("setting beta_minus({},{})".format(i,p))
-        beta_minus_dict[(i,p)] = a
+        beta_minus_dict[(i,p)] = b
     except (ValueError, TypeError):
-        # a is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,a))
-        if str(a.parent().gen())==v0:
-            r,s = a.list()
-            a = r/(1-s)
+        # b is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,b))
+        if str(b.parent().gen())==v0:
+            r,s = b.list()
+            b = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,a))
+                print("{}={}".format(v0,b))
                 print("setting beta_minus({},{})".format(i,p))
-            beta_minus_dict[(i,p)] = a
-    return a
+            beta_minus_dict[(i,p)] = b
+    return b
 
 def make_betas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 betas with subscript i
@@ -881,15 +892,15 @@ def make_betas(i, p=pp, verbose=False):
     for j in range(3,i):
         make_betas(j,p)
         make_alphas(j,p)
-    a = beta_plus(i,p)
+    b = beta_plus(i,p)
     if verbose:
-        print("beta_plus({},{}) = {}".format(i,p,a))
-    a = beta_minus(i,p)
+        print("beta_plus({},{}) = {}".format(i,p,b))
+    b = beta_minus(i,p)
     if verbose:
-        print("beta_minus({},{}) = {}".format(i,p,a))
-    a = beta_0(i,p)
+        print("beta_minus({},{}) = {}".format(i,p,b))
+    b = beta_0(i,p)
     if verbose:
-        print("beta_0({},{}) = {}".format(i,p,a))
+        print("beta_0({},{}) = {}".format(i,p,b))
 
 def make_alphas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 alphas with subscript i
@@ -899,15 +910,15 @@ def make_alphas(i, p=pp, verbose=False):
     for j in range(3,i):
         make_betas(j,p)
         make_alphas(j,p)
-    b = alpha_plus(i,p)
+    a = alpha_plus(i,p)
     if verbose:
-        print("alpha_plus({},{}) = {}".format(i,p,b))
-    b = alpha_minus(i,p)
+        print("alpha_plus({},{}) = {}".format(i,p,a))
+    a = alpha_minus(i,p)
     if verbose:
-        print("alpha_minus({},{}) = {}".format(i,p,b))
-    b = alpha_0(i,p)
+        print("alpha_minus({},{}) = {}".format(i,p,a))
+    a = alpha_0(i,p)
     if verbose:
-        print("alpha_0({},{}) = {}".format(i,p,b))
+        print("alpha_0({},{}) = {}".format(i,p,a))
 
 def check_value(ab,i,eps,val,p=pp):
     myval = [beta_minus,beta_0,beta_plus][eps+1](i,p) if ab=="beta" else [alpha_minus,alpha_0,alpha_plus][eps+1](i,p)
@@ -1263,27 +1274,27 @@ def read_gamma_c_output(n, p, u, fname):
 
 def scale(f,a):
     """
-    Given f monic in F[x] and a nonzero in F, return the monic f(a*x)/a^deg(f)
+    Given f(x) monic in F[x] and a nonzero in F, return the monic f(a*x)/a^deg(f)
     """
     x = f.parent().gen()
     return f(a*x)/a**f.degree()
 
 def x_shift(f,b):
     """
-    Given f monic in F[x] and b in F, return the monic f(x+b)
+    Given f(x) monic in F[x] and b in F, return the monic f(x+b)
     """
     x = f.parent().gen()
     return f(x+b)
 
 def affine_transform(f,a,b):
     """
-    Given f monic in F[x] and a,b in F with a nonzero, return the monic f(a*(x+b))/a^deg(f)
+    Given f(x) monic in F[x] and a,b in F with a nonzero, return the monic f(a*(x+b))/a^deg(f)
     """
     return x_shift(scale(f,a),b)
 
 def expand1(f, alist):
     """
-    for f monic in F[x] with next coefficient 0, return all affine (a,b)-transforms with a in alist
+    for f(x) monic in F[x] with next coefficient 0, return all affine (a,b)-transforms with a in alist
     """
     n = f.degree()
     p = f.base_ring().cardinality()
@@ -1323,13 +1334,11 @@ def make_gammas_odd(n,p, restricted=False):
     """Read from file "gamma{n}_{p}.out" and return the complete sets
     Gamma(n,1), Gamma(n,u) for n odd.
 
-    Restricted means f = u*(x^n+0*x^{n-1}+c*x^{n-2}+...) with:
+    Restricted means f = (1 or u)*(x^n+0*x^{n-1}+c*x^{n-2}+...) with:
 
-    p=3 (mod 4): c in {0,1,u}, representing an affine orbit of size p, p(p-1)/1,
-    p(p-1)/2 respectively;
+    p=3 (mod 4): c=0 or in {1,u}, representing an affine orbit of size p or p(p-1)/2 respectively;
 
-    p=1 (mod 4): c in {0,1,u,u^2,u^3}, representing an affine orbit of size p, p(p-1)/4,
-    p(p-1)/4, p(p-1)/4, p(p-1)/4 respectively.
+    p=1 (mod 4): c=0 or in {1,u,u^2,u^3}, representing an affine orbit of size p or p(p-1)/4 respectively.
 
     """
     assert n%2==1
