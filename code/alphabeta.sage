@@ -5,6 +5,15 @@ from basics import (Qp, pp, monics, monics0, signed_roots, point_multiplicities,
 #from fact_pat import (lambda_A, lambda_P, Phi)
 
 ################################# Set up dicts for Gamma sets  ##################################
+
+# The short version of Gamma_plus, Gamma_minus with keys (p,d) only
+# exist for p not dividing d and hold a restricted set of
+# "affine-reduced" polynomials with leading coefficients restricted to
+# (1,0,{0,1,u},...)         for d even or p=3(4)
+# (1,0,{0,1,u,u^2,u^3},...) for d odd and p=1(4)
+#
+# each being a representative of an affine orbit. of size p or p(p-1)/2 or p(p-1)/4.
+
 try:
     n = len(Gamma_plus_dict)
 except NameError:
@@ -13,14 +22,25 @@ try:
     n = len(Gamma_minus_dict)
 except NameError:
     Gamma_minus_dict = {}
+try:
+    n = len(Gamma_plus_short_dict)
+except NameError:
+    Gamma_plus_short_dict = {}
+try:
+    n = len(Gamma_minus_short_dict)
+except NameError:
+    Gamma_minus_short_dict = {}
 
 def initialize_Gamma_dicts():
-    global Gamma_plus_dict, Gamma_minus_dict
+    global Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict
     Gamma_plus_dict = {}
     Gamma_minus_dict = {}
+    Gamma_plus_short_dict = {}
+    Gamma_minus_short_dict = {}
 
 def save_Gammas(filename="Gamma"):
-    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict], ["plus", "minus"]):
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict],
+                             ["plus", "minus", "plus_short", "minus_short"]):
         f = "_".join([filename, suffix])
         print("Saving {}".format(f))
         save(Gdict, f)
@@ -30,8 +50,9 @@ def save_Gammas(filename="Gamma"):
 # then the file version will overwrite the local one.
 
 def restore_Gammas(filename="Gamma"):
-    global Gamma_plus_dict, Gamma_minus_dict
-    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict], ["plus", "minus"]):
+    global Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict],
+                             ["plus", "minus", "plus_short", "minus_short"]):
         f = "_".join([filename, suffix])
         print("Restoring {}".format(f))
         Gdict.update(load(f))
@@ -449,17 +470,9 @@ def one_row(p):
     table[29] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     table[31] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-    res = [len(ff) for ff in [Gamma_plus(1,F),
-            Gamma_plus(2,F),
-            Gamma_plus(3,F),
-            Gamma_minus(4,F),
-            Gamma_plus(4,F),
-            Gamma_plus(5,F),
-            Gamma_minus(6,F),
-            Gamma_plus(6,F),
-            Gamma_plus(7,F),
-            Gamma_minus(8,F),
-            Gamma_plus(8,F)]]
+    d_list = [1, 2, 3, 4, 4, 5, 6, 6, 7, 8, 8]
+    Gamma_list = [Gamma_plus if i in [0,1,2,4,5,7,8,10] else Gamma_minus for i in range(11)]
+    res = [len(G(d,F)) for d,G in zip(d_list, Gamma_list)]
     if p in table:
        if res==table[p]:
           print("p={} OK".format(p))
@@ -1240,6 +1253,8 @@ with a *non-square* and up to sign.  Ignore "p u " lines starting
 
 """
 
+maxp = [0,0,0,0,5,11,13,19,23,37,37]
+
 def read_gamma_c_output(n, p, u, fname):
     """Read an output file from running gamma$n.c on prime p.  Ignore the
     last three lines which start "Checked" or "#".  All other lines
@@ -1252,6 +1267,8 @@ def read_gamma_c_output(n, p, u, fname):
     """
     list_1 = []
     list_u = []
+    if n<3 or p>maxp[n] or n%p==0:
+        return list_1, list_u
     with open(fname) as infile:
         for L in infile:
             if L[0] in ["C", "#", "p"]:
