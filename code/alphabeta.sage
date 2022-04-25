@@ -675,13 +675,14 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
     returned and stored; otherwise the returned value will be such a
     polynomial in some other variable.
     """
+    global alpha_plus_dict
     try:
         return alpha_plus_dict[(i,p)]
     except KeyError:
         if i<3:
             if verbose: print("setting alpha_plus({},{})".format(i,p))
-            b = alpha_plus_dict[(i,p)] = 1
-            return b
+            a = alpha_plus_dict[(i,p)] = 1
+            return a
         pass
     make_alphas(i-1,p)
     F = Qp if p==pp else QQ
@@ -724,6 +725,7 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
 
     Computed values are stored in alpha_minus_dict keyed on (i,p).
     """
+    global alpha_minus_dict
     try:
         return alpha_minus_dict[(i,p)]
     except KeyError:
@@ -776,33 +778,40 @@ def alpha_0(i,p=pp,v=None, verbose=False):
 
     Computed values are stored in alpha_0_dict keyed on (i,p).
     """
+    global alpha_0_dict
     try:
         return alpha_0_dict[(i,p)]
     except KeyError:
         if i<3:
-            if verbose: print("setting alpha_0({},{})".format(i,p))
-            a =  alpha_0_dict[(i,p)] = [0,1,1/2][i]
+            if verbose:
+                print("setting alpha_0({},{})".format(i,p))
+            a = [0,1,1/2][i]
+            alpha_0_dict[(i,p)] = a
             return a
     make_alphas(i-1,p)
     F = Qp if p==pp else QQ
     v0 = "a0_{}_{}".format(i,p)
     if v==None:
         v=v0
-        if verbose: print("Setting "+v0)
+        if verbose:
+            print("Setting "+v0)
     else:
         if v==v0:
             if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     # use Prop 3.3 (iii)
-    if verbose: print("Computing alpha_0({},{})".format(i,p))
+    if verbose:
+        print("Computing alpha_0({},{})".format(i,p))
     a = 1 - sum_phi_terms(i,False,p,v)
     try:
         a = F(a)
-        if verbose: print("setting alpha_0({},{})".format(i,p))
+        if verbose:
+            print("setting alpha_0({},{})".format(i,p))
         alpha_0_dict[(i,p)] = a
     except (ValueError, TypeError):
         # a is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,a))
+        if verbose:
+            print("{}={}".format(v0,a))
         if str(a.parent().gen())==v0:
             r,s = a.list()
             a = r/(1-s)
@@ -817,6 +826,7 @@ def beta_0(i,p=pp,v=None, verbose=False):
 
     Computed values are stored in beta_0_dict keyed on (i,p).
     """
+    global beta_0_dict
     try:
         return beta_0_dict[(i,p)]
     except KeyError:
@@ -869,6 +879,7 @@ def beta_plus(i,p=pp,v=None, verbose=False):
 
     Computed values are stored in beta_plus_dict keyed on (i,p).
     """
+    global beta_plus_dict
     try:
         return beta_plus_dict[(i,p)]
     except KeyError:
@@ -921,6 +932,7 @@ def beta_minus(i,p=pp,v=None, verbose=False):
 
     Computed values are stored in beta_minus_dict keyed on (i,p).
     """
+    global beta_minus_dict
     try:
         return beta_minus_dict[(i,p)]
     except KeyError:
@@ -974,38 +986,44 @@ def make_betas(i, p=pp, verbose=False):
     after first computing all betas and alphas with smaller
     subscripts.
     """
+    if (i,p) in beta_plus_dict and (i,p) in beta_minus_dict and (i,p) not in beta_0_dict:
+        return
     if verbose:
-        print("Making all beta_{} for p={}".format(i,p))
+        print("Making all beta({}, eps; {})".format(i,p))
     for j in range(3,i):
         make_betas(j,p)
         make_alphas(j,p)
     b = beta_plus(i,p)
     if verbose:
-        print("beta_plus({},{}) = {}".format(i,p,b))
+        print("beta({},1; {}) = {}".format(i,p,b))
     b = beta_minus(i,p)
     if verbose:
-        print("beta_minus({},{}) = {}".format(i,p,b))
+        print("beta({},u; {}) = {}".format(i,p,b))
     b = beta_0(i,p)
     if verbose:
-        print("beta_0({},{}) = {}".format(i,p,b))
+        print("beta({},p; {}) = {}".format(i,p,b))
 
 def make_alphas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 alphas with subscript i
     after first computing all betas and alphas with smaller
     subscripts.
     """
+    if (i,p) in alpha_plus_dict and (i,p) in alpha_minus_dict and (i,p) not in alpha_0_dict:
+        return
+    if verbose:
+        print("Making all alpha({}, eps; {})".format(i,p))
     for j in range(3,i):
         make_betas(j,p)
         make_alphas(j,p)
     a = alpha_plus(i,p)
     if verbose:
-        print("alpha_plus({},{}) = {}".format(i,p,a))
+        print("alpha({},1; {}) = {}".format(i,p,a))
     a = alpha_minus(i,p)
     if verbose:
-        print("alpha_minus({},{}) = {}".format(i,p,a))
+        print("alpha({},u; {}) = {}".format(i,p,a))
     a = alpha_0(i,p)
     if verbose:
-        print("alpha_0({},{}) = {}".format(i,p,a))
+        print("alpha({},p; {}) = {}".format(i,p,a))
 
 def check_value(ab,i,eps,val,p=pp):
     myval = [beta_minus,beta_0,beta_plus][eps+1](i,p) if ab=="beta" else [alpha_minus,alpha_0,alpha_plus][eps+1](i,p)
@@ -1149,7 +1167,7 @@ def rho(g,p=pp):
 
     all p>2   for g=1;
     all p>11  for g=2;
-    all p>?   for g=3, etc.
+    all p>29   for g=3, etc.
 
     """
     n = 2*g+2
