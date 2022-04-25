@@ -38,9 +38,16 @@ def initialize_Gamma_dicts():
     Gamma_plus_short_dict = {}
     Gamma_minus_short_dict = {}
 
-def save_Gammas(filename="Gamma"):
+def save_Gammas():
+    filename="Gamma"
     for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict],
                              ["plus", "minus", "plus_short", "minus_short"]):
+        for k in Gdict.keys():
+            p = k[0]
+            if p==2:
+                Gdict[k] = [[[int(c) for c in pol.coefficients(sparse=False)] for pol in fh] for fh in Gdict[k]]
+            else:
+                Gdict[k] = [[int(c) for c in f.coefficients(sparse=False)] for f in Gdict[k]]
         f = "_".join([filename, suffix])
         print("Saving {}".format(f))
         save(Gdict, f)
@@ -56,6 +63,19 @@ def restore_Gammas(filename="Gamma"):
         f = "_".join([filename, suffix])
         print("Restoring {}".format(f))
         Gdict.update(load(f))
+        for k in Gdict.keys():
+            p = k[0]
+            F = GF(p)
+            Fx = PolynomialRing(F, 'x')
+            #print("p={}, k={}".format(p,k))
+            if p==2:
+                # for co in Gdict[k]:
+                #     print("Converting entry from {}".format(co))
+                #     fh = [Fx(co1) for co1 in co]
+                #     print("to {}".format(fh))
+                Gdict[k] = [[Fx(co1) for co1 in co] for co in Gdict[k]]
+            else:
+                Gdict[k] = [Fx(co) for co in Gdict[k]]
 
 ################################# Set up dicts for alphas and betas  ##################################
 
@@ -306,7 +326,7 @@ def Gamma_plus(d,F=None):
             F = GF(q)
         print("Computing Gamma_plus({},{})".format(d,F))
         if q==2:
-            res = [(f,h) for f in monics(F,d,d%2)
+            res = [[f,h] for f in monics(F,d,d%2)
                          for h in monics(F,(d+1)//2,(d+1)%2)
                    if no_smooth_points_mod2(f,h)]
         else:
@@ -436,7 +456,7 @@ def Gamma_minus(d, F=None):
             F = GF(q)
         print("Computing Gamma_minus({},{})".format(d,F))
         if q==2:
-            res = [(f,h) for f in monics(F,d,1)
+            res = [[f,h] for f in monics(F,d,1)
                          for h in monics(F,d//2,1)
              if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
         else:
@@ -1253,7 +1273,7 @@ with a *non-square* and up to sign.  Ignore "p u " lines starting
 
 """
 
-maxp = [0,0,0,0,5,11,13,19,23,37,37]
+maxp = [0,0,0,3,5,11,13,19,23,37,37]
 
 def read_gamma_c_output(n, p, u, fname):
     """Read an output file from running gamma$n.c on prime p.  Ignore the
@@ -1272,8 +1292,8 @@ def read_gamma_c_output(n, p, u, fname):
     with open(fname) as infile:
         for L in infile:
             if L[0] in ["C", "#", "p"]:
-                print(L.strip())
-                continue
+               #print("ignoring line '{}'".format(L.strip()))
+               continue
             pp, c, coeffs = L.split()
             assert int(pp)==p
             coeffs = [int(a) for a in coeffs[1:-1].split(",")]
@@ -1391,6 +1411,23 @@ def make_gammas_odd(n,p, restricted=False):
                 gam_1 += [scale(f1,u) for f1 in flist]
     return gam_1, gam_u
 
+def make_gammas(n,p, restricted=False):
+    if n%p==0:
+        print("Not implemented when p divides degree")
+        return [],[]
+    return make_gammas_odd(n,p, restricted) if n%2 else make_gammas_even(n,p, restricted)
+
+def fill_restricted_gamma_dicts():
+    global Gamma_plus_short_dict, Gamma_minus_short_dict
+    for n in range(3,11):
+        for p in primes(maxp[n]+1):
+            if (2*n)%p==0:
+                continue
+            print("(n,p)=({},{})".format(n,p))
+            gam_1, gam_u = make_gammas(n,p,True)
+            Gamma_plus_short_dict[(p,n)] = gam_1
+            if n%2==0:
+                Gamma_minus_short_dict[(p,n)] = gam_u
 
 ############  Obsolete code for Delta sets ######################################
 
