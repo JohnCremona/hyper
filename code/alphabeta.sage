@@ -31,6 +31,9 @@ try:
 except NameError:
     Gamma_minus_short_dict = {}
 
+
+max_p_for_degree = {1:0, 2:0, 3:3, 4:5, 5:11, 6:13, 7:19, 8:23, 9:37, 10:37}
+
 def initialize_Gamma_dicts():
     global Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict
     Gamma_plus_dict = {}
@@ -42,6 +45,7 @@ def save_Gammas():
     filename="Gamma"
     for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict],
                              ["plus", "minus", "plus_short", "minus_short"]):
+        Gdict_saved = Gdict.copy()
         for k in Gdict.keys():
             p = k[0]
             if p==2:
@@ -51,6 +55,7 @@ def save_Gammas():
         f = "_".join([filename, suffix])
         print("Saving {}".format(f))
         save(Gdict, f)
+        Gdict = Gdict_saved.copy()
 
 # The restore functions use the update() method so that local values
 # are preserved, but NB if the same key exists locally and on file
@@ -70,12 +75,19 @@ def restore_Gammas(filename="Gamma"):
             #print("p={}, k={}".format(p,k))
             if p==2:
                 # for co in Gdict[k]:
-                #     print("Converting entry from {}".format(co))
+                #     print("Converting entry from {} mod {}".format(co, p))
                 #     fh = [Fx(co1) for co1 in co]
                 #     print("to {}".format(fh))
                 Gdict[k] = [[Fx(co1) for co1 in co] for co in Gdict[k]]
             else:
-                Gdict[k] = [Fx(co) for co in Gdict[k]]
+                # for co in Gdict[k]:
+                #     print("Converting entry from {} mod {}".format(co, p))
+                #     try:
+                #         f = Fx(co)
+                #         print("to {}".format(f))
+                #     except TypeError:
+                #         print("***problem converting entry with key {}: {}".format(k,co))
+                Gdict[k] = [co if co in Fx else Fx(co) for co in Gdict[k]]
 
 ################################# Set up dicts for alphas and betas  ##################################
 
@@ -313,27 +325,34 @@ def is_irred_mod2(f,h,abs=False):
     return nfactors_mod2(f,h,abs)==[1]
 
 def Gamma_plus(d,F=None):
-    """ List of monics of degree d with no smooth points.
+    """List of monics of degree d with no smooth points, with multiplicity
+    flag (set when retrieved from the precomputed restricted list,
+    else not set).
     """
     if F==None:
-       return []
+       return [], False
     if F in ZZ:
         q = F
     else:
         q = F.cardinality()
-    if not (q,d) in Gamma_plus_dict:
-        if F in ZZ:
-            F = GF(q)
-        print("Computing Gamma_plus({},{})".format(d,F))
-        if q==2:
-            res = [[f,h] for f in monics(F,d,d%2)
-                         for h in monics(F,(d+1)//2,(d+1)%2)
-                   if no_smooth_points_mod2(f,h)]
-        else:
-            res = Gamma_new(d,F,+1)
-        Gamma_plus_dict[(q,d)] = res
+    if q>max_p_for_degree[d]:
+        return [], False
+    if (q,d) in Gamma_plus_short_dict:
+        return Gamma_plus_short_dict[(q,d)], True
+    if (q,d) in Gamma_plus_dict:
+        return Gamma_plus_dict[(q,d)], False
+    if F in ZZ:
+        F = GF(q)
+    print("Computing Gamma_plus({},{})".format(d,F))
+    if q==2:
+        res = [[f,h] for f in monics(F,d,d%2)
+               for h in monics(F,(d+1)//2,(d+1)%2)
+               if no_smooth_points_mod2(f,h)]
+    else:
+        res = Gamma_new(d,F,+1)
+    Gamma_plus_dict[(q,d)] = res
     #print("accessing Gamma(d,1) with p={}".format(d,q))
-    return Gamma_plus_dict[(q,d)]
+    return res, False
 
 def Gamma_default(d,F,plusorminus):
     if plusorminus==+1:
@@ -440,33 +459,41 @@ def Gamma_new_odd(d,F,plusorminus):
 
 def Gamma_minus(d, F=None):
     """List of f of degree d, with (fixed) non-square leading coefficient
-    u, with no smooth points but not of the form u*h^2.
+    u, with no smooth points but not of the form u*h^2, with
+    multiplicity flag (set when retrieved from the precomputed
+    restricted list, else not set).
     """
     if F==None:
-       return []
+       return [], False
     if F in ZZ:
         q = F
     else:
         q = F.cardinality()
-    if not (q,d) in Gamma_minus_dict:
-        if d%2:
-            Gamma_minus_dict[(q,d)] = Gamma_plus(d,F)
-            return Gamma_minus_dict[(q,d)]
-        if F in ZZ:
-            F = GF(q)
-        print("Computing Gamma_minus({},{})".format(d,F))
-        if q==2:
-            res = [[f,h] for f in monics(F,d,1)
-                         for h in monics(F,d//2,1)
-             if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
-        else:
-            res = Gamma_new(d,F,-1)
+    if q>max_p_for_degree[d]:
+        return [], False
+    if (q,d) in Gamma_minus_short_dict:
+        return Gamma_minus_short_dict[(q,d)], True
+    if (q,d) in Gamma_minus_dict:
+        return Gamma_minus_dict[(q,d)], False
+    if d%2:
+        res, fl = Gamma_plus(d,F)
         Gamma_minus_dict[(q,d)] = res
+        return res, False
+    if F in ZZ:
+        F = GF(q)
+    print("Computing Gamma_minus({},{})".format(d,F))
+    if q==2:
+        res = [[f,h] for f in monics(F,d,1)
+               for h in monics(F,d//2,1)
+            if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
+    else:
+        res = Gamma_new(d,F,-1)
+    Gamma_minus_dict[(q,d)] = res
     #print("accessing Gamma(d,u) with p={}".format(d,q))
-    return Gamma_minus_dict[(q,d)]
+    return res, False
 
 def show_Gamma(verbose=False):
-    for d,dname in zip([Gamma_plus_dict, Gamma_minus_dict], ["Gamma(n,1)","Gamma(n,u)"]):
+    for d,dname in zip([Gamma_plus_dict, Gamma_minus_dict,Gamma_plus_short_dict, Gamma_minus_short_dict], ["Gamma(n,1)","Gamma(n,u)", "Gamma(n,1)/affine", "Gamma(n,u)/affine"]):
         print("\n{} entries".format(dname))
         for k in sorted(d.keys()):
             if verbose:
@@ -492,7 +519,10 @@ def one_row(p):
 
     d_list = [1, 2, 3, 4, 4, 5, 6, 6, 7, 8, 8]
     Gamma_list = [Gamma_plus if i in [0,1,2,4,5,7,8,10] else Gamma_minus for i in range(11)]
-    res = [len(G(d,F)) for d,G in zip(d_list, Gamma_list)]
+    def count_f(flist_mflag):
+        flist, mflag = flist_mflag
+        return sum(f_multiplicity(f) for f in flist) if mflag else len(flist)
+    res = [count_f(G(d,F)) for d,G in zip(d_list, Gamma_list)]
     if p in table:
        if res==table[p]:
           print("p={} OK".format(p))
@@ -549,13 +579,37 @@ def f_term(f,p=pp):
         return 0
     return prod((1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f))
 
-def sum_f_terms(flist, p=pp):
+def f_multiplicity(f):
+    """For f in a restricted list of polys of degree n, up to affine
+    transformation (with p not dividing 2*n), assuming f[n-1]=0, the
+    multiplicity is
+
+    p if f[n-2]=0
+    (p-1)/2 if f[n-2]!=0 and p=3 (mod 4) or n even
+    (p-1)/4 if f[n-2]!=0 and p=1 (mod 4) and n odd
+
+    """
+    p = f.parent().characteristic()
+    n = f.degree()
+    if p==2 or n%p==0:
+        return 1
+    if f[n-2]==0:
+        return p
+    if p%4==3 or n%2==0:
+        return p*(p-1)/2
+    else:
+        return p*(p-1)/4
+
+def sum_f_terms(flist, p=pp, mflag=False):
     """
     Sum of f_term(f,p) over f in flist
     """
     if p==pp: # will not be called in this case anyway
         return 0
-    return sum(f_term(f, p) for f in flist)
+    if mflag:
+        return sum(f_multiplicity(f)*f_term(f, p) for f in flist)
+    else:
+        return sum(f_term(f, p) for f in flist)
 
 def fh_term(f,h):
     """Helper function for alpha(-,eps) in case p=2.  In the paper
@@ -642,12 +696,12 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
     # use Prop 3.3 (i)
     if verbose: print("Computing alpha_plus({},{})".format(i,p))
     Fp = GF(p) if p in ZZ else None
-    G = Gamma_plus(i,Fp)
+    G, mflag = Gamma_plus(i,Fp)
     if p==2:
         e = (3*i+1)//2 if i%2 else 3*i//2
         a = 1 - sum_fh_terms(G)/p**e
     else:
-        a = 1 - sum_f_terms(G,p)/p**i
+        a = 1 - sum_f_terms(G,p, mflag)/p**i
 
     try:
         a = F(a)
@@ -695,12 +749,12 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
     if verbose: print("Computing alpha_minus({},{})".format(i,p))
     i2 = i//2
     Fp = GF(p) if p in ZZ else None
-    G = Gamma_minus(i,Fp)
+    G, mflag = Gamma_minus(i,Fp)
     a = 1 - sum_phi_terms(i,True,p,v) / p**i2
     if p==2:
         a = a - sum_fh_terms(G) / p**(3*i2)
     else:
-        a = a - sum_f_terms(G,p) / p**i
+        a = a - sum_f_terms(G,p, mflag) / p**i
     try:
         a = F(a)
         if verbose: print("setting alpha_minus({},{})".format(i,p))
@@ -1273,8 +1327,6 @@ with a *non-square* and up to sign.  Ignore "p u " lines starting
 
 """
 
-maxp = [0,0,0,3,5,11,13,19,23,37,37]
-
 def read_gamma_c_output(n, p, u, fname):
     """Read an output file from running gamma$n.c on prime p.  Ignore the
     last three lines which start "Checked" or "#".  All other lines
@@ -1287,7 +1339,7 @@ def read_gamma_c_output(n, p, u, fname):
     """
     list_1 = []
     list_u = []
-    if n<3 or p>maxp[n] or n%p==0:
+    if n<3 or p>max_p_for_degree[n] or n%p==0:
         return list_1, list_u
     with open(fname) as infile:
         for L in infile:
@@ -1420,7 +1472,7 @@ def make_gammas(n,p, restricted=False):
 def fill_restricted_gamma_dicts():
     global Gamma_plus_short_dict, Gamma_minus_short_dict
     for n in range(3,11):
-        for p in primes(maxp[n]+1):
+        for p in primes(max_p_for_degree[n]+1):
             if (2*n)%p==0:
                 continue
             print("(n,p)=({},{})".format(n,p))
