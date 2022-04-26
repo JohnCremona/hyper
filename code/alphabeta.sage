@@ -1,24 +1,98 @@
-from sage.all import (QQ, ZZ, GF, PolynomialRing, prod)
-from basics import Qp,pp, signed_roots, affine, point_multiplicities
-from fact_pat import (initialize_N_dict, lambda_A, lambda_P, Phi)
-from gamma import initialize_Gamma_dicts, Gamma_plus, Gamma_minus
+from sage.all import (save, load, prod, polygen, xmrange_iter, moebius)
+from sage.all import (QQ, ZZ, GF, PolynomialRing, ProjectiveSpace)
 
-"""
-Translation into new notation:
+from basics import (Qp, pp, monics, monics0, signed_roots, point_multiplicities, affine)
+#from fact_pat import (lambda_A, lambda_P, Phi)
 
-alpha_plus_dict[(n,p)]  = alpha(n,1; p)
-alpha_minus_dict[(n,p)] = alpha(n,u; p)
-alpha_0_dict[(n,p)]     = alpha(n,p; p)
+################################# Set up dicts for Gamma sets  ##################################
 
-beta_plus_dict[(n,p)]  = beta(n,1; p)
-beta_minus_dict[(n,p)] = beta(n,u; p)
-beta_0_dict[(n,p)]     = beta(n,p; p)
+# The short version of Gamma_plus, Gamma_minus with keys (p,d) only
+# exist for p not dividing d and hold a restricted set of
+# "affine-reduced" polynomials with leading coefficients restricted to
+# (1,0,{0,1,u},...)         for d even or p=3(4)
+# (1,0,{0,1,u,u^2,u^3},...) for d odd and p=1(4)
+#
+# each being a representative of an affine orbit. of size p or p(p-1)/2 or p(p-1)/4.
 
-"""
+try:
+    n = len(Gamma_plus_dict)
+except NameError:
+    Gamma_plus_dict = {}
+try:
+    n = len(Gamma_minus_dict)
+except NameError:
+    Gamma_minus_dict = {}
+try:
+    n = len(Gamma_plus_short_dict)
+except NameError:
+    Gamma_plus_short_dict = {}
+try:
+    n = len(Gamma_minus_short_dict)
+except NameError:
+    Gamma_minus_short_dict = {}
+
+
+max_p_for_degree = {1:0, 2:0, 3:3, 4:5, 5:11, 6:13, 7:19, 8:23, 9:37, 10:37}
+
+def initialize_Gamma_dicts():
+    global Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict
+    Gamma_plus_dict = {}
+    Gamma_minus_dict = {}
+    Gamma_plus_short_dict = {}
+    Gamma_minus_short_dict = {}
+
+def save_Gammas():
+    filename="Gamma"
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict],
+                             ["plus", "minus", "plus_short", "minus_short"]):
+        Gdict_saved = Gdict.copy()
+        for k in Gdict.keys():
+            p = k[0]
+            if p==2:
+                Gdict[k] = [[[int(c) for c in pol.coefficients(sparse=False)] for pol in fh] for fh in Gdict[k]]
+            else:
+                Gdict[k] = [[int(c) for c in f.coefficients(sparse=False)] for f in Gdict[k]]
+        f = "_".join([filename, suffix])
+        print("Saving {}".format(f))
+        save(Gdict, f)
+        Gdict = Gdict_saved.copy()
+
+# The restore functions use the update() method so that local values
+# are preserved, but NB if the same key exists locally and on file
+# then the file version will overwrite the local one.
+
+def restore_Gammas(filename="Gamma"):
+    global Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict],
+                             ["plus", "minus", "plus_short", "minus_short"]):
+        f = "_".join([filename, suffix])
+        print("Restoring {}".format(f))
+        Gdict.update(load(f))
+        for k in Gdict.keys():
+            p = k[0]
+            F = GF(p)
+            Fx = PolynomialRing(F, 'x')
+            #print("p={}, k={}".format(p,k))
+            if p==2:
+                # for co in Gdict[k]:
+                #     print("Converting entry from {} mod {}".format(co, p))
+                #     fh = [Fx(co1) for co1 in co]
+                #     print("to {}".format(fh))
+                Gdict[k] = [[Fx(co1) for co1 in co] for co in Gdict[k]]
+            else:
+                # for co in Gdict[k]:
+                #     print("Converting entry from {} mod {}".format(co, p))
+                #     try:
+                #         f = Fx(co)
+                #         print("to {}".format(f))
+                #     except TypeError:
+                #         print("***problem converting entry with key {}: {}".format(k,co))
+                Gdict[k] = [co if co in Fx else Fx(co) for co in Gdict[k]]
+
+################################# Set up dicts for alphas and betas  ##################################
 
 # Initialize dicts to store the betas and alphas but do not reset on reload!
 # The beta and alpha values for subscripts 0,1,2 are known directly.
-
 try:
     n = len(beta_0_dict)
 except NameError:
@@ -73,15 +147,20 @@ def initialize_alpha_beta_dicts():
     initialize_alpha_dicts()
     initialize_beta_dicts()
 
+try:
+    n = len(N_dict)
+except NameError:
+    N_dict = {}
+
+def initialize_N_dict():
+    global N_dict
+    N_dict = {}
+
 def initialize_all_dicts():
     initialize_alpha_beta_dicts()
-    #initialize_Delta_dicts()
     initialize_Gamma_dicts()
+    #initialize_Delta_dicts()
     initialize_N_dict()
-
-"""
-Utilities for displaying the dicts:
-"""
 
 def show1dict(d,dn):
     print(dn+":")
@@ -102,9 +181,379 @@ def show_dicts():
     show_alpha_dicts()
     show_beta_dicts()
 
-"""
-Helper functions
-"""
+def N(j, p=pp):
+    """The number of degree j monic irreducibles in GF(p)[X].
+    """
+    global N_dict
+    if not (j,p) in N_dict:
+        N_dict[(j,p)] = sum([moebius(d)*p**(j//d) for d in ZZ(j).divisors()]) / j
+    return N_dict[(j,p)]
+
+def Ndash(j, p=pp):
+    """The number of degree j homogeneous irreducibles in GF(p)[X,Y] up to scaling.
+    """
+    return p+1 if j==1 else N(j,p)
+
+def Phi(d, base=[1,1]):
+    """List of factorization patterns in degree d.  Each is a list of
+    pairs [d_i,e_i] with d_i*e_i summing to d, with repeats allowed
+    but unordered.
+    """
+    if d==0:
+       yield []
+    d0, e0 = base
+    for di in range(d0,d+1):
+        e1 = e0 if di==d0 else 1
+        for ei in range(e1,(d//di)+1):
+            for phi in Phi(d-di*ei,[di,ei]):
+                yield [[di,ei]] + phi
+
+def deg_fp(phi):
+    """ The degree of the factorization pattern phi.
+    """
+    return sum(d*e for d,e in phi)
+
+def m2(phi, jk):
+    """ The number of occurrences of [d,e] in phi with de==[j,k].
+    """
+    return len([de for de in phi if de==jk])
+
+def m1(phi, j):
+    """ The number of occurrences of [d,e] in phi with d==j.
+    """
+    return len([de for de in phi if de[0]==j])
+
+def lambda_helper(phi, NN, p=pp):
+    """ Helper function for affine and projective factorization probabilities.
+    """
+    d = deg_fp(phi)
+    return prod([prod([NN(j,p)-i for i in
+                       range(m1(phi,j))])/prod([ZZ(m2(phi,[j,i])).factorial()
+                                                for i in range(1,d+1)]) for j in range(1,d+1)])
+
+def lambda_A(phi, p=pp):
+    """ The probability that a monic polynomial of degree deg(phi) has factorization pattern phi.
+    """
+    d = deg_fp(phi)
+    return lambda_helper(phi, N, p) / p**d
+
+def lambda_P(phi, p=pp):
+    """ The probability that a homogeneous polynomial of degree deg(phi) has factorization pattern phi.
+    """
+    d = deg_fp(phi)
+    return lambda_helper(phi, Ndash, p) * (p-1)/ (p**(d+1)-1)
+
+def a_nonsquare(F):
+    """ The first non-square element of F (an odd finite field).
+    """
+    for u in F:
+        if not u.is_square():
+           return u
+    raise ValueError("Field {} has no non-squares!".format(F))
+
+def no_smooth_points(f): 
+    """Return True iff y^2=f(x) has no smooth
+    (affine) points over the base (odd finite) field.
+
+    N.B.  y^2=f(x) has no smooth F_p-points if for all x in F_p either
+     f(x) is nonsquare or it is 0 and x is a multiple root.
+    """
+    fd = f.derivative()
+    return all([(not f(x).is_square()) or (f(x)==fd(x)==0)
+     for x in f.base_ring()])
+
+def smooth_points_mod2(f,h):
+    """ Return a list of the smooth affine points on z^2+h(x)z=f(x).
+    """ 
+    if f.parent().ngens()==1:
+        # NB even in char. 2, f'(0) gives the coefficient of x
+        pts = []
+        fd=f.derivative()
+        hd=h.derivative()
+        if f(0)==0 and (fd(0),h(0))!=(0,0):
+           pts += [[0,0]]
+        if f(1)==0 and (fd(1),h(1))!=(0,0):
+           pts += [[1,0]]
+        if f(0)!=h(0) and (fd(0)-hd(0),h(0))!=(0,0):
+           pts += [[0,1]]
+        if f(1)!=h(1) and (fd(1)-hd(1),h(1))!=(0,0):
+           pts += [[1,1]]
+        return pts
+    # homogeneous case
+    R1 = PolynomialRing(f.base_ring(),'x')
+    x = R1.gen()
+    f1 = f([x,1])
+    h1 = h([x,1])
+    # first affine points, with y=1:
+    pts = [[P[0],1,P[1]] for P in smooth_points_mod2(f1,h1)]
+    # next, points of the form [1,0,z].  NB cannot have x=y=0.
+    x,y = f.parent().gens()
+    fy = f.derivative(y)
+    hy = h.derivative(y)
+    if f(1,0)==0 and (fy(1,0),h(1,0))!=(0,0):
+       pts += [[1,0,0]]
+    if f(1,0)!=h(1,0) and (fy(1,0)+hy(1,0),h(1,0))!=(0,0):
+       pts += [[1,0,1]]
+    return pts
+
+def all_points_mod2(f,h):
+    return [P for P in ProjectiveSpace(GF(2),2) if P[2]*(P[2]+h(P[:2]))==f(P[:2])]
+
+def no_smooth_points_mod2(f,h):
+    """Return True iff z^2+h(x)z=f(x) has no smooth  points over F_2
+    """
+    return len(smooth_points_mod2(f,h))==0
+
+def nfactors_mod2(f,h,abs=False):
+    """Return list of multiplicities of irreducible factors of z^2+h*z-f
+    over GF(2), or over GF(4) if abs=True.  This will be [1] if
+    irreducible, [2] if a square and [1,1] if split.
+    """
+    F = f.base_ring() # GF(2)
+    if abs:
+        F = GF(F.cardinality()**2,'a') # GF(4)
+    if f.parent().ngens()==1: # inhomogeneous case: f,h in GF(2)[x]
+        R2 = PolynomialRing(F,2, ['x','z'])
+        x, z = R2.gens()
+    else:
+        # homogeneous case:  f,h in GF(2)[x,y]
+        R3 = PolynomialRing(F,3,['x','y','z'])
+        x, y, z = R3.gens()
+    return [c[1] for c in (z^2+h*z-f).factor()]
+
+def is_irred_mod2(f,h,abs=False):
+    return nfactors_mod2(f,h,abs)==[1]
+
+def Gamma_plus(d,F=None):
+    """List of monics of degree d with no smooth points, with multiplicity
+    flag (set when retrieved from the precomputed restricted list,
+    else not set).
+    """
+    if F==None:
+       return [], False
+    if F in ZZ:
+        q = F
+    else:
+        q = F.cardinality()
+    if q>max_p_for_degree[d]:
+        return [], False
+    if (q,d) in Gamma_plus_short_dict:
+        return Gamma_plus_short_dict[(q,d)], True
+    if (q,d) in Gamma_plus_dict:
+        return Gamma_plus_dict[(q,d)], False
+    if F in ZZ:
+        F = GF(q)
+    print("Computing Gamma_plus({},{})".format(d,F))
+    if q==2:
+        res = [[f,h] for f in monics(F,d,d%2)
+               for h in monics(F,(d+1)//2,(d+1)%2)
+               if no_smooth_points_mod2(f,h)]
+    else:
+        res = Gamma_new(d,F,+1)
+    Gamma_plus_dict[(q,d)] = res
+    #print("accessing Gamma(d,1) with p={}".format(d,q))
+    return res, False
+
+def Gamma_default(d,F,plusorminus):
+    if plusorminus==+1:
+       return Gamma_plus_default(d,F)
+    else:
+       return Gamma_minus_default(d,F)
+
+def Gamma_plus_default(d,F):
+    p = F.cardinality()
+    m = monics if d%p==0 else monics0
+    res = [f for f in m(F,d) if no_smooth_points(f)]
+    if d%p==0:
+       return res
+    x = res[0].parent().gen()
+    return [f(x+b) for b in F for f in res]
+
+def Gamma_minus_default(d,F):
+    p = F.cardinality()
+    u = a_nonsquare(F)
+    m = monics if d%p==0 else monics0
+    res = [f for f in m(F,d,u) if (not (u*f).is_square()) and no_smooth_points(f)]
+    if d%p==0:
+       return res
+    x = res[0].parent().gen()
+    return [f(x+b) for b in F for f in res]
+
+def Gamma_new(d,F,plusorminus):
+    if d<3: return []
+    if d<4 and F.cardinality()>3: return []
+    if d<5 and F.cardinality()>5: return []
+    if d<6 and F.cardinality()>11: return []
+    if d<7 and F.cardinality()>20: return []
+    if d%2==0:
+       return Gamma_new_even(d,F,plusorminus)
+    else:
+       return Gamma_new_odd(d,F,plusorminus)
+
+def Gamma_new_even(d,F,plusorminus):
+    p = F.cardinality()
+    if p<=d-3 or d<=3 or p.divides(d):
+       return Gamma_default(d,F,plusorminus)
+    x = polygen(F)
+    ff0 = prod([x-j for j in range(d-2)])
+    ff  = [f//f(k) for k,f in enumerate([ff0//(x-k) for k in range(d-2)])]
+    assert all([ff[i](j)==F(i==j) for i in range(d-2) for j in range(d-2)])
+    # list of 0 and non-squares:
+    ns = [i for i in F if i.is_zero() or not i.is_square()]
+    p2 = (p+1)//2
+    assert len(ns) == p2
+    rr = range(1,p2)
+    u = ns[1] # first non-square
+    s = ff0[d-3]
+    t = ff0[d-4]-s**2
+    if plusorminus==-1:
+       t*=u
+       u1=u
+       test = lambda f: no_smooth_points(f) and not (u*f).is_square()
+    else:
+       u1=1
+       test = lambda f: no_smooth_points(f)
+
+    def pols(k):
+        """Construct polys of degree d with top 3 coeffs 1,0,k and d-2 non-square values
+        """
+        #print("k={}".format(k))
+        temp = [(u1*x**2-s*u1*x+k-t)*ff0 + sum([w[j]*ff[j] for j in range(d-2)])
+           for w in xmrange_iter([ns for _ in range(d-2)])]
+        assert all([list(f)[-3:] == [k,0,u1] for f in temp])
+        temp = [f for f in temp if test(f)]
+        if k:
+           temp = [f(r*x)/r**d for r in rr for f in temp]
+        return temp
+
+    return [f(x+b) for f in sum([pols(k) for k in [0,1,u]],[]) for b in F]
+
+def Gamma_new_odd(d,F,plusorminus):
+    p = F.cardinality()
+    if p<d or d<=2 or p.divides(d):
+       return Gamma_plus_default(d,F)
+    x = polygen(F)
+    ff0 = prod([x-j for j in range(d-1)])
+    ff  = [f//f(k) for k,f in enumerate([ff0//(x-k) for k in range(d-1)])]
+    ff0 *= (x+sum(range(d-1)))
+    assert all([ff[i](j)==F(i==j) for i in range(d-1) for j in range(d-1)])
+    # list of 0 and non-squares:
+    ns = [i for i in F if i.is_zero() or not i.is_square()]
+    p2 = (p+1)//2
+    assert len(ns) == p2
+    u = ns[1] # first non-square
+    if plusorminus==-1:
+       u1=u
+       test = lambda f: no_smooth_points(f) and not (u*f).is_square()
+    else:
+       u1=1
+       test = lambda f: no_smooth_points(f)
+
+    # Construct polys of degree d with top 2 coeffs 0,k and d-1 non-square values
+    temp = [u1*ff0 + sum([w[j]*ff[j] for j in range(d-1)])
+           for w in xmrange_iter([ns for _ in range(d-1)])]
+    assert all([list(f)[-2:] == [0,u1] for f in temp])
+    temp = [f for f in temp if test(f)]
+
+    return [f(x+b) for f in temp for b in F]
+
+def Gamma_minus(d, F=None):
+    """List of f of degree d, with (fixed) non-square leading coefficient
+    u, with no smooth points but not of the form u*h^2, with
+    multiplicity flag (set when retrieved from the precomputed
+    restricted list, else not set).
+    """
+    if F==None:
+       return [], False
+    if F in ZZ:
+        q = F
+    else:
+        q = F.cardinality()
+    if q>max_p_for_degree[d]:
+        return [], False
+    if (q,d) in Gamma_minus_short_dict:
+        return Gamma_minus_short_dict[(q,d)], True
+    if (q,d) in Gamma_minus_dict:
+        return Gamma_minus_dict[(q,d)], False
+    if d%2:
+        res, fl = Gamma_plus(d,F)
+        Gamma_minus_dict[(q,d)] = res
+        return res, False
+    if F in ZZ:
+        F = GF(q)
+    print("Computing Gamma_minus({},{})".format(d,F))
+    if q==2:
+        res = [[f,h] for f in monics(F,d,1)
+               for h in monics(F,d//2,1)
+            if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
+    else:
+        res = Gamma_new(d,F,-1)
+    Gamma_minus_dict[(q,d)] = res
+    #print("accessing Gamma(d,u) with p={}".format(d,q))
+    return res, False
+
+def show_Gamma(verbose=False):
+    for d,dname in zip([Gamma_plus_dict, Gamma_minus_dict,Gamma_plus_short_dict, Gamma_minus_short_dict], ["Gamma(n,1)","Gamma(n,u)", "Gamma(n,1)/affine", "Gamma(n,u)/affine"]):
+        print("\n{} entries".format(dname))
+        for k in sorted(d.keys()):
+            if verbose:
+                print("\t(p,d)={}: {}".format(k,d[k]))
+            else:
+                print("\t(p,d)={}: {} elements".format(k,len(d[k])))
+
+def one_row(p):
+    """ Function to check entries in Table in paper
+    """
+    F = GF(p)
+    table = {}
+    table[3] = [0, 0, 1, 0, 6, 21, 37, 64, 192, 495, 576]
+    table[5] = [0, 0, 0, 0, 5, 47, 145, 250, 1285, 5820, 6440]
+    table[7] = [0, 0, 0, 0, 0, 49, 196, 392, 2992, 18928, 21126]
+    table[11] = [0, 0, 0, 0, 0, 11, 55, 220, 3762, 35442, 43032]
+    table[13] = [0, 0, 0, 0, 0, 0, 0, 104, 2691, 29471, 38064]
+    table[17] = [0, 0, 0, 0, 0, 0, 0, 0, 816, 10404, 15810]
+    table[19] = [0, 0, 0, 0, 0, 0, 0, 0, 171, 5130, 8436]
+    table[23] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 506, 1012]
+    table[29] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    table[31] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    d_list = [1, 2, 3, 4, 4, 5, 6, 6, 7, 8, 8]
+    Gamma_list = [Gamma_plus if i in [0,1,2,4,5,7,8,10] else Gamma_minus for i in range(11)]
+    def count_f(flist_mflag):
+        flist, mflag = flist_mflag
+        return sum(f_multiplicity(f) for f in flist) if mflag else len(flist)
+    res = [count_f(G(d,F)) for d,G in zip(d_list, Gamma_list)]
+    if p in table:
+       if res==table[p]:
+          print("p={} OK".format(p))
+       else:
+          print("p={} not OK, table is\n{} but we get\n{}".format(p,table[p],res))
+    return res
+
+def is_square_homog(f):
+    """ Test if f (homogeneous) is a square, by factoring.
+    """
+    if f.degree()%2 ==1:
+       return False
+    F = f.base_ring()
+    f_fac = f.factor()
+    return F(f_fac.unit()).is_square() and all([e%2==0 for g,e in f_fac])
+
+def no_smooth_points_homog(f):
+    """Return True iff z^2=f(x,y) has no smooth (projective) points over the base (odd finite) field.
+
+    N.B.  z^2=f(x,y) has no smooth F_p-points if for all (x:y) in
+     P^1(F_p) either f(x,y) is nonsquare or it is 0 and (x:y) is also
+     a root of both derivatives.  Note that x*fx+y*fy=d*f but we must
+     check that all 3 are zero to correctly handle (0:1), (1:0) and
+     the case p|d.
+    """
+    x,y = f.parent().gens()
+    fx = f.derivative(x)
+    fy = f.derivative(y)
+    P1 = ProjectiveSpace(f.base_ring(),1)
+    return all([(not f(x,y).is_square()) or (fx(x,y)==fy(x,y)==f(x,y)==0)
+     for x,y in P1])
 
 def beta_eps(eps):
     """ Return the function beta(-,u), beta(-,p) or beta(-,1) according to eps=-1,0,+1.
@@ -115,7 +564,7 @@ def beta_eps(eps):
         return beta
 
 def f_term(f,p=pp):
-    """Helper function for alpha(-,eps), mu_0.  In the paper this is
+    """Helper function for alpha(-,eps).  In the paper this is
     expressed differently, as a double product over j up to the degree
     and eps, with multiplicities.  Here we just take the product over
     all roots.
@@ -128,10 +577,42 @@ def f_term(f,p=pp):
     """
     if p==pp: # will not be called in this case anyway
         return 0
-    return prod([(1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f)])
+    return prod((1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f))
+
+def f_multiplicity(f):
+    """For f in a restricted list of polys of degree n, up to affine
+    transformation (with p not dividing 2*n), assuming f[n-1]=0, the
+    multiplicity is
+
+    p if f[n-2]=0
+    (p-1)/2 if f[n-2]!=0 and p=3 (mod 4) or n even
+    (p-1)/4 if f[n-2]!=0 and p=1 (mod 4) and n odd
+
+    """
+    p = f.parent().characteristic()
+    n = f.degree()
+    if p==2 or n%p==0:
+        return 1
+    if f[n-2]==0:
+        return p
+    if p%4==3 or n%2==0:
+        return p*(p-1)/2
+    else:
+        return p*(p-1)/4
+
+def sum_f_terms(flist, p=pp, mflag=False):
+    """
+    Sum of f_term(f,p) over f in flist
+    """
+    if p==pp: # will not be called in this case anyway
+        return 0
+    if mflag:
+        return sum(f_multiplicity(f)*f_term(f, p) for f in flist)
+    else:
+        return sum(f_term(f, p) for f in flist)
 
 def fh_term(f,h):
-    """Helper function for alpha(-,eps), mu_0 in case p=2.  In the paper
+    """Helper function for alpha(-,eps) in case p=2.  In the paper
     this is expressed differently, as a double product over j up to
     the degree and eps, with multiplicities.  Here we just take the
     product over all roots.
@@ -145,20 +626,26 @@ def fh_term(f,h):
     """
     return prod([(1-beta_eps(eps)(j,2)) for P,(j,eps) in point_multiplicities(f,h)])
 
-def phi_term(phi, A_or_P, double, p, v=None):
-    """Helper function for alpha(-,p), alpha(-,u), mu_0, mu_1.
+def sum_fh_terms(fhlist):
+    """
+    Sum of fh_term(f,h) over (f,h) in fhlist
+    """
+    return sum(fh_term(f,h) for f,h in fhlist)
 
-    The first two use A_or_P="affine" to use lambda_A while the others
-    use "proj" to get lambda_P.
+def phi_term(phi, double, p, v=None):
+    """Helper function for alpha(-,p), alpha(-,u).
 
-    alpha(-,u) and mu_0 have double=True which uses beta(2*e,u) for (1,e) in phi.
+    alpha(-,u) has double=True which uses beta(2*e,u) for (1,e) in phi.
 
-    alpha(-,p) and mu_1 have double=False which uses beta(e,p) for (1,e) in phi.
+    alpha(-,p) has double=False which uses beta(e,p) for (1,e) in phi.
 
     """
-    lam = lambda_A(phi,p) if A_or_P=="affine" else lambda_P(phi,p)
-    al = (lambda i: beta_minus(2*i,p,v)) if double else (lambda i: beta_0(i,p,v))
-    return lam * prod([1-al(e) for d,e in phi if d==1])
+    be = (lambda i: beta_minus(2*i,p,v)) if double else (lambda i: beta_0(i,p,v))
+    return lambda_A(phi,p) * prod(1-be(e) for d,e in phi if d==1)
+
+def sum_phi_terms(i, double, p, v):
+    j = i//2 if double else i
+    return sum(phi_term(phi, double, p, v) for phi in Phi(j))
 
 def alpha(i,p=pp,v=None):
     """ Average of alpha(i,1) and alpha(i,u)
@@ -169,10 +656,6 @@ def beta(i,p=pp,v=None):
     """ Average of beta(i,1) and beta(i,u)
     """
     return (beta_plus(i,p,v)+beta_minus(i,p,v))/2
-
-"""
-The main recursive function to compute alpha_plus, i.e. alpha(n,1; p)
-"""
 
 def alpha_plus(i,p=pp,v=None, verbose=False):
     """alpha(i,1; p).
@@ -192,17 +675,18 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
     returned and stored; otherwise the returned value will be such a
     polynomial in some other variable.
     """
+    global alpha_plus_dict
     try:
         return alpha_plus_dict[(i,p)]
     except KeyError:
         if i<3:
             if verbose: print("setting alpha_plus({},{})".format(i,p))
-            b = alpha_plus_dict[(i,p)] = 1
-            return b
+            a = alpha_plus_dict[(i,p)] = 1
+            return a
         pass
     make_alphas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "bp_{}_{}".format(i,p)
+    v0 = "ap_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -213,52 +697,49 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
     # use Prop 3.3 (i)
     if verbose: print("Computing alpha_plus({},{})".format(i,p))
     Fp = GF(p) if p in ZZ else None
-    G = Gamma_plus(i,Fp)
+    G, mflag = Gamma_plus(i,Fp)
     if p==2:
         e = (3*i+1)//2 if i%2 else 3*i//2
-        b = 1 - sum([fh_term(f,h) for f,h in G])/p**e
+        a = 1 - sum_fh_terms(G)/p**e
     else:
-        b = 1 - sum([f_term(f,p) for f in G])/p**i
+        a = 1 - sum_f_terms(G,p, mflag)/p**i
 
     try:
-        b=F(b)
+        a = F(a)
         if verbose: print("setting alpha_plus({},{})".format(i,p))
-        alpha_plus_dict[(i,p)] = b
+        alpha_plus_dict[(i,p)] = a
     except (ValueError, TypeError):
-        # b is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,b))
-        if str(b.parent().gen())==v0:
-            r,s = b.list()
-            b = r/(1-s)
+        # a is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,a))
+        if str(a.parent().gen())==v0:
+            r,s = a.list()
+            a = r/(1-s)
             if verbose:
                 print("setting alpha_plus({},{})".format(i,p))
-                print("{}={}".format(v0,b))
-            alpha_plus_dict[(i,p)] = b
-    return b
-
-"""
-The main recursive function to compute alpha_minus, i.e. alpha(n,u; p)
-"""
+                print("{}={}".format(v0,a))
+            alpha_plus_dict[(i,p)] = a
+    return a
 
 def alpha_minus(i,p=pp,v=None, verbose=False):
     """alpha(i,u; p).
 
     Computed values are stored in alpha_minus_dict keyed on (i,p).
     """
+    global alpha_minus_dict
     try:
         return alpha_minus_dict[(i,p)]
     except KeyError:
         if i<3:
             if verbose: print("setting alpha_minus({},{})".format(i,p))
-            b = alpha_minus_dict[(i,p)] = [0,1,p/(p+1)][i]
-            return b
+            a = alpha_minus_dict[(i,p)] = [0,1,p/(p+1)][i]
+            return a
     if i%2==1:
         if verbose: print("setting alpha_minus({},{})".format(i,p))
-        b = alpha_minus_dict[(i,p)] = alpha_plus(i,p,v)
-        return b
+        a = alpha_minus_dict[(i,p)] = alpha_plus(i,p,v)
+        return a
     make_alphas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "bm_{}_{}".format(i,p)
+    v0 = "am_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -270,85 +751,82 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
     if verbose: print("Computing alpha_minus({},{})".format(i,p))
     i2 = i//2
     Fp = GF(p) if p in ZZ else None
-    G = Gamma_minus(i,Fp)
+    G, mflag = Gamma_minus(i,Fp)
+    a = 1 - sum_phi_terms(i,True,p,v) / p**i2
     if p==2:
-        b = ( 1
-              - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p**i2
-              - sum([fh_term(f,h) for f,h in G]) / p**((3*i)//2))
+        a = a - sum_fh_terms(G) / p**(3*i2)
     else:
-        b = ( 1
-              - sum([phi_term(phi,"affine",True,p,v) for phi in Phi(i2)]) / p**i2
-              - sum([f_term(f,p) for f in G]) / p**i)
+        a = a - sum_f_terms(G,p, mflag) / p**i
     try:
-        b=F(b)
+        a = F(a)
         if verbose: print("setting alpha_minus({},{})".format(i,p))
-        alpha_minus_dict[(i,p)] = b
+        alpha_minus_dict[(i,p)] = a
     except (ValueError, TypeError):
-        # b is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,b))
-        if str(b.parent().gen())==v0:
-            r,s = b.list()
-            b = r/(1-s)
+        # a is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,a))
+        if str(a.parent().gen())==v0:
+            r,s = a.list()
+            a = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,b))
+                print("{}={}".format(v0,a))
                 print("setting alpha_minus({},{})".format(i,p))
-            alpha_minus_dict[(i,p)] = b
-    return b
-
-"""
-The main recursive function to compute alpha_0, i.e. alpha(n,p; p)
-"""
+            alpha_minus_dict[(i,p)] = a
+    return a
 
 def alpha_0(i,p=pp,v=None, verbose=False):
     """alpha(i,p; p).
 
     Computed values are stored in alpha_0_dict keyed on (i,p).
     """
+    global alpha_0_dict
     try:
         return alpha_0_dict[(i,p)]
     except KeyError:
         if i<3:
-            if verbose: print("setting alpha_0({},{})".format(i,p))
-            b =  alpha_0_dict[(i,p)] = [0,1,1/2][i]
-            return b
+            if verbose:
+                print("setting alpha_0({},{})".format(i,p))
+            a = [0,1,1/2][i]
+            alpha_0_dict[(i,p)] = a
+            return a
     make_alphas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "b0_{}_{}".format(i,p)
+    v0 = "a0_{}_{}".format(i,p)
     if v==None:
         v=v0
-        if verbose: print("Setting "+v0)
+        if verbose:
+            print("Setting "+v0)
     else:
         if v==v0:
             if verbose: print("recursion for "+v0)
             return PolynomialRing(F,v0).gen()
     # use Prop 3.3 (iii)
-    if verbose: print("Computing alpha_0({},{})".format(i,p))
-    b = 1 - sum([phi_term(phi,"affine",False,p,v) for phi in Phi(i)])
+    if verbose:
+        print("Computing alpha_0({},{})".format(i,p))
+    a = 1 - sum_phi_terms(i,False,p,v)
     try:
-        b=F(b)
-        if verbose: print("setting alpha_0({},{})".format(i,p))
-        alpha_0_dict[(i,p)] = b
+        a = F(a)
+        if verbose:
+            print("setting alpha_0({},{})".format(i,p))
+        alpha_0_dict[(i,p)] = a
     except (ValueError, TypeError):
-        # b is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,b))
-        if str(b.parent().gen())==v0:
-            r,s = b.list()
-            b = r/(1-s)
+        # a is a linear poly in some variable: is it v0?
+        if verbose:
+            print("{}={}".format(v0,a))
+        if str(a.parent().gen())==v0:
+            r,s = a.list()
+            a = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,b))
+                print("{}={}".format(v0,a))
                 print("setting alpha_0({},{})".format(i,p))
-            alpha_0_dict[(i,p)] = b
-    return b
-
-"""
-The main recursive function to compute beta_0, i.e. beta(n,p; p)
-"""
+            alpha_0_dict[(i,p)] = a
+    return a
 
 def beta_0(i,p=pp,v=None, verbose=False):
     """ beta(i,p; p).
 
     Computed values are stored in beta_0_dict keyed on (i,p).
     """
+    global beta_0_dict
     try:
         return beta_0_dict[(i,p)]
     except KeyError:
@@ -357,7 +835,7 @@ def beta_0(i,p=pp,v=None, verbose=False):
             a = beta_0_dict[(i,p)] = [0,1,1/2][i]
             return a
     F = Qp if p==pp else QQ
-    v0 = "a0_{}_{}".format(i,p)
+    v0 = "b0_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -379,42 +857,39 @@ def beta_0(i,p=pp,v=None, verbose=False):
     else:
        blist += [alpha(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
-    a = affine(blist,p)
+    b = affine(blist,p)
     try:
-        a=F(a)
+        b = F(b)
         if verbose: print("setting beta_0({},{})".format(i,p))
-        beta_0_dict[(i,p)] = a
+        beta_0_dict[(i,p)] = b
     except (ValueError, TypeError):
-        # a is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,a))
-        if str(a.parent().gen())==v0:
-            r,s = a.list()
-            a = r/(1-s)
+        # b is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,b))
+        if str(b.parent().gen())==v0:
+            r,s = b.list()
+            b = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,a))
+                print("{}={}".format(v0,b))
                 print("setting beta_0({},{})".format(i,p))
-            beta_0_dict[(i,p)] = a
-    return a
-
-"""
-The main recursive function to compute beta_plus, i.e. beta(n,1; p)
-"""
+            beta_0_dict[(i,p)] = b
+    return b
 
 def beta_plus(i,p=pp,v=None, verbose=False):
     """ beta(i,1; p).
 
     Computed values are stored in beta_plus_dict keyed on (i,p).
     """
+    global beta_plus_dict
     try:
         return beta_plus_dict[(i,p)]
     except KeyError:
         if i<3:
             if verbose: print("setting beta_plus({},{})".format(i,p))
-            a = beta_plus_dict[(i,p)] = [1,1,1/p][i]
-            return a
+            b = beta_plus_dict[(i,p)] = [1,1,1/p][i]
+            return b
     make_betas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "ap_{}_{}".format(i,p)
+    v0 = "bp_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -435,46 +910,43 @@ def beta_plus(i,p=pp,v=None, verbose=False):
     else:
        blist += [alpha_0(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
-    a = affine(blist,p)
+    b = affine(blist,p)
     try:
-        a=F(a)
+        b = F(b)
         if verbose: print("setting beta_plus({},{})".format(i,p))
-        beta_plus_dict[(i,p)] = a
+        beta_plus_dict[(i,p)] = b
     except (ValueError, TypeError):
-        # a is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,a))
-        if str(a.parent().gen())==v0:
-            r,s = a.list()
-            a = r/(1-s)
+        # b is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,b))
+        if str(b.parent().gen())==v0:
+            r,s = b.list()
+            b = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,a))
+                print("{}={}".format(v0,b))
                 print("setting beta_plus({},{})".format(i,p))
-            beta_plus_dict[(i,p)] = a
-    return a
-
-"""
-The main recursive function to compute beta_minus, i.e. beta(n,u; p)
-"""
+            beta_plus_dict[(i,p)] = b
+    return b
 
 def beta_minus(i,p=pp,v=None, verbose=False):
     """ beta(i,u; p).
 
     Computed values are stored in beta_minus_dict keyed on (i,p).
     """
+    global beta_minus_dict
     try:
         return beta_minus_dict[(i,p)]
     except KeyError:
         if i<3:
             if verbose: print("setting beta_minus({},{})".format(i,p))
-            a = beta_minus_dict[(i,p)] = [0,1,1/(p+1)][i]
-            return a
+            b = beta_minus_dict[(i,p)] = [0,1,1/(p+1)][i]
+            return b
     if i%2==1:
         if verbose: print("setting beta_minus({},{})".format(i,p))
         beta_minus_dict[(i,p)] = beta_plus(i,p)
         return beta_minus_dict[(i,p)]
     make_betas(i-1,p)
     F = Qp if p==pp else QQ
-    v0 = "am_{}_{}".format(i,p)
+    v0 = "bm_{}_{}".format(i,p)
     if v==None:
         v=v0
         if verbose: print("Setting "+v0)
@@ -492,72 +964,66 @@ def beta_minus(i,p=pp,v=None, verbose=False):
          blist += [alpha(k,p,v) for k in range(j,-1,-1)]
     blist += [alpha_minus(i,p,v)]
     if verbose: print("Computing affine({}) with p={}".format(blist,p))
-    a = affine(blist,p)
+    b = affine(blist,p)
     try:
-        a=F(a)
+        b = F(b)
         if verbose: print("setting beta_minus({},{})".format(i,p))
-        beta_minus_dict[(i,p)] = a
+        beta_minus_dict[(i,p)] = b
     except (ValueError, TypeError):
-        # a is a linear poly in some variable: is it v0?
-        if verbose: print("{}={}".format(v0,a))
-        if str(a.parent().gen())==v0:
-            r,s = a.list()
-            a = r/(1-s)
+        # b is a linear poly in some variable: is it v0?
+        if verbose: print("{}={}".format(v0,b))
+        if str(b.parent().gen())==v0:
+            r,s = b.list()
+            b = r/(1-s)
             if verbose:
-                print("{}={}".format(v0,a))
+                print("{}={}".format(v0,b))
                 print("setting beta_minus({},{})".format(i,p))
-            beta_minus_dict[(i,p)] = a
-    return a
-
-"""
-Compute and cache all alpha(n,eps; p).  Recursively computes or looks up alpha(m,eps'; p) and beta(m,eps'; p) for m<n
-"""
-
-def make_alphas(i, p=pp, verbose=False):
-    """Compute (and optionally display) all 3 alphas with subscript i
-    after first computing all betas and alphas with smaller
-    subscripts.
-    """
-    for j in range(3,i):
-        make_betas(j,p)
-        make_alphas(j,p)
-    b = alpha_plus(i,p)
-    if verbose:
-        print("alpha_plus({},{}) = {}".format(i,p,b))
-    b = alpha_minus(i,p)
-    if verbose:
-        print("alpha_minus({},{}) = {}".format(i,p,b))
-    b = alpha_0(i,p)
-    if verbose:
-        print("alpha_0({},{}) = {}".format(i,p,b))
-
-"""
-Compute and cache all beta(n,eps; p).  Recursively computes or looks up alpha(m,eps'; p) and beta(m,eps'; p) for m<n
-"""
+            beta_minus_dict[(i,p)] = b
+    return b
 
 def make_betas(i, p=pp, verbose=False):
     """Compute (and optionally display) all 3 betas with subscript i
     after first computing all betas and alphas with smaller
     subscripts.
     """
+    if (i,p) in beta_plus_dict and (i,p) in beta_minus_dict and (i,p) not in beta_0_dict:
+        return
     if verbose:
-        print("Making all beta_{} for p={}".format(i,p))
+        print("Making all beta({}, eps; {})".format(i,p))
     for j in range(3,i):
         make_betas(j,p)
         make_alphas(j,p)
-    a = beta_plus(i,p)
+    b = beta_plus(i,p)
     if verbose:
-        print("beta_plus({},{}) = {}".format(i,p,a))
-    a = beta_minus(i,p)
+        print("beta({},1; {}) = {}".format(i,p,b))
+    b = beta_minus(i,p)
     if verbose:
-        print("beta_minus({},{}) = {}".format(i,p,a))
-    a = beta_0(i,p)
+        print("beta({},u; {}) = {}".format(i,p,b))
+    b = beta_0(i,p)
     if verbose:
-        print("beta_0({},{}) = {}".format(i,p,a))
+        print("beta({},p; {}) = {}".format(i,p,b))
 
-"""
-Utilities for checking any alpha or beta value against expected (i.e. previously computed and written in here)
-"""
+def make_alphas(i, p=pp, verbose=False):
+    """Compute (and optionally display) all 3 alphas with subscript i
+    after first computing all betas and alphas with smaller
+    subscripts.
+    """
+    if (i,p) in alpha_plus_dict and (i,p) in alpha_minus_dict and (i,p) not in alpha_0_dict:
+        return
+    if verbose:
+        print("Making all alpha({}, eps; {})".format(i,p))
+    for j in range(3,i):
+        make_betas(j,p)
+        make_alphas(j,p)
+    a = alpha_plus(i,p)
+    if verbose:
+        print("alpha({},1; {}) = {}".format(i,p,a))
+    a = alpha_minus(i,p)
+    if verbose:
+        print("alpha({},u; {}) = {}".format(i,p,a))
+    a = alpha_0(i,p)
+    if verbose:
+        print("alpha({},p; {}) = {}".format(i,p,a))
 
 def check_value(ab,i,eps,val,p=pp):
     myval = [beta_minus,beta_0,beta_plus][eps+1](i,p) if ab=="beta" else [alpha_minus,alpha_0,alpha_plus][eps+1](i,p)
@@ -658,20 +1124,19 @@ def check_ab(i=None):
     else:
         raise NotImplementedError("checks only implemented for i=3,4,5,6 so far")
 
-"""
-    Computing rho from alphas and betas
-"""
 
 def ie(a,b): return 1-(1-a)*(1-b)
 
 def rho_0(n,p=pp):
-    """Return rho(n,1; p) for p an odd prime or generic, n even.  This is the
+    """Return rho_0(n) for p an odd prime or generic, n even.  This is the
     *relative* local density of soluble y^2=f(x), restricted to primitive
     f.
 
     This is (a rearrangement of) Prop 3.13 of hyper.pdf.
     """
-    def term(i): # prob. soluble if deg(f mod p)=i
+    def term(i):
+        """ prob. soluble if deg(f mod p)=i
+        """
         if i%2:
             return ie(beta(n-i,p), alpha(i,p))
         else:
@@ -680,12 +1145,18 @@ def rho_0(n,p=pp):
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
 
 def rho_1(n,p=pp):
-    """Return rho(n,u; p) for p an odd prime or generic, n even.  This is the
+    """Return rho_1(n) for p an odd prime or generic, n even.  This is the
     *relative* local density of soluble y^2=f(x), restricted to f with
     valuation 1.
+
+    This different from the formula give in Prop 3.23 of hyper.pdf,
+    which only involves the beta's.
     """
-    def term(i): # prob. soluble if deg(f/p mod p)=i
+    def term(i):
+        """ prob. soluble if deg(f/p mod p)=i
+        """
         return ie(beta_0(n-i,p), alpha_0(i,p))
+    # prob sol if f/p mod p is nonzero
 
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
 
@@ -696,7 +1167,7 @@ def rho(g,p=pp):
 
     all p>2   for g=1;
     all p>11  for g=2;
-    all p>?   for g=3, etc.
+    all p>29   for g=3, etc.
 
     """
     n = 2*g+2
@@ -819,3 +1290,285 @@ def new_rho_p(n, p=pp):
     r1 = rho_1(n,p)
     pn1 = p**(n+1)
     return (pn1*r1 + r0) / (pn1 + 1)
+
+################ Code to create Gamma sets from the C program output ##############################
+
+"""
+For n even output lines look like
+
+13 u [1,0,0,0,0,0,0,0,10,0,12]
+13 1 [1,0,0,12,0,0,0,1,4,8,11]
+or
+13 1 [1,0,1,6,0,0,0,0,8,7,5]
+13 u [1,0,1,6,0,0,0,4,2,10,12]
+or
+13 u [1,0,2,6,0,0,0,8,8,9,9]
+13 1 [1,0,2,11,0,0,0,11,6,0,6]
+
+with a list of coefficients *starting with the leading coefficient 1*
+of a monic polynomial f(x) in Gamma(10,u; 13) or Gamma(10,1; 13). The
+first coefficients are 1,0 c with c in {0,1,u} (so u=2 in the
+example).
+
+To get the full list of Gamma(n,1; p) or Gamma(n,u; p) take lines starting
+"p 1 " or "p u " respectively, and:
+
+ - take the f starting [1,0,0,...] and collect all f(x+b) for b in F_p, i.e. 0<=b<=p-1.
+
+ - take the f starting [1,0,c,...] with c!=0 and collect all
+   f(a*x+b)/a^n for a in F_p^* up to sign, b in F_p, i.e. (a,b) with
+   1<=a<=(p-1)/2 and 0<=b<=p-1/
+
+For n odd (e.g. n=9) output lines look like
+
+13 u [1,0,0,1,0,0,0,0,0,10]
+13 1 [1,0,0,8,0,0,0,0,0,11]
+or
+13 1 [1,0,1,1,0,10,4,11,2,7]
+13 u [1,0,1,9,5,5,10,3,6,3]
+or
+13 u [1,0,2,7,12,10,11,6,0,0]
+13 1 [1,0,2,7,12,11,3,0,4,6]
+
+as before.
+
+To get the full set Gamma(n,1; p) the procedure depends on p mod 4.
+If p=3 (mod 4), so that all squares a 4th powers, proceed exactly as
+for n even, using only lines starting "p 1 ".  When p=1 (mod 4), we
+need to take consider lines starting "p 1 " and "p u ".  For a "p 1 "
+line and f starting [1,0,0,...] just apply p translations as before.
+For a "p 1 "line and f starting [1,0,c,...] with c!=0, apply affine
+transforms (a,b) with a *square* and up to sign.  For a "p u " line
+and f starting [1,0,c,...] with c!=0, apply affine transforms (a,b)
+with a *non-square* and up to sign.  Ignore "p u " lines starting
+[1,0,0,...].
+
+"""
+
+def read_gamma_c_output(n, p, u, fname):
+    """Read an output file from running gamma$n.c on prime p.  Ignore the
+    last three lines which start "Checked" or "#".  All other lines
+    are as above, where the coefficient list has length n+1.
+
+    Returns two lists list_1 and list_u of the coefficient lists
+    starting "p 1 " and "p u " respectively.  The parameters n,p,u are
+    just for consistency checks, u being the least quadratic
+    nonresidue mod p.
+    """
+    list_1 = []
+    list_u = []
+    if n<3 or p>max_p_for_degree[n] or n%p==0:
+        return list_1, list_u
+    with open(fname) as infile:
+        for L in infile:
+            if L[0] in ["C", "#", "p"]:
+               #print("ignoring line '{}'".format(L.strip()))
+               continue
+            pp, c, coeffs = L.split()
+            assert int(pp)==p
+            coeffs = [int(a) for a in coeffs[1:-1].split(",")]
+            assert len(coeffs)==n+1
+            assert c in ["1", "u"]
+            assert coeffs[0]==1
+            assert coeffs[1]==0
+            assert coeffs[2] in [0,1,u]
+            coeffs.reverse()
+            if c=="1":
+                list_1.append(coeffs)
+            else:
+                list_u.append(coeffs)
+    return list_1, list_u
+
+def scale(f,a):
+    """
+    Given f(x) monic in F[x] and a nonzero in F, return the monic f(a*x)/a^deg(f)
+    """
+    x = f.parent().gen()
+    return f(a*x)/a**f.degree()
+
+def x_shift(f,b):
+    """
+    Given f(x) monic in F[x] and b in F, return the monic f(x+b)
+    """
+    x = f.parent().gen()
+    return f(x+b)
+
+def affine_transform(f,a,b):
+    """
+    Given f(x) monic in F[x] and a,b in F with a nonzero, return the monic f(a*(x+b))/a^deg(f)
+    """
+    return x_shift(scale(f,a),b)
+
+def expand1(f, alist):
+    """
+    for f(x) monic in F[x] with next coefficient 0, return all affine (a,b)-transforms with a in alist
+    """
+    n = f.degree()
+    p = f.base_ring().cardinality()
+    if f[n-2]==0:
+        return [x_shift(f,b) for b in range(p)]
+    else:
+        return [affine_transform(f,a,b) for a in alist for b in range(p)]
+
+def make_gammas_even(n,p, restricted=False):
+    """Read from file "gamma{n}_{p}.out" and return the complete sets
+    Gamma(n,1), Gamma(n,u), for n even (when restricted=False), or
+    just the reduced ones when restricted=True.
+
+    Restricted means f = x^n+0*x^{n-1}+c*x^{n-2}+... with c in
+    {0,1,u}, representing an affine orbit of size p, p(p-1)/1,
+    p(p-1)/2 respectively.
+
+    """
+    assert n%2==0
+    assert n%p!=0 # not yet implemented
+    F = GF(p)
+    Fx = PolynomialRing(F, 'x')
+    u = a_nonsquare(F)
+    l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
+    gam_1 = []
+    gam_u = []
+    p12 = (p+1)//2
+    for coeffs in l1:
+        f = Fx(coeffs)
+        gam_1 += ([f] if restricted else expand1(f, range(1,p12)))
+    for coeffs in lu:
+        f = Fx(coeffs)
+        gam_u += ([u*f] if restricted else [u*f1 for f1 in expand1(f, range(1,p12))])
+    return gam_1, gam_u
+
+def make_gammas_odd(n,p, restricted=False):
+    """Read from file "gamma{n}_{p}.out" and return the complete sets
+    Gamma(n,1), Gamma(n,u) for n odd.
+
+    Restricted means f = (1 or u)*(x^n+0*x^{n-1}+c*x^{n-2}+...) with:
+
+    p=3 (mod 4): c=0 or in {1,u}, representing an affine orbit of size p or p(p-1)/2 respectively;
+
+    p=1 (mod 4): c=0 or in {1,u,u^2,u^3}, representing an affine orbit of size p or p(p-1)/4 respectively.
+
+    """
+    assert n%2==1
+    assert n%p!=0 # not yet implemented
+    F = GF(p)
+    Fx = PolynomialRing(F, 'x')
+    u = a_nonsquare(F)
+    l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
+    l1 = [Fx(coeffs) for coeffs in l1]
+    lu = [Fx(coeffs) for coeffs in lu]
+    gam_1 = []
+    gam_u = []
+    p12 = (p+1)//2
+    squs = [(a*a)%p for a in range(1,p12)]
+    squs_mod = [a for a in squs if a < p12]
+    if p%4==3:
+        for f in l1:
+            flist = [f] if restricted else expand1(f, squs)
+            gam_1 += flist
+        for f in lu:
+            flist = [f] if restricted else expand1(f, squs)
+            gam_u += [u*f1 for f1 in flist]
+    else:
+        for f in l1:
+            flist = [f] if restricted else expand1(f, squs_mod)
+            gam_1 += flist
+            if f[n-2]:
+                gam_u += [u*scale(f1,u) for f1 in flist]
+        for f in lu:
+            flist = [f] if restricted else expand1(f, squs_mod)
+            gam_u += [u*f1 for f1 in flist]
+            if f[n-2]:
+                gam_1 += [scale(f1,u) for f1 in flist]
+    return gam_1, gam_u
+
+def make_gammas(n,p, restricted=False):
+    if n%p==0:
+        print("Not implemented when p divides degree")
+        return [],[]
+    return make_gammas_odd(n,p, restricted) if n%2 else make_gammas_even(n,p, restricted)
+
+def fill_restricted_gamma_dicts():
+    global Gamma_plus_short_dict, Gamma_minus_short_dict
+    for n in range(3,11):
+        for p in primes(max_p_for_degree[n]+1):
+            if (2*n)%p==0:
+                continue
+            print("(n,p)=({},{})".format(n,p))
+            gam_1, gam_u = make_gammas(n,p,True)
+            Gamma_plus_short_dict[(p,n)] = gam_1
+            if n%2==0:
+                Gamma_minus_short_dict[(p,n)] = gam_u
+
+############  Obsolete code for Delta sets ######################################
+
+# Initialize dicts to store the Delta sets but do not reset on reload!
+# try:
+#     nd = len(Delta_dict)
+# except NameError:
+#     Delta_dict = {}
+
+# def initialize_Delta_dicts():
+#     global Delta_dict
+#     Delta_dict = {}
+
+# # Save to file and restore from file for Gammas and Deltas:
+# def save_Deltas(filename="Delta"):
+#     save(Delta_dict, filename)
+
+# def restore_Deltas(filename="Delta"):
+#     global Delta_dict
+#     Delta_dict.update(load(filename))
+
+# def Delta(d,F=None):
+#     """Return a list of f of even degree d, homogeneous with no smooth
+#     points but not of the form u*h^2.  Includes scalings (the
+#     condition is invariant under scaling by squares).
+#     """
+#     if F==None or d%2==1 or d<6 :
+#        return []
+#     if F in ZZ:
+#         q = F
+#     else:
+#         q = F.cardinality()
+#     if (d==6 and q>11):
+#         return []
+#     if not (q,d) in Delta_dict:
+#         if q==2:
+#             Delta_dict[(q,d)] = Delta2(d)
+#             return Delta_dict[(q,d)]
+#         if F in ZZ:
+#             F = GF(q)
+#         print("Computing Delta({},{})".format(d,F))
+#         u = a_nonsquare(F)
+#         flist = homog(F,d) # up to scaling
+#         # consider both f and u*f
+#         D1 =  [f for f in flist if not is_square_homog(u*f) and no_smooth_points_homog(f)]
+#         D2 =  [u*f for f in flist if not is_square_homog(f) and no_smooth_points_homog(u*f)]
+#         # D1+D2 is the result up to scaling by squares.
+#         sq = [F(a)**2 for a in range(1,((q-1)//2)+1)]
+#         Delta_dict[(q,d)] = flatten([[a*f for f in D1+D2] for a in sq])
+#     return Delta_dict[(q,d)]
+
+# def Delta2(d):
+#     """Return a list of (f,h) homogeneous of degrees (d,<=(d/2)) with d even,
+#     such that z^2+h*z+f has no smooth points and either factors over
+#     F_2 with distinct factors or is orrediucible over F_4.
+#     """
+#     F2 = GF(2)
+#     Fxy = PolynomialRing(F2,['x','y'])
+#     D = [(f,h) for f in homog(F2,d)+[Fxy(0)] for h in homog(F2,d//2)]
+#     #print("{} (f,h) pairs in degree {}".format(len(D),d))
+#     D = [fh for fh in D if no_smooth_points_mod2(*fh)]
+#     #print("{} (f,h) pairs have no smooth points".format(len(D)))
+#     D = [fh for fh in D if nfactors_mod2(*fh,abs=False)==[1,1] or nfactors_mod2(*fh,abs=True)==[1]]
+#     #print("{} of those have are abs. irred.  or split over F2".format(len(D)))
+#     return D
+
+# def show_Delta(verbose=False):
+#     for k in sorted(Delta_dict.keys()):
+#         if verbose:
+#             print("(p,d)={}: {}".format(k,Delta_dict[k]))
+#         else:
+#             print("(p,d)={}: {} elements".format(k,len(Delta_dict[k])))
+
+
