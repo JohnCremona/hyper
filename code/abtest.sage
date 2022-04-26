@@ -185,7 +185,7 @@ for p in primes(50):
 for p in primes(3,50):
     print("p={} & {} \\\\".format(p,rho(4,p)))
 
-print("Of these, the generic formula is not valid for p<???:")
+print("Of these, the generic formula is not valid for p<37:")
 
 for p in primes(50):
     print("p={}: {}".format(p,"general formula valid" if rho(4,p)==subs(rho4p,p) else "special case"))
