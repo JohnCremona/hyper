@@ -6,7 +6,7 @@
 #include <math.h>
 
 #define MAXD    10
-#define MAXP    64
+#define MAXP    128
 
 static inline int zmod (int x, int m)
     { register int t, z;  t = (1.0/m) * x;  z = x-t*m;  if ( z < 0 ) z += m;  if ( z >= m ) z -= m;  return z; }
