@@ -335,7 +335,7 @@ def Gamma_plus(d,F=None):
         q = F
     else:
         q = F.cardinality()
-    if q>max_p_for_degree[d]:
+    if q>max_p_for_degree.get(d, Infinity):
         return [], False
     if (q,d) in Gamma_plus_short_dict:
         return Gamma_plus_short_dict[(q,d)], True
@@ -469,7 +469,7 @@ def Gamma_minus(d, F=None):
         q = F
     else:
         q = F.cardinality()
-    if q>max_p_for_degree[d]:
+    if q>max_p_for_degree.get(d, Infinity):
         return [], False
     if (q,d) in Gamma_minus_short_dict:
         return Gamma_minus_short_dict[(q,d)], True
@@ -1357,7 +1357,7 @@ def read_gamma_c_output(n, p, u, fname):
     """
     list_1 = []
     list_u = []
-    if n<3 or p>max_p_for_degree[n] or n%p==0:
+    if n<3 or p>max_p_for_degree.get(n,Infinity) or n%p==0:
         return list_1, list_u
     with open(fname) as infile:
         for L in infile:
