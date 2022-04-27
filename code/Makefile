@@ -47,6 +47,9 @@ gamma4: gamma4.c
 gamma5: gamma5.c
 	gcc -O3 -funroll-loops -fopenmp gamma5.c -lm -o gamma5
 
+gamma5mod5: gamma5mod5.c
+	gcc -O3 -funroll-loops -fopenmp gamma5mod5.c -lm -o gamma5mod5
+
 gamma6: gamma6.c
 	gcc -O3 -funroll-loops -fopenmp gamma6.c -lm -o gamma6
 
@@ -62,6 +65,9 @@ gamma9: gamma9.c
 gamma10: gamma10.c
 	gcc -O3 -funroll-loops -fopenmp gamma10.c -lm -o gamma10
 
+gamma10mod5: gamma10mod5.c
+	gcc -O3 -funroll-loops -fopenmp gamma10mod5.c -lm -o gamma10mod5
+
 gamma11: gamma11.c
 	gcc -O3 -funroll-loops -fopenmp gamma11.c -lm -o gamma11
 
@@ -74,4 +80,4 @@ gamma13: gamma13.c
 gamma14: gamma14.c
 	gcc -O3 -funroll-loops -fopenmp gamma14.c -lm -o gamma14
 
-gammas: gamma3 gamma4 gamma5 gamma6 gamma7 gamma8 gamma9 gamma10 gamma11 gamma12 gamma13 gamma14
+gammas: gamma3 gamma4 gamma5 gamma5mod5 gamma6 gamma7 gamma8 gamma9 gamma10 gamma10mod5 gamma11 gamma12 gamma13 gamma14
