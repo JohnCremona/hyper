@@ -20,21 +20,15 @@ int main (int argc, char *argv[])
     int orbit_size, p2, p4, pmod4;
     int qmap[MAXP*MAXP];
     int xmap[MAXD*MAXP];
-    int i, j, p;
+    int i, j;
     int u; // will hold the least quadratic nonresidue
     int output_polynomials = 0;
 
-    if ( argc < 2 ) { puts ("gamma3 p"); return 0; }
-    p = atoi(argv[1]);
-    if ( p <= 3 || p > MAXP) { printf ("p must be in [5,%d]\n", MAXP); return 0; }
-    if (argc > 2) output_polynomials = atoi(argv[2]);
+    if ( argc < 1 ) { puts ("gamma3mod3 or gamma3mod3 1"); return 0; }
+    const int p=3;
+    if (argc > 1) output_polynomials = atoi(argv[1]);
 
     start = omp_get_wtime();
-
-    p2 = p*(p-1)/2; // size of orbits under affine transformations unless f6==0
-    p4 = p2/2;      // only used when p=1 (mod 4) and we have to split orbits
-    pmod4 = p & 3;
-    printf("p = %d = %d (mod 4)\n", p, pmod4);
 
     // set qmap[i] = 1 + kron(i,p) for i in [0,p^2]
     memset(qmap,0,sizeof(qmap));
@@ -61,22 +55,21 @@ int main (int argc, char *argv[])
     xnptless1 = xnptless2 = 0;
 #pragma omp parallel num_threads(p)
     {
-        register int f0, f1, f2, f3,
-          df2, df1,
-          i, ny, cnt, ucnt, mincnt,
-          *x;
-        int emap[MAXP], edmap[MAXP];
+      register int f0, f1, f2,
+        df2, df1,
+        i, ny, cnt, ucnt, mincnt,
+        *x;
+      int emap[MAXP], edmap[MAXP];
 
-        mincnt = 2*p+1;
-        f0 = omp_get_thread_num();
-        for ( f1 = 0 ; f1 < 3 ; f1++ ) {
-        if ( f1 == 2 ) f1 = u; // f1 ranges over 0,1,u where u is least non-residue
-
-        for ( i = 0 ; i < p ; i++ ) {
-          x = xmap + i*MAXD - 1;  // x[j] = i^j
-          emap[i] = zmod(f0+f1*x[1]+x[3],p);
-          edmap[i] = zmod(f1+3*x[2],p);
-        }
+      mincnt = 2*p+1;
+      f1 = omp_get_thread_num();
+      for ( f2 = 0 ; f2 < 2 ; f2++ ) {
+        for ( f0 = 0 ; f0 < p ; f0++ ) {
+          for ( i = 0 ; i < p ; i++ ) {
+            x = xmap + i*MAXD - 1;  // x[j] = i^j
+            emap[i] = zmod(f0+f1*x[1]+f2*x[2]+x[3],p);
+            edmap[i] = zmod(f1+2*f2*x[1]+3*x[2],p);
+          }
         for ( cnt = 0, ucnt = 0, i = 0 ; i < p && (cnt==0 || ucnt==0); i++ )
           {
             ny = qmap[emap[i]]; // # of y with y^2=f(i)
@@ -94,49 +87,39 @@ int main (int argc, char *argv[])
             if (cnt==0)
               {
                 xnptless1 ++;
-                if (f1==0)
-                  xnptless2 += p;
+                if (f2==0)
+                  xnptless2 ++;
                 else
                   {
-                    if (pmod4==3)
-                      xnptless2 += p2;
-                    else
-                      {
-                        xnptless1u ++;
-                        xnptless2  += p4;
-                        xnptless2u += p4;
-                      }
+                    xnptless1u ++;
+                    xnptless2  ++;
+                    xnptless2u ++;
                   }
                 if (output_polynomials)
-                  printf ("%d 1 [1,0,%d,%d]\n", p,f1,f0);
+                  printf ("%d 1 [1,%d,%d,%d]\n", p,f2,f1,f0);
               }
             if (ucnt==0)
               {
                 xnptless1u ++;
-                if (f1==0)
-                  xnptless2u += p;
+                if (f2==0)
+                  xnptless2u ++;
                 else
                   {
-                    if (pmod4==3)
-                      xnptless2u += p2;
-                    else
-                      {
-                        xnptless1 ++;
-                        xnptless2  += p4;
-                        xnptless2u += p4;
-                      }
+                    xnptless1 ++;
+                    xnptless2  ++;
+                    xnptless2u ++;
                   }
                 if (output_polynomials)
-                  printf ("%d u [1,0,%d,%d]\n", p,f1,f0);
+                  printf ("%d u [1,%d,%d,%d]\n", p,f2,f1,f0);
               }
             if ( mincnt < xmincnt) { // update global minimum point count
               xmincnt = mincnt;
             }
           } // end of critical block
         }  // end of test for 0 or new record low number of smooth points
-        }     // end of f1 loop
+        }}     // end of f0,f2 loops
     }
-    printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,MAXD-2), omp_get_wtime()-start);
+    printf ("Checked %ld curves in %.3fs\n", 2*(long)pow(p,MAXD-1), omp_get_wtime()-start);
     printf ("#Gamma(%d,1) =  %ld (in %ld orbits) for p = %d\n", MAXD, xnptless2, xnptless1, p);
     printf ("#Gamma(%d,u) =  %ld (in %ld orbits) for p = %d\n", MAXD, xnptless2u, xnptless1u, p);
 }

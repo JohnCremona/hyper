@@ -1,4 +1,4 @@
-from sage.all import (save, load, prod, polygen, xmrange_iter, moebius)
+from sage.all import (save, load, prod, polygen, xmrange_iter, moebius, primes, Infinity)
 from sage.all import (QQ, ZZ, GF, PolynomialRing, ProjectiveSpace)
 
 from basics import (Qp, pp, monics, monics0, signed_roots, point_multiplicities, affine)
@@ -72,21 +72,9 @@ def restore_Gammas(filename="Gamma"):
             p = k[0]
             F = GF(p)
             Fx = PolynomialRing(F, 'x')
-            #print("p={}, k={}".format(p,k))
             if p==2:
-                # for co in Gdict[k]:
-                #     print("Converting entry from {} mod {}".format(co, p))
-                #     fh = [Fx(co1) for co1 in co]
-                #     print("to {}".format(fh))
                 Gdict[k] = [[Fx(co1) for co1 in co] for co in Gdict[k]]
             else:
-                # for co in Gdict[k]:
-                #     print("Converting entry from {} mod {}".format(co, p))
-                #     try:
-                #         f = Fx(co)
-                #         print("to {}".format(f))
-                #     except TypeError:
-                #         print("***problem converting entry with key {}: {}".format(k,co))
                 Gdict[k] = [co if co in Fx else Fx(co) for co in Gdict[k]]
 
 ################################# Set up dicts for alphas and betas  ##################################
@@ -591,14 +579,12 @@ def f_multiplicity(f):
     """
     p = f.parent().characteristic()
     n = f.degree()
-    if p==2 or n%p==0:
+    if p==2:
         return 1
-    if f[n-2]==0:
-        return p
-    if p%4==3 or n%2==0:
-        return p*(p-1)/2
+    if n%p==0:
+        return 1 if f[n-1]==0 else p-1 if n%2==0 else (p-1)/2
     else:
-        return p*(p-1)/4
+        return p if f[n-2]==0 else p*(p-1)/2 if (p%4==3 or n%2==0) else p*(p-1)/4
 
 def sum_f_terms(flist, p=pp, mflag=False):
     """
@@ -1357,7 +1343,7 @@ def read_gamma_c_output(n, p, u, fname):
     """
     list_1 = []
     list_u = []
-    if n<3 or p>max_p_for_degree.get(n,Infinity) or n%p==0:
+    if n<3 or p>max_p_for_degree.get(n,Infinity):
         return list_1, list_u
     with open(fname) as infile:
         for L in infile:
@@ -1366,17 +1352,17 @@ def read_gamma_c_output(n, p, u, fname):
                continue
             pp, c, coeffs = L.split()
             assert int(pp)==p
+            assert c in ["1", "u"]
             coeffs = [int(a) for a in coeffs[1:-1].split(",")]
             assert len(coeffs)==n+1
-            assert c in ["1", "u"]
             assert coeffs[0]==1
-            assert coeffs[1]==0
-            assert coeffs[2] in [0,1,u]
-            coeffs.reverse()
-            if c=="1":
-                list_1.append(coeffs)
+            if n%p:
+                assert coeffs[1]==0
+                assert coeffs[2] in [0,1,u]
             else:
-                list_u.append(coeffs)
+                assert coeffs[1] in [0,1]
+            coeffs.reverse()
+            (list_1 if c=="1" else list_u).append(coeffs)
     return list_1, list_u
 
 def scale(f,a):
@@ -1403,12 +1389,20 @@ def expand1(f, alist):
     """
     for f(x) monic in F[x] with next coefficient 0, return all affine (a,b)-transforms with a in alist
     """
-    n = f.degree()
     p = f.base_ring().cardinality()
-    if f[n-2]==0:
+    if f[f.degree()-2]==0:
         return [x_shift(f,b) for b in range(p)]
     else:
         return [affine_transform(f,a,b) for a in alist for b in range(p)]
+
+def expand2(f, alist):
+    """
+    for f(x) monic in F[x], return all a-scalings a in alist
+    """
+    if f[f.degree()-1]==0:
+        return [f]
+    else:
+        return [scale(f,a) for a in alist]
 
 def make_gammas_even(n,p, restricted=False):
     """Read from file "gamma{n}_{p}.out" and return the complete sets
@@ -1421,20 +1415,21 @@ def make_gammas_even(n,p, restricted=False):
 
     """
     assert n%2==0
-    assert n%p!=0 # not yet implemented
     F = GF(p)
     Fx = PolynomialRing(F, 'x')
     u = a_nonsquare(F)
     l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
-    gam_1 = []
-    gam_u = []
-    p12 = (p+1)//2
-    for coeffs in l1:
-        f = Fx(coeffs)
-        gam_1 += ([f] if restricted else expand1(f, range(1,p12)))
-    for coeffs in lu:
-        f = Fx(coeffs)
-        gam_u += ([u*f] if restricted else [u*f1 for f1 in expand1(f, range(1,p12))])
+    l1 = [Fx(coeffs) for coeffs in l1]
+    lu = [Fx(coeffs) for coeffs in lu]
+    if restricted:
+        return l1, [u*f for f in lu]
+    if n%p:
+        p12 = (p+1)//2
+        gam_1 = [  g for L in [expand1(f, range(1,p12)) for f in l1] for g in L]
+        gam_u = [u*g for L in [expand1(f, range(1,p12)) for f in lu] for g in L]
+        return gam_1, gam_u
+    gam_1 = [  g for L in [expand2(f, range(1,p)) for f in l1] for g in L]
+    gam_u = [u*g for L in [expand2(f, range(1,p)) for f in lu] for g in L]
     return gam_1, gam_u
 
 def make_gammas_odd(n,p, restricted=False):
@@ -1449,50 +1444,60 @@ def make_gammas_odd(n,p, restricted=False):
 
     """
     assert n%2==1
-    assert n%p!=0 # not yet implemented
     F = GF(p)
     Fx = PolynomialRing(F, 'x')
     u = a_nonsquare(F)
     l1, lu = read_gamma_c_output(n, p, u, "gamma{}_{}.out".format(n,p))
     l1 = [Fx(coeffs) for coeffs in l1]
     lu = [Fx(coeffs) for coeffs in lu]
-    gam_1 = []
-    gam_u = []
     p12 = (p+1)//2
     squs = [(a*a)%p for a in range(1,p12)]
-    squs_mod = [a for a in squs if a < p12]
+    gam_1 = []
+    gam_u = []
+
+    if n%p==0:
+        for f in l1:
+            flist = [f] if restricted else expand2(f, squs)
+            glist = [u*scale(f1,u) for f1 in flist]
+            gam_1 += flist
+            if f[n-1]:
+                gam_u += glist
+        for f in lu:
+            flist = [f] if restricted else expand2(f, squs)
+            glist = [scale(f1,u) for f1 in flist]
+            gam_u += [u*f1 for f1 in flist]
+            if f[n-1]:
+                gam_1 += glist
+        return gam_1, gam_u
+
     if p%4==3:
-        for f in l1:
-            flist = [f] if restricted else expand1(f, squs)
-            gam_1 += flist
-        for f in lu:
-            flist = [f] if restricted else expand1(f, squs)
-            gam_u += [u*f1 for f1 in flist]
-    else:
-        for f in l1:
-            flist = [f] if restricted else expand1(f, squs_mod)
-            gam_1 += flist
-            if f[n-2]:
-                gam_u += [u*scale(f1,u) for f1 in flist]
-        for f in lu:
-            flist = [f] if restricted else expand1(f, squs_mod)
-            gam_u += [u*f1 for f1 in flist]
-            if f[n-2]:
-                gam_1 += [scale(f1,u) for f1 in flist]
+        if restricted:
+            return l1, [u*f for f in lu]
+        gam_1 = [  g for L in [expand1(f, squs) for f in l1] for g in L]
+        gam_u = [u*g for L in [expand1(f, squs) for f in lu] for g in L]
+        return gam_1, gam_u
+
+    # now p%4==1
+    squs_mod = [a for a in squs if a < p12]
+    for f in l1:
+        flist = [f] if restricted else expand1(f, squs_mod)
+        gam_1 += flist
+        if f[n-2]:
+            gam_u += [u*scale(f1,u) for f1 in flist]
+    for f in lu:
+        flist = [f] if restricted else expand1(f, squs_mod)
+        gam_u += [u*f1 for f1 in flist]
+        if f[n-2]:
+            gam_1 += [scale(f1,u) for f1 in flist]
     return gam_1, gam_u
 
 def make_gammas(n,p, restricted=False):
-    if n%p==0:
-        print("Not implemented when p divides degree")
-        return [],[]
     return make_gammas_odd(n,p, restricted) if n%2 else make_gammas_even(n,p, restricted)
 
 def fill_restricted_gamma_dicts():
     global Gamma_plus_short_dict, Gamma_minus_short_dict
     for n in range(3,11):
         for p in primes(max_p_for_degree[n]+1):
-            if (2*n)%p==0:
-                continue
             print("(n,p)=({},{})".format(n,p))
             gam_1, gam_u = make_gammas(n,p,True)
             Gamma_plus_short_dict[(p,n)] = gam_1
