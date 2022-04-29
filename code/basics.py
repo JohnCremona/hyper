@@ -7,6 +7,7 @@
 # - affine linear combinations
 
 from sage.all import (FunctionField, QQ, PolynomialRing, ProjectiveSpace, VectorSpace, infinity)
+from collections import Counter
 
 Qp = FunctionField(QQ,'p')
 pp = Qp.gen()
@@ -95,6 +96,34 @@ def signed_roots(f):
     if j:
         res = [(infinity,j,1 if j%2==1 or f1.leading_coefficient().is_square() else -1)]
     return res + signed_roots(f1)
+
+def f_multiplicity(f):
+    """For f in a restricted list of polys of degree n, up to affine
+    transformation (with p not dividing 2*n), assuming f[n-1]=0, the
+    multiplicity is
+
+    p if f[n-2]=0
+    (p-1)/2 if f[n-2]!=0 and p=3 (mod 4) or n even
+    (p-1)/4 if f[n-2]!=0 and p=1 (mod 4) and n odd
+
+    """
+    p = f.parent().characteristic()
+    n = f.degree()
+    if p==2:
+        return 1
+    if n%p==0:
+        return 1 if f[n-1]==0 else p-1 if n%2==0 else (p-1)/2
+    else:
+        return p if f[n-2]==0 else p*(p-1)/2 if (p%4==3 or n%2==0) else p*(p-1)/4
+
+def root_multiplicities(f):
+    return tuple(sorted(((j,eps(f,a,j)) for a,j in f.roots())))
+
+def root_multiplicity_counts(flist):
+    c = Counter()
+    for f in flist:
+        c[root_multiplicities(f)] += f_multiplicity(f)
+    return c
 
 def affine(L,p):
     """Returns linear combination of elements of the list L of length n,

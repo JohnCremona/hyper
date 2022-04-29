@@ -22,26 +22,26 @@ print("Gamma(n,1) precomputed for these primes and degree ranges:")
 print(" - complete lists:")
 print([(p,Set([k[1] for k in Gamma_plus_dict.keys() if k[0]==p]))
          for p in Set([k[0] for k in Gamma_plus_dict.keys()])])
-print(" - lists up to affine transforms:")
-print([(p,Set([k[1] for k in Gamma_plus_short_dict.keys() if k[0]==p]))
-         for p in Set([k[0] for k in Gamma_plus_short_dict.keys()])])
+print(" - multiplicities only for:")
+print([(p,Set([k[1] for k in Gamma_plus_short_mult_dict.keys() if k[0]==p]))
+         for p in Set([k[0] for k in Gamma_plus_short_mult_dict.keys()])])
 
 print("Gamma(n,u) precomputed for these primes and degree ranges:")
 print(" - complete lists:")
 print([(p,Set([k[1] for k in Gamma_minus_dict.keys() if k[0]==p]))
          for p in Set([k[0] for k in Gamma_minus_dict.keys()])])
-print(" - lists up to affine transforms:")
-print([(p,Set([k[1] for k in Gamma_minus_short_dict.keys() if k[0]==p]))
-         for p in Set([k[0] for k in Gamma_minus_short_dict.keys()])])
+print(" - multiplicities only for:")
+print([(p,Set([k[1] for k in Gamma_minus_short_mult_dict.keys() if k[0]==p]))
+         for p in Set([k[0] for k in Gamma_minus_short_mult_dict.keys()])])
 
 print()
 print("*"*80)
 print()
 smallp = list(primes(3,32))
-print("Check that the code for computing |Gamma(n,eps; p)| agrees with the table in the paper (for odd p up to {})".format(max(smallp)))
+# print("Check that the code for computing |Gamma(n,eps; p)| agrees with the table in the paper (for odd p up to {})".format(max(smallp)))
 
-for p in smallp:
-    one_row(p)
+# for p in smallp:
+#     one_row(p)
 
 # NB since we do not yet have Gamma(n,eps) for n>8, we
 # will not obtain correct density formulas for g>=4 except at
