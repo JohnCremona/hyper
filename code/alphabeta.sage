@@ -1034,7 +1034,7 @@ def make_alphas(i, p=pp, verbose=False):
     after first computing all betas and alphas with smaller
     subscripts.
     """
-    if (i,p) in alpha_plus_dict and (i,p) in alpha_minus_dict and (i,p) not in alpha_0_dict:
+    if (i,p) in alpha_plus_dict and (i,p) in alpha_minus_dict and (i,p) in alpha_0_dict:
         return
     if verbose:
         print("Making all alpha({}, eps; {})".format(i,p))
