@@ -211,3 +211,11 @@ def point_multiplicities(f,h):
     res = [(P,point_multiplicity(f,h,P)) for P in [[0,0],[1,0],[0,1],[1,1]]]
     return [m for m in res if m[1][0]]
 
+def point_multiplicity_counts(fhlist):
+    c = Counter()
+    for f,h in fhlist:
+        pm = tuple(sorted((tuple(m[1]) for m in point_multiplicities(f, h))))
+        c[pm] += 1
+    return c
+
+
