@@ -1387,6 +1387,38 @@ def read_gamma_c_output(n, p, u, fname):
             (list_1 if c=="1" else list_u).append(coeffs)
     return list_1, list_u
 
+def read_gamma_c_output_iter(n, p, u, fname, code="1"):
+    """Read an output file from running gamma$n.c on prime p.  Ignore the
+    last three lines which start "Checked" or "#".  All other lines
+    are as above, where the coefficient list has length n+1.
+
+    Returns an iterator through the coefficient lists of the lines
+    starting "p 1 " (if code=="1") and "p u " (if code=="1")
+    respectively.  The parameters n,p,u are just for consistency
+    checks, u being the least quadratic nonresidue mod p.
+
+    """
+    with open(fname) as infile:
+        for L in infile:
+            if L[0] in ["C", "#", "p"]:
+               #print("ignoring line '{}'".format(L.strip()))
+               continue
+            pp, c, coeffs = L.split()
+            assert int(pp)==p
+            assert c in ["1", "u"]
+            if not c==code:
+                continue
+            coeffs = [int(a) for a in coeffs[1:-1].split(",")]
+            assert len(coeffs)==n+1
+            assert coeffs[0]==1
+            if n%p:
+                assert coeffs[1]==0
+                assert coeffs[2] in [0,1,u]
+            else:
+                assert coeffs[1] in [0,1]
+            coeffs.reverse()
+            yield coeffs
+
 def scale(f,a):
     """
     Given f(x) monic in F[x] and a nonzero in F, return the monic f(a*x)/a^deg(f)
@@ -1453,6 +1485,24 @@ def make_gammas_even(n,p, restricted=False):
     gam_1 = [  g for L in [expand2(f, range(1,p)) for f in l1] for g in L]
     gam_u = [u*g for L in [expand2(f, range(1,p)) for f in lu] for g in L]
     return gam_1, gam_u
+
+def make_gammas_even_iter(n,p, code="1"):
+    """Read from file "gamma{n}_{p}.out" and return an iterator through
+    the set Gamma(n,1) (if code=="1") or Gamma(n,u) (if code=="u"), up
+    to affine transforms.
+    """
+    assert n%2==0
+    F = GF(p)
+    Fx = PolynomialRing(F, 'x')
+    u = a_nonsquare(F)
+    lc = a_nonsquare(F) if code=="u" else F(1)
+    coeff_iter = read_gamma_c_output_iter(n, p, u, "gamma{}_{}.out".format(n,p), code)
+    n = 0
+    for coeffs in coeff_iter:
+        n += 1
+        if (n%1000000==0):
+            print("Read {} coefficient lists".format(n))
+        yield lc*Fx(coeffs)
 
 def make_gammas_odd(n,p, restricted=False):
     """Read from file "gamma{n}_{p}.out" and return the complete sets
@@ -1536,6 +1586,22 @@ def make_gamma_counts(n,p, restricted=False, store=False):
             print("Storing multiplicity counts for Gamma({},u; {})".format(n,p))
             (Gamma_minus_short_mult_dict if restricted else Gamma_minus_mult_dict)[(p,n)] = rmc_u
     return rmc_1, rmc_u
+
+def make_gamma_counts_new(n,p, store=True):
+    print("(n,p)=({},{})".format(n,p))
+    if n%2:
+        print("Not yet implemented for odd degree")
+        return
+
+    for code in ["1", "u"]:
+        print("Reading C output with code {}".format(code))
+        rmc = root_multiplicity_counts(make_gammas_even_iter(n,p, code))
+        if store:
+            print("Storing multiplicity counts for Gamma({},{}; {})".format(n,code,p))
+            if code=="1":
+                Gamma_plus_short_mult_dict[(p,n)] = rmc
+            else:
+                Gamma_minus_short_mult_dict[(p,n)] = rmc
 
 def fill_restricted_gamma_dicts():
     global Gamma_plus_short_dict, Gamma_minus_short_dict
