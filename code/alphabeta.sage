@@ -1,8 +1,7 @@
 from sage.all import (save, load, prod, polygen, xmrange_iter, moebius, primes, Infinity)
 from sage.all import (QQ, ZZ, GF, PolynomialRing, ProjectiveSpace)
 
-from basics import (Qp, pp, monics, monics0, signed_roots, point_multiplicities, affine, f_multiplicity, root_multiplicity_counts)
-#from fact_pat import (lambda_A, lambda_P, Phi)
+from basics import (Qp, pp, affine)
 
 ################################# Set up dicts for Gamma sets  ##################################
 
@@ -65,7 +64,7 @@ def initialize_Gamma_mult_dicts():
     Gamma_plus_short_mult_dict = {}
     Gamma_minus_short_mult_dict = {}
 
-def save_Gammas():
+def save_Gammas_old():
     filename="Gamma"
     for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
                              ["plus", "minus", "plus_short_mult", "minus_short_mult"]):
@@ -82,11 +81,19 @@ def save_Gammas():
                 Fx = PolynomialRing(GF(p), 'x')
                 Gdict[k] = [[Fx(co1) for co1 in co] for co in Gdict[k]]
 
+def save_Gammas():
+    filename="Gamma"
+    for Gdict, suffix in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
+                             ["plus_short_mult", "minus_short_mult"]):
+        f = "_".join([filename, suffix])
+        print("Saving {}".format(f))
+        save(Gdict, f)
+
 # The restore functions use the update() method so that local values
 # are preserved, but NB if the same key exists locally and on file
 # then the file version will overwrite the local one.
 
-def restore_Gammas(filename="Gamma"):
+def restore_Gammas_old(filename="Gamma"):
     global Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict
     for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
                              ["plus", "minus", "plus_short_mult", "minus_short_mult"]):
@@ -99,6 +106,14 @@ def restore_Gammas(filename="Gamma"):
                 if p==2:
                     Fx = PolynomialRing(GF(p), 'x')
                     Gdict[k] = [[Fx(co1) for co1 in co] for co in Gdict[k]]
+
+def restore_Gammas(filename="Gamma"):
+    global Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict
+    for Gdict, suffix in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
+                             ["plus_short_mult", "minus_short_mult"]):
+        f = "_".join([filename, suffix])
+        print("Restoring {}".format(f))
+        Gdict.update(load(f))
 
 ################################# Set up dicts for alphas and betas  ##################################
 
@@ -372,6 +387,7 @@ def Gamma_plus(d,F=None):
         F = GF(q)
     print("Computing Gamma_plus({},{})".format(d,F))
     if q==2:
+        from basics import monics
         res = [[f,h] for f in monics(F,d,d%2)
                for h in monics(F,(d+1)//2,(d+1)%2)
                if no_smooth_points_mod2(f,h)]
@@ -389,6 +405,7 @@ def Gamma_default(d,F,plusorminus):
 
 def Gamma_plus_default(d,F):
     p = F.cardinality()
+    from basics import monics, monics0
     m = monics if d%p==0 else monics0
     res = [f for f in m(F,d) if no_smooth_points(f)]
     if d%p==0:
@@ -399,6 +416,7 @@ def Gamma_plus_default(d,F):
 def Gamma_minus_default(d,F):
     p = F.cardinality()
     u = a_nonsquare(F)
+    from basics import monics, monics0
     m = monics if d%p==0 else monics0
     res = [f for f in m(F,d,u) if (not (u*f).is_square()) and no_smooth_points(f)]
     if d%p==0:
@@ -510,6 +528,7 @@ def Gamma_minus(d, F=None):
         F = GF(q)
     print("Computing Gamma_minus({},{})".format(d,F))
     if q==2:
+        from basics import monics
         res = [[f,h] for f in monics(F,d,1)
                for h in monics(F,d//2,1)
             if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
@@ -531,6 +550,7 @@ def show_Gamma(verbose=False):
 def one_row(p):
     """ Function to check entries in Table in paper
     """
+    from basics import f_multiplicity
     F = GF(p)
     table = {}
     table[3] = [0, 0, 1, 0, 6, 21, 37, 64, 192, 495, 576]
@@ -604,6 +624,7 @@ def f_term(f,p=pp):
     """
     if p==pp: # will not be called in this case anyway
         return 0
+    from basics import signed_roots
     return prod((1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f))
 
 def sum_f_terms(flist, p=pp, mflag=False):
@@ -613,6 +634,7 @@ def sum_f_terms(flist, p=pp, mflag=False):
     if p==pp: # will not be called in this case anyway
         return 0
     if mflag:
+        from basics import f_multiplicity
         return sum(f_multiplicity(f)*f_term(f, p) for f in flist)
     else:
         return sum(f_term(f, p) for f in flist)
@@ -633,6 +655,7 @@ def fh_term(f,h):
     This works equally well in the projective case.
 
     """
+    from basics import point_multiplicities
     return prod([(1-beta_eps(eps)(j,2)) for P,(j,eps) in point_multiplicities(f,h)])
 
 def sum_fh_terms(fhlist):
@@ -705,14 +728,11 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
             return PolynomialRing(F,v0).gen()
     # use Prop 3.3 (i)
     if verbose: print("Computing alpha_plus({},{})".format(i,p))
-    if p==2:
-        e = (3*i+1)//2 if i%2 else 3*i//2
-        a = 1 - sum_fh_terms(Gamma_plus(i,p)[0])/p**e
+    if p in ZZ:
+        e = (3*i+1)//2 if i%2 else 3*i//2 if p==2 else i
+        a = 1 - sum_f_terms_from_mults(Gamma_plus_mults(i,p), p)/p**e
     else:
-        if p in ZZ:
-            a = 1 - sum_f_terms_from_mults(Gamma_plus_mults(i, p),p)/p**i
-        else:
-            a = 1
+        a = 1
     try:
         a = F(a)
         if verbose: print("setting alpha_plus({},{})".format(i,p))
@@ -760,11 +780,9 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
     if verbose: print("Computing alpha_minus({},{})".format(i,p))
     i2 = i//2
     a = 1 - sum_phi_terms(i,True,p,v) / p**i2
-    if p==2:
-        a = a - sum_fh_terms(Gamma_minus(i,p)[0]) / p**(3*i2)
-    else:
-        if p in ZZ:
-            a = a - sum_f_terms_from_mults(Gamma_minus_mults(i, p),p) / p**i
+    if p in ZZ:
+        e = 3*i2 if p==2 else i
+        a = a - sum_f_terms_from_mults(Gamma_minus_mults(i, p),p) / p**e
     try:
         a = F(a)
         if verbose: print("setting alpha_minus({},{})".format(i,p))
@@ -1016,7 +1034,7 @@ def make_alphas(i, p=pp, verbose=False):
     after first computing all betas and alphas with smaller
     subscripts.
     """
-    if (i,p) in alpha_plus_dict and (i,p) in alpha_minus_dict and (i,p) not in alpha_0_dict:
+    if (i,p) in alpha_plus_dict and (i,p) in alpha_minus_dict and (i,p) in alpha_0_dict:
         return
     if verbose:
         print("Making all alpha({}, eps; {})".format(i,p))
@@ -1575,6 +1593,7 @@ def make_gammas(n,p, restricted=False, store=False):
     return gam_1, gam_u
 
 def make_gamma_counts(n,p, restricted=False, store=False):
+    from basics import root_multiplicity_counts
     print("(n,p)=({},{})".format(n,p))
     gam_1, gam_u = make_gammas_odd(n,p, restricted) if n%2 else make_gammas_even(n,p, restricted)
     rmc_1 = root_multiplicity_counts(gam_1)
@@ -1587,7 +1606,16 @@ def make_gamma_counts(n,p, restricted=False, store=False):
             (Gamma_minus_short_mult_dict if restricted else Gamma_minus_mult_dict)[(p,n)] = rmc_u
     return rmc_1, rmc_u
 
+def make_gamma_counts_2(n):
+    from basics import point_multiplicity_counts
+    print("Storing multiplicity counts for Gamma({},1; 2)".format(n))
+    Gamma_plus_short_mult_dict[(2,n)] = point_multiplicity_counts(Gamma_plus_dict[(2,n)])
+    if n%2==0:
+        print("Storing multiplicity counts for Gamma({},u; 2)".format(n))
+        Gamma_minus_short_mult_dict[(2,n)] = point_multiplicity_counts(Gamma_minus_dict[(2,n)])
+
 def make_gamma_counts_new(n,p, store=True):
+    from basics import root_multiplicity_counts
     print("(n,p)=({},{})".format(n,p))
     if n%2:
         print("Not yet implemented for odd degree")
