@@ -112,9 +112,9 @@ def f_multiplicity(f):
     if p==2:
         return 1
     if n%p==0:
-        return 1 if f[n-1]==0 else p-1 if n%2==0 else (p-1)/2
+        return 1 if f[n-1]==0 else (p-1 if n%2==0 else (p-1)/2)
     else:
-        return p if f[n-2]==0 else p*(p-1)/2 if (p%4==3 or n%2==0) else p*(p-1)/4
+        return p if f[n-2]==0 else (p*(p-1)/2 if (p%4==3 or n%2==0) else p*(p-1)/4)
 
 def root_multiplicities(f):
     return tuple(sorted(((j,eps(f,a,j)) for a,j in f.roots())))

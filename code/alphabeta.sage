@@ -729,7 +729,7 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
     # use Prop 3.3 (i)
     if verbose: print("Computing alpha_plus({},{})".format(i,p))
     if p in ZZ:
-        e = (3*i+1)//2 if i%2 else 3*i//2 if p==2 else i
+        e = ((3*i+1)//2 if i%2 else 3*i//2) if p==2 else i
         a = 1 - sum_f_terms_from_mults(Gamma_plus_mults(i,p), p)/p**e
     else:
         a = 1
