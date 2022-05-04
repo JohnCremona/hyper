@@ -14,7 +14,7 @@ from sage.all import Set, primes
 #                        initialize_alpha_beta_dicts, make_betas, rho,
 #                        check_ab, check_rho)
 
-if not Gamma_plus_dict:
+if not Gamma_plus_short_mult_dict:
     restore_Gammas()
 
 
