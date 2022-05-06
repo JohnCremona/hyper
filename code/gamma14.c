@@ -152,7 +152,7 @@ int main (int argc, char *argv[])
                           }
                         if (ucnt==0)
                           {
-                            if (!(f6s==f6 && f6s==f6 && f4s==f4 && f3s==f3 && f2s==f2 && f1s==f1 && f0s==f0))
+                            if (!(f6s==f6 && f5s==f5 && f4s==f4 && f3s==f3 && f2s==f2 && f1s==f1 && f0s==f0))
                               {
                                 xnptless1u ++;
                                 xnptless2u += (f12==0? p: p2);
