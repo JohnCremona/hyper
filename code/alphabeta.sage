@@ -539,7 +539,7 @@ def Gamma_minus(d, F=None):
     return res, False
 
 def show_Gamma(verbose=False):
-    for d,dname in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict], ["Gamma(n,1)","Gamma(n,u)", "Gamma(n,1) mod affine multiplicities", "Gamma(n,u) mod affine multiplicities"]):
+    for d,dname in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict], ["Gamma(n,1) multiplicities", "Gamma(n,u) multiplicities"]):
         print("\n{} entries".format(dname))
         for k in sorted(d.keys()):
             if verbose:
@@ -575,6 +575,32 @@ def one_row(p):
           print("p={} OK".format(p))
        else:
           print("p={} not OK, table is\n{} but we get\n{}".format(p,table[p],res))
+    return res
+
+def one_row_from_mults(p):
+    """ Function to check entries in Table in paper
+    """
+    table = {}
+    table[3] = [0, 0, 1, 0, 6, 21, 37, 64, 192, 495, 576]
+    table[5] = [0, 0, 0, 0, 5, 47, 145, 250, 1285, 5820, 6440]
+    table[7] = [0, 0, 0, 0, 0, 49, 196, 392, 2992, 18928, 21126]
+    table[11] = [0, 0, 0, 0, 0, 11, 55, 220, 3762, 35442, 43032]
+    table[13] = [0, 0, 0, 0, 0, 0, 0, 104, 2691, 29471, 38064]
+    table[17] = [0, 0, 0, 0, 0, 0, 0, 0, 816, 10404, 15810]
+    table[19] = [0, 0, 0, 0, 0, 0, 0, 0, 171, 5130, 8436]
+    table[23] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 506, 1012]
+    table[29] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    table[31] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if p not in table:
+        print("No table row for p = {}".format(p))
+        return
+    d_list = [1, 2, 3, 4, 4, 5, 6, 6, 7, 8, 8]
+    G_list = [Gamma_plus_short_mult_dict if i in [0,1,2,4,5,7,8,10] else Gamma_minus_short_mult_dict for i in range(11)]
+    res = [sum(G[p,d].values()) for d,G in zip(d_list, G_list)]
+    if res==table[p]:
+        print("p={} OK".format(p))
+    else:
+        print("p={} not OK, table is\n{} but we get\n{}".format(p,table[p],res))
     return res
 
 def is_square_homog(f):

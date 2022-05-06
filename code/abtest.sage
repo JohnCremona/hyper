@@ -38,10 +38,10 @@ print()
 print("*"*80)
 print()
 smallp = list(primes(3,32))
-# print("Check that the code for computing |Gamma(n,eps; p)| agrees with the table in the paper (for odd p up to {})".format(max(smallp)))
+print("Check that the code for computing |Gamma(n,eps; p)| agrees with the table in the paper (for odd p up to {})".format(max(smallp)))
 
-# for p in smallp:
-#     one_row(p)
+for p in smallp:
+    one_row_from_mults(p)
 
 # NB since we do not yet have Gamma(n,eps) for n>8, we
 # will not obtain correct density formulas for g>=4 except at
