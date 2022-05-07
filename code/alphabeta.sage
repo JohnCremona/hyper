@@ -1607,6 +1607,39 @@ def make_gammas_odd(n,p, restricted=False):
             gam_1 += [scale(f1,u) for f1 in flist]
     return gam_1, gam_u
 
+def make_gammas_odd_iter(n,p, code="1"):
+    """Read from file "gamma{n}_{p}.out" and return an iterator through
+    the set Gamma(n,1) (if code=="1") or Gamma(n,u) (if code=="u"), up
+    to affine transforms.
+    """
+    assert n%2==0
+    F = GF(p)
+    Fx = PolynomialRing(F, 'x')
+    u = a_nonsquare(F)
+    lc = a_nonsquare(F) if code=="u" else F(1)
+    # We need to read the file twice when p|n or p=1 (mod 4).
+    # First time (always):
+    coeff_iter = read_gamma_c_output_iter(n, p, u, "gamma{}_{}.out".format(n,p), code)
+    n = 0
+    for coeffs in coeff_iter:
+        n += 1
+        if (n%1000000==0):
+            print("Read {} coefficient lists".format(n))
+        yield lc*Fx(coeffs)
+    # Second time (conditional):
+    if n%p==0 or p%4==1:
+        other_code = "u" if code=="1" else "1"
+        i = n-2 if p%n else n-1
+        coeff_iter = read_gamma_c_output_iter(n, p, u, "gamma{}_{}.out".format(n,p), other_code)
+        n = 0
+        for coeffs in coeff_iter:
+            n += 1
+            if (n%1000000==0):
+                print("Read {} coefficient lists".format(n))
+                f = Fx(coeffs)
+                if f[i]:
+                    yield lc*scale(f,u)
+
 def make_gammas(n,p, restricted=False, store=False):
     print("(n,p)=({},{})".format(n,p))
     gam_1, gam_u = make_gammas_odd(n,p, restricted) if n%2 else make_gammas_even(n,p, restricted)
@@ -1643,13 +1676,13 @@ def make_gamma_counts_2(n):
 def make_gamma_counts_new(n,p, store=True):
     from basics import root_multiplicity_counts
     print("(n,p)=({},{})".format(n,p))
-    if n%2:
-        print("Not yet implemented for odd degree")
-        return
 
     for code in ["1", "u"]:
         print("Reading C output with code {}".format(code))
-        rmc = root_multiplicity_counts(make_gammas_even_iter(n,p, code))
+        if n%2:
+            rmc = root_multiplicity_counts(make_gammas_odd_iter(n,p, code))
+        else:
+            rmc = root_multiplicity_counts(make_gammas_even_iter(n,p, code))
         if store:
             print("Storing multiplicity counts for Gamma({},{}; {})".format(n,code,p))
             if code=="1":
