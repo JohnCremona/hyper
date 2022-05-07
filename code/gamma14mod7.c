@@ -98,7 +98,7 @@ int main (int argc, char *argv[])
           h1h3 = zmod(h1*h3, p);
           h1h4 = zmod(h1*h4, p);
           h1h5 = zmod(h1*h5, p);
-          h1h6 = zmod(h1*h5, p);
+          h1h6 = zmod(h1*h6, p);
           for ( f7 = 0 ; f7 < p ; f7++ ) { df6 = 0; //zmod(7*f7, p);
           h0 = zmod(half*f7-h3h4-h2h5-h1h6,p);
           f6s = zmod(h3h3+2*(h2h4+h1h5+h0*h6),p);

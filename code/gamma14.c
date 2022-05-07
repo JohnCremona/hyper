@@ -14,7 +14,6 @@ static inline int zmod (int x, int m)
 int main (int argc, char *argv[])
 {
     double start;
-    int xmincnt;
     long xnptless1, xnptless2; // 1 is #orbits, 2 is total: y^2=f(x)
     long xnptless1u, xnptless2u; // 1 is #orbits, 2 is total: uy^2=f(x)
     int orbit_size, p2, half;
@@ -55,7 +54,6 @@ int main (int argc, char *argv[])
           xmap[MAXD*i+j] = zmod(i*xmap[MAXD*i+j-1],p);
       }
 
-    xmincnt = 2*p+1;
     xnptless1 = xnptless2 = 0;
 #pragma omp parallel num_threads(p)
     {
@@ -64,11 +62,10 @@ int main (int argc, char *argv[])
         h0, h1, h2, h3, h4, h5, // potential coeffs of sqrt(f)
         h1h1, h1h2, h1h3, h1h4, h2h2, h2h3, h2h4, h2h5, h3h3, h3h4, h3h5, h4h4, h4h5, h5h5,
         f6s, f5s, f4s, f3s, f2s, f1s, f0s,
-        i, ny, cnt, ucnt, mincnt,
+        i, ny, cnt, ucnt,
         *x;
         int emap[MAXP], edmap[MAXP];
 
-        mincnt = 2*p+1;
         f11 = omp_get_thread_num();
         df10 = zmod(11*f11, p);
         h4 = zmod(half*f11, p);
@@ -77,8 +74,8 @@ int main (int argc, char *argv[])
         if ( f12 == 2 ) f12 = u; // f12 ranges over 0,1,u where u is least non-residue
         df11 = zmod(12*f12, p);
         h5 = zmod(half*f12, p);
-        h4h5 = zmod(h3*h4, p);
-        h5h5 = zmod(h4*h4, p);
+        h4h5 = zmod(h4*h5, p);
+        h5h5 = zmod(h5*h5, p);
         for ( f10 = 0 ; f10 < p ; f10++ ) {
           df9 = zmod(10*f10, p);
           h3 = zmod(half*(f10-h5h5),p);
@@ -139,8 +136,7 @@ int main (int argc, char *argv[])
                             ucnt += 2-ny;
                           }
                       }
-                    if ( cnt < mincnt || cnt == 0 || ucnt == 0) { // update minimum point count in this thread
-                      if (cnt<mincnt) mincnt = cnt;
+                    if ( cnt == 0 || ucnt == 0)
 #pragma omp critical(min)
                       { // critical block, can only be executed by one thread at a time
                         if (cnt==0)
@@ -160,11 +156,7 @@ int main (int argc, char *argv[])
                                   printf ("%d u [1,0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f12,f11,f10,f9,f8,f7,f6,f5,f4,f3,f2,f1,f0);
                               }
                           }
-                        if ( mincnt < xmincnt) { // update global minimum point count
-                          xmincnt = mincnt;
-                        }
                       } // end of critical block
-                    }  // end of test for 0 or new record low number of smooth points
                 } // end of f0 loop
           }     // end of f1 loop
         }}}}}}}}}} // end of f2, f3, f4, f5, f6, f7, f8, f9, f10, f12 loops (f11 is thread number, f13=0 and f14=1)
