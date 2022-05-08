@@ -1612,7 +1612,7 @@ def make_gammas_odd_iter(n,p, code="1"):
     the set Gamma(n,1) (if code=="1") or Gamma(n,u) (if code=="u"), up
     to affine transforms.
     """
-    assert n%2==0
+    assert n%2==1
     F = GF(p)
     Fx = PolynomialRing(F, 'x')
     u = a_nonsquare(F)
