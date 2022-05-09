@@ -52,6 +52,7 @@ int main (int argc, char *argv[])
       }
 
     xnptless1 = xnptless2 = 0;
+    xnptless1u = xnptless2u = 0;
     //#pragma omp parallel num_threads(p)
     register int f10;
     for(f10=0; f10<p; f10++)
@@ -123,6 +124,8 @@ int main (int argc, char *argv[])
                       ucnt += 2-ny;
                     }
                 }
+#pragma omp critical(min)
+              { // critical block, can only be executed by one thread at a time
               if (cnt==0)
                 {
                   xnptless1 ++;
@@ -140,6 +143,7 @@ int main (int argc, char *argv[])
                         printf ("%d u [1,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f11,f10,f9,f8,f7,f6,f5,f4,f3,f2,f1,f0);
                     }
                 }
+              } // end of critical block
             } // end of f0 loop
           }     // end of f1 loop
         }}}}}}}}} // end of f2, f3, f4, f5, f6, f7, f8, f9, f11 loops (f10 is thread number and f12=1)

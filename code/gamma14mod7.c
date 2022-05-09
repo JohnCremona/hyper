@@ -55,6 +55,7 @@ int main (int argc, char *argv[])
 
     xmincnt = 2*p+1;
     xnptless1 = xnptless2 = 0;
+    xnptless1u = xnptless2u = 0;
 #pragma omp parallel num_threads(p)
     {
       register int f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13,
@@ -90,7 +91,7 @@ int main (int argc, char *argv[])
           h2h3 = zmod(h2*h3, p);
           h2h4 = zmod(h2*h4, p);
           h2h5 = zmod(h2*h5, p);
-          h2h6 = zmod(h2*h5, p);
+          h2h6 = zmod(h2*h6, p);
         for ( f8 = 0 ; f8 < p ; f8++ ) { df7 = zmod(8*f8, p);
           h1 = zmod(half*(f8-h4h4)-h3h5-h2h6,p);
           h1h1 = zmod(h1*h1, p);
@@ -133,6 +134,8 @@ int main (int argc, char *argv[])
                             ucnt += 2-ny;
                           }
                       }
+#pragma omp critical(min)
+                        { // critical block, can only be executed by one thread at a time
                         if (cnt==0)
                           {
                             xnptless1 ++;
@@ -150,6 +153,7 @@ int main (int argc, char *argv[])
                                   printf ("%d u [1,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f13,f12,f11,f10,f9,f8,f7,f6,f5,f4,f3,f2,f1,f0);
                               }
                           }
+                        } // end of critical block
             } // end of f0 loop
           }     // end of f1 loop
         }}}}}}}}}}} // end of f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f13 loops (f12 is thread number and f14=1)

@@ -56,6 +56,7 @@ int main (int argc, char *argv[])
 
     xmincnt = 2*p+1;
     xnptless1 = xnptless2 = 0;
+    xnptless1u = xnptless2u = 0;
 #pragma omp parallel num_threads(p)
     {
       register int f0, f1, f2, f3, f4, f5, f6, f7, f8, f9,
