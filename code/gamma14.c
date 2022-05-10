@@ -14,8 +14,6 @@ static inline int zmod (int x, int m)
 int main (int argc, char *argv[])
 {
     double start;
-    long xnptless1, xnptless2; // 1 is #orbits, 2 is total: y^2=f(x)
-    long xnptless1u, xnptless2u; // 1 is #orbits, 2 is total: uy^2=f(x)
     int orbit_size, p2, half;
     int qmap[MAXP*MAXP];
     int xmap[MAXD*MAXP];
@@ -54,8 +52,10 @@ int main (int argc, char *argv[])
           xmap[MAXD*i+j] = zmod(i*xmap[MAXD*i+j-1],p);
       }
 
-    xnptless1 = xnptless2 = 0;
-    xnptless1u = xnptless2u = 0;
+    long count_1[MAXP];
+    long count_2[MAXP];
+    long count_1u[MAXP];
+    long count_2u[MAXP];
 #pragma omp parallel num_threads(p)
     {
       register int f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12,
@@ -66,6 +66,10 @@ int main (int argc, char *argv[])
         i, ny, cnt, ucnt,
         *x;
         int emap[MAXP], edmap[MAXP];
+        long xnptless1, xnptless2; // 1 is #orbits, 2 is total: y^2=f(x)
+        long xnptless1u, xnptless2u; // 1 is #orbits, 2 is total: uy^2=f(x)
+        xnptless1 = xnptless2 = 0;
+        xnptless1u = xnptless2u = 0;
 
         f11 = omp_get_thread_num();
         df10 = zmod(11*f11, p);
@@ -137,32 +141,46 @@ int main (int argc, char *argv[])
                             ucnt += 2-ny;
                           }
                       }
-                    if ( cnt == 0 || ucnt == 0)
+              if (cnt==0)
+                {
+                  xnptless1 ++;
+                  xnptless2 += (f12==0? p: p2);
+                  if (output_polynomials)
 #pragma omp critical(min)
                       { // critical block, can only be executed by one thread at a time
-                        if (cnt==0)
-                          {
-                            xnptless1 ++;
-                            xnptless2 += (f12==0? p: p2);
-                            if (output_polynomials)
-                              printf ("%d 1 [1,0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f12,f11,f10,f9,f8,f7,f6,f5,f4,f3,f2,f1,f0);
-                          }
-                        if (ucnt==0)
-                          {
-                            if (!(f6s==f6 && f5s==f5 && f4s==f4 && f3s==f3 && f2s==f2 && f1s==f1 && f0s==f0))
-                              {
-                                xnptless1u ++;
-                                xnptless2u += (f12==0? p: p2);
-                                if (output_polynomials)
-                                  printf ("%d u [1,0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f12,f11,f10,f9,f8,f7,f6,f5,f4,f3,f2,f1,f0);
-                              }
-                          }
-                      } // end of critical block
+                        printf ("%d 1 [1,0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f12,f11,f10,f9,f8,f7,f6,f5,f4,f3,f2,f1,f0);
+                      }
+                }
+              if (ucnt==0)
+                {
+                  if (!(f6s==f6 && f5s==f5 && f4s==f4 && f3s==f3 && f2s==f2 && f1s==f1 && f0s==f0))
+                    {
+                      xnptless1u ++;
+                      xnptless2u += (f12==0? p: p2);
+                      if (output_polynomials)
+#pragma omp critical(min)
+                        { // critical block, can only be executed by one thread at a time
+                          printf ("%d u [1,0,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]\n", p,f12,f11,f10,f9,f8,f7,f6,f5,f4,f3,f2,f1,f0);
+                        }
+                    }
+                }
                 } // end of f0 loop
           }     // end of f1 loop
         }}}}}}}}}} // end of f2, f3, f4, f5, f6, f7, f8, f9, f10, f12 loops (f11 is thread number, f13=0 and f14=1)
-    }
+        count_1[f11] = xnptless1;
+        count_2[f11] = xnptless2;
+        count_1u[f11] = xnptless1u;
+        count_2u[f11] = xnptless2u;
+    } // end of parallel block
+    long n1=0, n2=0, n1u=0, n2u=0;
+    for(i=0; i<p; i++)
+      {
+        n1 += count_1[i];
+        n2 += count_2[i];
+        n1u += count_1u[i];
+        n2u += count_2u[i];
+      }
     printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,MAXD-2), omp_get_wtime()-start);
-    printf ("#Gamma(%d,1) =  %ld (in %ld orbits) for p = %d\n", MAXD, xnptless2, xnptless1, p);
-    printf ("#Gamma(%d,u) =  %ld (in %ld orbits) for p = %d\n", MAXD, xnptless2u, xnptless1u, p);
+    printf ("#Gamma(%d,1) =  %ld (in %ld orbits) for p = %d\n", MAXD, n2, n1, p);
+    printf ("#Gamma(%d,u) =  %ld (in %ld orbits) for p = %d\n", MAXD, n2u, n1u, p);
 }
