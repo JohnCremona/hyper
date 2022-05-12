@@ -38,6 +38,9 @@ minpoints3odd: minpoints3odd.c
 minpoints4: minpoints4.c
 	gcc -O3 -funroll-loops -fopenmp minpoints4.c -lm -o minpoints4
 
+mgamma.o: mgamma.h mgamma.c
+	gcc -O3 -c mgamma.c -o mgamma.o
+
 gamma3: gamma3.c
 	gcc -O3 -funroll-loops -fopenmp gamma3.c -lm -o gamma3
 
@@ -67,6 +70,9 @@ gamma7mod7: gamma7mod7.c
 
 gamma8: gamma8.c
 	gcc -O3 -funroll-loops -fopenmp gamma8.c -lm -o gamma8
+
+mgamma8: mgamma8.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mgamma8.c mgamma.o -lm -o mgamma8
 
 gamma9: gamma9.c
 	gcc -O3 -funroll-loops -fopenmp gamma9.c -lm -o gamma9
