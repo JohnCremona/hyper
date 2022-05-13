@@ -84,3 +84,15 @@ char** root_multiplicity_codes(int n, int p, int *legendre, int *fc, int *rts);
 // Flip signs in a code (+ to - and vice versa)
 
 char* flip_signs(char* code);
+
+// update code multiplicity counts: look up code in the list of codes,
+// if is has index i then increment the i'th counter by mult,
+// otherwise add it to the list, increment ncodes and set the i'th
+// counter to mult.
+
+void update_code_counts(char *code, char **codes, int *ncodes, long *code_counts, int mult);
+
+// Functions to test whether monic polys mod p are squares.  Here f is
+// an array of length n+1 with f[n]=1.
+
+int is_square(int n, int* f, int p);

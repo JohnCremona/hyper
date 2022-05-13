@@ -231,3 +231,158 @@ char* flip_signs(char* code)
   /* printf("after flipping signs, code is %s...\n", ucode); */
   return ucode;
 }
+
+// update code multiplicity counts: look up code in the list of codes,
+// if is has index i then increment the i'th counter by mult,
+// otherwise add it to the list, increment ncodes and set the i'th
+// counter to mult.
+
+void update_code_counts(char *code, char **codes, int *ncodes, long *code_counts, int mult)
+{
+  int i = find_code(code, codes, *ncodes);
+  if (i==-1)
+    {
+      codes[*ncodes] = code;
+      code_counts[*ncodes] = mult;
+      (*ncodes) ++;
+    }
+  else
+    code_counts[i] += mult;
+}
+
+
+// Functions to test whether monic polys of even degree are
+// squares. The array f has n+1 entries where n is the degree, so
+// f[n]=1.
+
+int is_square_2(int* f, int p)
+{
+  return (f[1]*f[1]-4*f[0])%p == 0;
+}
+
+int is_square_4(int* f, int p)
+{
+  int half = (p+1)/2;
+  int h1 = half*f[3];
+  int h0 = half*(f[2]-h1*h1);
+  return
+    ((f[1] - 2*h0*h1)%p == 0)
+    &&
+    ((f[0] - h0*h0)%p == 0);
+}
+
+int is_square_6(int* f, int p)
+{
+  int half = (p+1)/2;
+  int h2 = half*f[5];
+  int h1 = half*(f[4]-h2*h2);
+  int h0 = half*f[3]-h1*h2;
+  return
+    ((f[0] - h0*h0)%p == 0)
+    &&
+    ((f[1] - 2*h0*h1)%p == 0)
+    &&
+    ((f[2] - (h1*h1+2*h0*h2))%p == 0);
+}
+
+int is_square_8(int* f, int p)
+{
+  int half = (p+1)/2;
+  int h3 = half*f[7];
+  int h2 = half*(f[6]-h3*h3);
+  int h1 = half*f[5] - h2*h3;
+  int h0 = half*(f[4]-h2*h2) - h1*h3;
+  return
+    ((f[0] - h0*h0)%p == 0)
+    &&
+    ((f[1] - 2*h0*h1)%p == 0)
+    &&
+    ((f[2] - (h1*h1+2*h0*h2))%p == 0)
+    &&
+    ((f[3] - 2*(h0*h3+h1*h2))%p == 0);
+}
+
+int is_square_10(int* f, int p)
+{
+  int half = (p+1)/2;
+  int h4 = half*f[9];
+  int h3 = half*(f[8]-h4*h4);
+  int h2 = half*f[7] - h3*h4;
+  int h1 = half*(f[6]-h3*h3) - h2*h4;
+  int h0 = half*f[5] - h2*h3 - h1*h4;
+  return
+    ((f[0] - h0*h0)%p == 0)
+    &&
+    ((f[1] - 2*h0*h1)%p == 0)
+    &&
+    ((f[2] - (h1*h1+2*h0*h2))%p == 0)
+    &&
+    ((f[3] - 2*(h0*h3+h1*h2))%p == 0)
+    &&
+    ((f[4] - 2*(h1*h3+h0*h4) - h2*h2)%p == 0);
+}
+
+int is_square_12(int* f, int p)
+{
+  int half = (p+1)/2;
+  int h5 = half*f[11];
+  int h4 = half*(f[10]-h5*h5);
+  int h3 = half*f[9] - h4*h5;
+  int h2 = half*(f[8]-h4*h4) - h3*h5;
+  int h1 = half*f[7] - h3*h4 - h2*h5;
+  int h0 = half*(f[6]-h3*h3) - h2*h4 - h1*h5;
+  return
+    ((f[0] - h0*h0)%p == 0)
+    &&
+    ((f[1] - 2*h0*h1)%p == 0)
+    &&
+    ((f[2] - (h1*h1+2*h0*h2))%p == 0)
+    &&
+    ((f[3] - 2*(h0*h3+h1*h2))%p == 0)
+    &&
+    ((f[4] - 2*(h1*h3+h0*h4) - h2*h2)%p == 0)
+    &&
+    ((f[5] - 2*(h0*h5+h1*h4+h2*h3))%p == 0);
+}
+
+int is_square_14(int* f, int p)
+{
+  int half = (p+1)/2;
+  int h6 = half*f[13];
+  int h5 = half*(f[12]-h6*h6);
+  int h4 = half*f[11] - h5*h6;
+  int h3 = half*(f[10]-h5*h5) - h4*h6;
+  int h2 = half*f[9] - h3*h6 - h4*h5;
+  int h1 = half*(f[8]-h4*h4) - h2*h6 - h3*h5;
+  int h0 = half*f[7] - h3*h4 - h2*h5 - h1*h6;
+  return
+    ((f[0] - h0*h0)%p == 0)
+    &&
+    ((f[1] - 2*h0*h1)%p == 0)
+    &&
+    ((f[2] - (h1*h1+2*h0*h2))%p == 0)
+    &&
+    ((f[3] - 2*(h0*h3+h1*h2))%p == 0)
+    &&
+    ((f[4] - 2*(h1*h3+h0*h4) - h2*h2)%p == 0)
+    &&
+    ((f[5] - 2*(h0*h5+h1*h4+h2*h3))%p == 0)
+    &&
+    ((f[6] - 2*(h0*h6+h1*h5+h2*h4) - h3*h3)%p == 0);
+}
+
+int is_square(int n, int* f, int p)
+{
+  if (n%2)
+    return 0;
+  switch (n) {
+  case 2: return is_square_2(f, p);
+  case 4: return is_square_4(f, p);
+  case 6: return is_square_6(f, p);
+  case 8: return is_square_8(f, p);
+  case 10: return is_square_10(f, p);
+  case 12: return is_square_12(f, p);
+  case 14: return is_square_14(f, p);
+  default: return 0;
+  }
+}

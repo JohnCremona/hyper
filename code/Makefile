@@ -105,3 +105,6 @@ gamma14mod7: gamma14mod7.c
 	gcc -O3 -funroll-loops -fopenmp gamma14mod7.c -lm -o gamma14mod7
 
 gammas: gamma3 gamma4 gamma5 gamma6 gamma7 gamma8 gamma9 gamma10 gamma11 gamma12 gamma13 gamma14 gamma3mod3 gamma5mod5 gamma6mod3 gamma7mod7 gamma9mod3 gamma10mod5 gamma12mod3 gamma14mod7
+
+mgammas: mgamma8
+

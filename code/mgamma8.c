@@ -71,8 +71,6 @@ int main (int argc, char *argv[])
     {
       int f[MAXD+1];
         register int df5, df4, df3, df2, df1,
-          h0, h1, h2, // potential coeffs of sqrt(f)
-          h1h1, f3s, f2s, f1s, f0s,
           i, ny, cnt, ucnt, f_mult,
           *x;
         char **codes;
@@ -82,20 +80,12 @@ int main (int argc, char *argv[])
         f[8] = 1; f[7] = 0;
         f[5] = omp_get_thread_num();
         df4 = zmod(5*f[5], p);
-        h1 = half*f[5];
-        h1h1 = zmod(h1*h1, p);
         for ( f[6] = 0 ; f[6] < 3 ; f[6]++ ) {
         if ( f[6] == 2 ) f[6] = u; // f[6] ranges over 0,1,u where u is least non-residue
         f_mult = (f[6]==0? p: p2);
-        h2 = half*f[6];
-        f3s = zmod(2*h1*h2, p);
         df5 = zmod(6*f[6], p);
         for ( f[4] = 0 ; f[4] < p ; f[4]++ ) {
           df3 = zmod(4*f[4], p);
-          h0 = zmod(half*(f[4]-h2*h2),p);
-          f0s = zmod(h0*h0,p);
-          f1s = zmod(2*h0*h1,p);
-          f2s = zmod(2*h0*h2+h1h1,p);
         for ( f[3] = 0 ; f[3] < p ; f[3]++ ) {
           df2 = zmod(3*f[3], p);
         for ( f[2] = 0 ; f[2] < p ; f[2]++ ) {
@@ -125,21 +115,11 @@ int main (int argc, char *argv[])
 #pragma omp critical(min)
                       { // critical block, can only be executed by one thread at a time
                         codes = root_multiplicity_codes(MAXD, p, legendre, f, rts);
-                        keep_code = keep_ucode = 0; // only keep it is it is a new one
                         if (cnt==0)
                           {
                             xnptless1 ++;
                             xnptless2 += f_mult;
-                            i = find_code(codes[0], codes_1, ncodes_1);
-                            if (i==-1)
-                              {
-                                i = ncodes_1;
-                                codes_1[i] = codes[0];
-                                keep_code = 1;
-                                code_counts_1[i] = 0;
-                                ncodes_1 ++;
-                              }
-                            code_counts_1[i] += f_mult;
+                            update_code_counts(codes[0], codes_1, &ncodes_1, code_counts_1, f_mult);
                             if (output_polynomials)
                               {
                                 printf ("%d 1 ", p);
@@ -149,36 +129,20 @@ int main (int argc, char *argv[])
                                 printf("\n");
                               }
                           }
-                        if (ucnt==0)
+                        if ((ucnt==0) && (!is_square(MAXD, f, p)))
                           {
-                            if (!(f3s==f[3] && f2s==f[2] && f1s==f[1] && f0s==f[0]))
+                            xnptless1u ++;
+                            xnptless2u += f_mult;
+                            update_code_counts(codes[1], codes_u, &ncodes_u, code_counts_u, f_mult);
+                            if (output_polynomials)
                               {
-                                xnptless1u ++;
-                                xnptless2u += f_mult;
-                                i = find_code(codes[1], codes_u, ncodes_u);
-                                if (i==-1)
-                                  {
-                                    i = ncodes_u;
-                                    codes_u[i] = codes[1];
-                                    keep_ucode = 1;
-                                    code_counts_u[i] = 0;
-                                    ncodes_u ++;
-                                  }
-                                code_counts_u[i] += f_mult;
-                                if (output_polynomials)
-                                  {
-                                    printf ("%d u ", p);
-                                    printf ("[1,0,%d,%d,%d,%d,%d,%d,%d] ", f[6],f[5],f[4],f[3],f[2],f[1],f[0]);
-                                    printf("%s ", codes[1]);
-                                    printf("%d ", f_mult);
-                                    printf("\n");
-                                  }
+                                printf ("%d u ", p);
+                                printf ("[1,0,%d,%d,%d,%d,%d,%d,%d] ", f[6],f[5],f[4],f[3],f[2],f[1],f[0]);
+                                printf("%s ", codes[1]);
+                                printf("%d ", f_mult);
+                                printf("\n");
                               }
                           }
-                        /* if (!keep_code) */
-                        /*   free(code); */
-                        /* if (!keep_ucode) */
-                        /*   free(ucode); */
                       } // end of critical block
                 } // end of f[0] loop
         }     // end of f[1] loop
@@ -199,12 +163,4 @@ int main (int argc, char *argv[])
       {
         printf("%s: %ld\n", codes_u[i], code_counts_u[i]);
       }
-    /* for (i=0; i<ncodes_1; i++) */
-    /*   { */
-    /*     free(codes_1[i]); */
-    /*   } */
-    /* for (i=0; i<ncodes_u; i++) */
-    /*   { */
-    /*     free(codes_u[i]); */
-    /*   } */
 }
