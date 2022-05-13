@@ -386,3 +386,15 @@ int is_square(int n, int* f, int p)
   default: return 0;
   }
 }
+
+
+// evaluate f(x) of degree n, using precomputed list of powers of x, starting with the x^m term:
+
+int f_eval(int n, int* f, int* xpowers, int m)
+{
+  register int i, val;
+  for (i=m, val=0; i<=n; i++)
+    if (f[i])
+      val += f[i]*xpowers[i];
+  return val;
+}

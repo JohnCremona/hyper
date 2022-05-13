@@ -96,3 +96,7 @@ void update_code_counts(char *code, char **codes, int *ncodes, long *code_counts
 // an array of length n+1 with f[n]=1.
 
 int is_square(int n, int* f, int p);
+
+// evaluate f(x) of degree n, using precomputed list of powers of x, starting with the x^m term:
+
+int f_eval(int n, int* f, int* xpowers, int m);
