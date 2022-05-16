@@ -18,5 +18,7 @@ code/gamma?mod?
 code/gamma??mod?
 code/mgamma?
 code/mgamma??
+code/mxgamma?
+code/mxgamma??
 code/*.o
 code/*out*

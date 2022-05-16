@@ -168,7 +168,6 @@ int find_code(char* code, char** codes, int ncodes)
 
 char* root_multiplicity_code(int n, int p, int *legendre, int *fc, int *rts)
 {
-  int i;
   root_multiplicities(n, p, legendre, fc, rts);
   sort(p, rts);
   return encode(p, rts);
