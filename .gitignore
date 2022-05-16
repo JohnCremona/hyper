@@ -10,3 +10,13 @@ code/xdeg10
 code/xdeg6
 code/xdeg8
 code/xdeg4
+code/minpoints3
+code/minpoints4
+code/gamma?
+code/gamma??
+code/gamma?mod?
+code/gamma??mod?
+code/mgamma?
+code/mgamma??
+code/*.o
+code/*out*
