@@ -209,10 +209,9 @@ void flip_multiplicities(int p, int *mults)
 
 char* flip_signs(char* code)
 {
-  int n = strlen(code);
-  char *ucode = (char*)malloc(n);
-  memcpy(ucode, code, n);
-  if (n==0)
+  char *ucode = (char*)malloc(strlen(code));
+  strcpy(ucode, code);
+  if (strlen(code)==0)
     return ucode;
   /* printf("flipping signs in code %s...\n", code); */
   char *pos = strchr(code, '+');
@@ -241,7 +240,9 @@ void update_code_counts(char *code, char **codes, int *ncodes, long *code_counts
   int i = find_code(code, codes, *ncodes);
   if (i==-1)
     {
-      codes[*ncodes] = code;
+      // copy the code string
+      codes[*ncodes] = (char*)malloc(strlen(code));
+      strcpy(codes[*ncodes], code);
       code_counts[*ncodes] = mult;
       (*ncodes) ++;
     }

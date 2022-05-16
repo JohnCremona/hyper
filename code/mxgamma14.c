@@ -28,18 +28,18 @@ int main (int argc, char *argv[])
     long code_counts_u[NCODES];
     int ncodes_1 = 0;
     int ncodes_u = 0;
-    int i, j, p, p2;
+    int i, j, p, pm1;
     int u; // will hold the least quadratic nonresidue
     int output_polynomials = 0;
 
-    if ( argc < 2 ) { printf ("mgamma%d p (or mgamma%d p 1)", DEG, DEG); return 0; }
+    if ( argc < 2 ) { printf ("mxgamma%d p (or mxgamma%d p 1)\n", DEG, DEG); return 0; }
     p = atoi(argv[1]);
-    if ( p < 3 || p > MAXP || DEG%p==0 ) { printf ("p must be in [3,%d] and not divide %d\n", MAXP, DEG); return 0; }
+    if ( p < 3 || p > MAXP ) { printf ("p must be in [3,%d]\n", MAXP); return 0; }
     if (argc > 2) output_polynomials = atoi(argv[2]);
 
     start = omp_get_wtime();
 
-    p2 = p*(p-1)/2; // size of orbits under affine transformations unless f[DEG2]==0
+    pm1 = p-1; // size of orbits under affine transformations unless f[DEG1]==0
 
     // set qmap[i] = 1 + kron(i,p) for i in [0,p^2]
     memset(qmap,0,sizeof(qmap));
@@ -75,19 +75,19 @@ int main (int argc, char *argv[])
         char **codes;
         int emap[MAXP], edmap[MAXP], rts[MAXP];
 
-        f[DEG] = 1; f[DEG1] = 0;
-        f[DEG3] = omp_get_thread_num();
-        df[DEG1] = DEG; df[DEG2] = 0;
-        df[DEG4] = zmod((DEG3)*f[DEG3], p);
-        for ( f[DEG2] = 0 ; f[DEG2] < 3 ; f[DEG2]++ ) {
-        if ( f[DEG2] == 2 ) f[DEG2] = u; // f[DEG2] ranges over 0,1,u where u is least non-residue
-        f_mult = (f[DEG2]==0? p: p2);
+        f[DEG] = 1;
+        df[DEG1] = zmod(DEG, p);
+        f[DEG2] = omp_get_thread_num();
         df[DEG3] = zmod((DEG2)*f[DEG2], p);
+        for ( f[DEG1] = 0 ; f[DEG1] < 2 ; f[DEG1]++ ) {
+        f_mult = (f[DEG1]==0? 1: pm1);
+        df[DEG2] = zmod((DEG1)*f[DEG1], p);
         //
-        // for k=DEG-4, DEG-5, down to 2, include lines
+        // for k=DEG-3, DEG-4, down to 2, (DEG-4 loops) include lines
         //
         // for ( f[k] = 0 ; f[k] < p ; f[k]++ ) { df[k-1] = zmod(k*f[k], p);
         //
+        for ( f[11] = 0 ; f[11] < p ; f[11]++ ) { df[10] = zmod(11*f[11], p);
         for ( f[10] = 0 ; f[10] < p ; f[10]++ ) { df[9] = zmod(10*f[10], p);
         for ( f[9] = 0 ; f[9] < p ; f[9]++ ) { df[8] = zmod(9*f[9], p);
         for ( f[8] = 0 ; f[8] < p ; f[8]++ ) { df[7] = zmod(8*f[8], p);
@@ -102,9 +102,9 @@ int main (int argc, char *argv[])
           // and edmap[i] = f'(i)-f[1]
           for ( i = 0 ; i < p ; i++ ) {
                 x = xmap + i*DEG - 1;  // x[j] = i^j
-                // RHS is x[DEG] + sum(f[k]*x[k] for k in 2..DEG2)
+                // RHS is x[DEG] + sum(f[k]*x[k] for k in 2..DEG1)
                 emap[i] = zmod(f_eval(DEG, f, x, 2), p);
-                // RHS is DEG*x[DEG1] + sum(df[k]*x[k] for k in 1..DEG3)
+                // RHS is DEG*x[DEG1] + sum(df[k]*x[k] for k in 1..DEG2)
                 edmap[i] = zmod(f_eval(DEG1, df, x, 1), p);
             }
           // inner loop over lowest two coefficients, f[1] and f[0]:
@@ -137,8 +137,8 @@ int main (int argc, char *argv[])
                               }
                             if (output_polynomials)
                               {
-                                printf ("%d 1 [1,0", p);
-                                for(i=DEG2; i>=0; i--)
+                                printf ("%d 1 [1", p);
+                                for(i=DEG1; i>=0; i--)
                                   printf(",%d", f[i]);
                                 printf("] %s %d\n", codes[0], f_mult);
                               }
@@ -155,8 +155,8 @@ int main (int argc, char *argv[])
                               }
                             if (output_polynomials)
                               {
-                                printf ("%d u [1,0", p);
-                                for(i=DEG2; i>=0; i--)
+                                printf ("%d u [1", p);
+                                for(i=DEG1; i>=0; i--)
                                   printf(",%d", f[i]);
                                 printf("] %s %d\n", codes[1], f_mult);
                               }
@@ -167,8 +167,8 @@ int main (int argc, char *argv[])
                       } // end of critical block
                 } // end of f[0] loop
           }     // end of f[1] loop
-          // next line has DEG4 * } ending f[k] loops for k=2..DEG4, DEG2 (DEG3 is thread number)
-        }}}}}}}}}}
+          // next line has DEG3 * } ending f[k] loops for k=2..DEG2 (DEG1 is thread number)
+        }}}}}}}}}}}
     } // end of parallel block
 
     printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,DEG2), omp_get_wtime()-start);

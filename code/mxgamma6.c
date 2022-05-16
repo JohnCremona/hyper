@@ -32,7 +32,7 @@ int main (int argc, char *argv[])
     int u; // will hold the least quadratic nonresidue
     int output_polynomials = 0;
 
-    if ( argc < 2 ) { printf ("mgamma%d p (or mgamma%d p 1)\n", DEG, DEG); return 0; }
+    if ( argc < 2 ) { printf ("mxgamma%d p (or mxgamma%d p 1)\n", DEG, DEG); return 0; }
     p = atoi(argv[1]);
     if ( p < 3 || p > MAXP ) { printf ("p must be in [3,%d]\n", MAXP); return 0; }
     if (argc > 2) output_polynomials = atoi(argv[2]);
@@ -76,7 +76,7 @@ int main (int argc, char *argv[])
         int emap[MAXP], edmap[MAXP], rts[MAXP];
 
         f[DEG] = 1;
-        df[DEG1] = DEG;
+        df[DEG1] = zmod(DEG, p);
         f[DEG2] = omp_get_thread_num();
         df[DEG3] = zmod((DEG2)*f[DEG2], p);
         for ( f[DEG1] = 0 ; f[DEG1] < 2 ; f[DEG1]++ ) {
@@ -153,6 +153,9 @@ int main (int argc, char *argv[])
                                 printf("] %s %d\n", codes[1], f_mult);
                               }
                           }
+                        free(codes[0]);
+                        free(codes[1]);
+                        free(codes);
                       } // end of critical block
                 } // end of f[0] loop
           }     // end of f[1] loop

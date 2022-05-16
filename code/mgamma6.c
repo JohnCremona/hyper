@@ -18,7 +18,6 @@ int main (int argc, char *argv[])
     double start;
     long xnptless1, xnptless2; // 1 is #orbits, 2 is total: y^2=f(x)
     long xnptless1u, xnptless2u; // 1 is #orbits, 2 is total: uy^2=f(x)
-    int orbit_size, p2, half;
     int DEG1=DEG-1, DEG2=DEG-2, DEG3=DEG-3, DEG4=DEG-4;
     int qmap[MAXP*MAXP];
     int legendre[MAXP];
@@ -29,7 +28,7 @@ int main (int argc, char *argv[])
     long code_counts_u[NCODES];
     int ncodes_1 = 0;
     int ncodes_u = 0;
-    int i, j, p;
+    int i, j, p, p2;
     int u; // will hold the least quadratic nonresidue
     int output_polynomials = 0;
 
@@ -41,7 +40,6 @@ int main (int argc, char *argv[])
     start = omp_get_wtime();
 
     p2 = p*(p-1)/2; // size of orbits under affine transformations unless f[DEG2]==0
-    half = (p+1)/2;
 
     // set qmap[i] = 1 + kron(i,p) for i in [0,p^2]
     memset(qmap,0,sizeof(qmap));
@@ -155,6 +153,9 @@ int main (int argc, char *argv[])
                                 printf("] %s %d\n", codes[1], f_mult);
                               }
                           }
+                        free(codes[0]);
+                        free(codes[1]);
+                        free(codes);
                       } // end of critical block
                 } // end of f[0] loop
           }     // end of f[1] loop

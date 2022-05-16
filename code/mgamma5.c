@@ -166,6 +166,9 @@ int main (int argc, char *argv[])
                                 printf("] %s %d\n", codes[1], f_mult);
                               }
                           }
+                        free(codes[0]);
+                        free(codes[1]);
+                        free(codes);
                       } // end of critical block
                 } // end of f[0] loop
           }     // end of f[1] loop
