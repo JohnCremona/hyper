@@ -555,6 +555,8 @@ def show_Gamma_mults(n, p, outfile=None):
     if outfile:
         with open(outfile, 'w') as output:
             for d,t in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],  ["1", "u"]):
+                if t=="u" and n%2:
+                    continue
                 dname = "Gamma({},{})".format(n,t)
                 try:
                     counts = d[(p,n)]
@@ -565,6 +567,8 @@ def show_Gamma_mults(n, p, outfile=None):
                     output.write("{} {} {}\n".format(t, convert_key(k), counts[k]))
     else:
         for d,t in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],  ["1", "u"]):
+            if t=="u" and n%2:
+                continue
             dname = "Gamma({},{})".format(n,t)
             try:
                 counts = d[(p,n)]
