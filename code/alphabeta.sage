@@ -556,14 +556,20 @@ def show_Gamma_mults(n, p, outfile=None):
         with open(outfile, 'w') as output:
             for d,t in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],  ["1", "u"]):
                 dname = "Gamma({},{})".format(n,t)
-                counts = d[(p,n)]
+                try:
+                    counts = d[(p,n)]
+                except KeyError:
+                    continue
                 output.write("{}: {} different patterns\n".format(dname, len(counts)))
                 for k in sorted(counts.keys(), key=lambda x:tuple(xi[0]*xi[1] for xi in x)):
                     output.write("{} {} {}\n".format(t, convert_key(k), counts[k]))
     else:
         for d,t in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],  ["1", "u"]):
             dname = "Gamma({},{})".format(n,t)
-            counts = d[(p,n)]
+            try:
+                counts = d[(p,n)]
+            except KeyError:
+                continue
             print("{}: {} different patterns".format(dname, len(counts)))
             for k in sorted(counts.keys(), key=lambda x:tuple(xi[0]*xi[1] for xi in x)):
                 print("{} {} {}".format(t, convert_key(k), counts[k]))

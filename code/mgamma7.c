@@ -6,9 +6,9 @@
 #include <math.h>
 #include "mgamma.h"
 
-#define DEG    12
+#define DEG    7
 #define MAXP    128
-#define NCODES  200
+#define NCODES  100
 
 static inline int zmod (int x, int m)
     { register int t, z;  t = (1.0/m) * x;  z = x-t*m;  if ( z < 0 ) z += m;  if ( z >= m ) z -= m;  return z; }
@@ -18,7 +18,7 @@ int main (int argc, char *argv[])
     double start;
     long xnptless1, xnptless2; // 1 is #orbits, 2 is total: y^2=f(x)
     long xnptless1u, xnptless2u; // 1 is #orbits, 2 is total: uy^2=f(x)
-    int orbit_size, p2, half;
+    int orbit_size, p2, pmod4;
     int DEG1=DEG-1, DEG2=DEG-2, DEG3=DEG-3, DEG4=DEG-4;
     int qmap[MAXP*MAXP];
     int legendre[MAXP];
@@ -40,8 +40,10 @@ int main (int argc, char *argv[])
 
     start = omp_get_wtime();
 
+    pmod4 = p & 3;
     p2 = p*(p-1)/2; // size of orbits under affine transformations unless f[DEG2]==0
-    half = (p+1)/2;
+    if (pmod4==1)
+      p2 /= 2;
 
     // set qmap[i] = 1 + kron(i,p) for i in [0,p^2]
     memset(qmap,0,sizeof(qmap));
@@ -86,15 +88,10 @@ int main (int argc, char *argv[])
         f_mult = (f[DEG2]==0? p: p2);
         df[DEG3] = zmod((DEG2)*f[DEG2], p);
         //
-        // for k=DEG-4, DEG-5, down to 2, include lines
+        // for k=DEG-4, DEG-5, down to 2, include DEG4-5 lines
         //
         // for ( f[k] = 0 ; f[k] < p ; f[k]++ ) { df[k-1] = zmod(k*f[k], p);
         //
-        for ( f[8] = 0 ; f[8] < p ; f[8]++ ) { df[7] = zmod(8*f[8], p);
-        for ( f[7] = 0 ; f[7] < p ; f[7]++ ) { df[6] = zmod(7*f[7], p);
-        for ( f[6] = 0 ; f[6] < p ; f[6]++ ) { df[5] = zmod(6*f[6], p);
-        for ( f[5] = 0 ; f[5] < p ; f[5]++ ) { df[4] = zmod(5*f[5], p);
-        for ( f[4] = 0 ; f[4] < p ; f[4]++ ) { df[3] = zmod(4*f[4], p);
         for ( f[3] = 0 ; f[3] < p ; f[3]++ ) { df[2] = zmod(3*f[3], p);
         for ( f[2] = 0 ; f[2] < p ; f[2]++ ) { df[1] = zmod(2*f[2], p);
 
@@ -130,7 +127,12 @@ int main (int argc, char *argv[])
                             xnptless1 ++;
                             xnptless2 += f_mult;
                             update_code_counts(codes[0], codes_1, &ncodes_1, code_counts_1, f_mult);
-                            if (ncodes_1>NCODES)
+                            if ( (pmod4==1) && (f[DEG2]!=0) )
+                              {
+                                xnptless2u += f_mult;
+                                update_code_counts(codes[0], codes_u, &ncodes_u, code_counts_u, f_mult);
+                              }
+                            if (ncodes_1>NCODES || ncodes_u>NCODES)
                               {
                                 printf("*** error:  NCODES value %d is too small!\n", NCODES);
                                 exit(1);
@@ -143,12 +145,17 @@ int main (int argc, char *argv[])
                                 printf("] %s %d\n", codes[0], f_mult);
                               }
                           }
-                        if ((ucnt==0) && (!is_square(DEG, f, p)))
+                        if (ucnt==0)
                           {
                             xnptless1u ++;
                             xnptless2u += f_mult;
                             update_code_counts(codes[1], codes_u, &ncodes_u, code_counts_u, f_mult);
-                            if (ncodes_u>NCODES)
+                            if ( (pmod4==1) && (f[DEG2]!=0) )
+                              {
+                                xnptless2 += f_mult;
+                                update_code_counts(codes[1], codes_1, &ncodes_1, code_counts_1, f_mult);
+                              }
+                            if (ncodes_1>NCODES || ncodes_u>NCODES)
                               {
                                 printf("*** error:  NCODES value %d is too small!\n", NCODES);
                                 exit(1);
@@ -165,22 +172,16 @@ int main (int argc, char *argv[])
                 } // end of f[0] loop
           }     // end of f[1] loop
           // next line has DEG4 * } ending f[k] loops for k=2..DEG4, DEG2 (DEG3 is thread number)
-        }}}}}}}}
+        }}}
     } // end of parallel block
 
     printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,DEG2), omp_get_wtime()-start);
     printf ("#Gamma(%d,1) =  %ld (in %ld orbits) for p = %d\n", DEG, xnptless2, xnptless1, p);
-    printf ("#Gamma(%d,u) =  %ld (in %ld orbits) for p = %d\n", DEG, xnptless2u, xnptless1u, p);
     printf ("\n");
     printf ("Frequencies of signed root multiplicities\n");
     printf ("Gamma(%d,1): %d different patterns\n", DEG, ncodes_1);
     for (i=0; i<ncodes_1; i++)
       {
         printf("1 %s %ld\n", codes_1[i], code_counts_1[i]);
-      }
-    printf ("Gamma(%d,u): %d different patterns\n", DEG, ncodes_u);
-    for (i=0; i<ncodes_u; i++)
-      {
-        printf("u %s %ld\n", codes_u[i], code_counts_u[i]);
       }
 }

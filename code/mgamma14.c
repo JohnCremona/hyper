@@ -35,7 +35,7 @@ int main (int argc, char *argv[])
 
     if ( argc < 2 ) { printf ("mgamma%d p (or mgamma%d p 1)", DEG, DEG); return 0; }
     p = atoi(argv[1]);
-    if ( p < 3 || p > MAXP || DEG%p!=0 ) { printf ("p must be in [3,%d] and not divide %d\n", MAXP, DEG); return 0; }
+    if ( p < 3 || p > MAXP || DEG%p==0 ) { printf ("p must be in [3,%d] and not divide %d\n", MAXP, DEG); return 0; }
     if (argc > 2) output_polynomials = atoi(argv[2]);
 
     start = omp_get_wtime();
