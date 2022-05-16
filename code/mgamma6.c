@@ -6,7 +6,7 @@
 #include <math.h>
 #include "mgamma.h"
 
-#define DEG    8
+#define DEG    6
 #define MAXP    128
 #define NCODES  100
 
@@ -90,8 +90,6 @@ int main (int argc, char *argv[])
         //
         // for ( f[k] = 0 ; f[k] < p ; f[k]++ ) { df[k-1] = zmod(k*f[k], p);
         //
-        for ( f[4] = 0 ; f[4] < p ; f[4]++ ) { df[3] = zmod(4*f[4], p);
-        for ( f[3] = 0 ; f[3] < p ; f[3]++ ) { df[2] = zmod(3*f[3], p);
         for ( f[2] = 0 ; f[2] < p ; f[2]++ ) { df[1] = zmod(2*f[2], p);
 
           // set emap[i] = f(i)-f[1]*i-f[0] for i in [0,p-1]
@@ -161,7 +159,7 @@ int main (int argc, char *argv[])
                 } // end of f[0] loop
           }     // end of f[1] loop
           // next line has DEG4 * } ending f[k] loops for k=2..DEG4, DEG2 (DEG3 is thread number)
-        }}}}
+        }}
     } // end of parallel block
 
     printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,DEG2), omp_get_wtime()-start);

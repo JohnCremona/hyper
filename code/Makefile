@@ -71,9 +71,6 @@ gamma7mod7: gamma7mod7.c
 gamma8: gamma8.c
 	gcc -O3 -funroll-loops -fopenmp gamma8.c -lm -o gamma8
 
-mgamma8: mgamma8.c mgamma.o
-	gcc -O3 -funroll-loops -fopenmp mgamma8.c mgamma.o -lm -o mgamma8
-
 gamma9: gamma9.c
 	gcc -O3 -funroll-loops -fopenmp gamma9.c -lm -o gamma9
 
@@ -106,5 +103,20 @@ gamma14mod7: gamma14mod7.c
 
 gammas: gamma3 gamma4 gamma5 gamma6 gamma7 gamma8 gamma9 gamma10 gamma11 gamma12 gamma13 gamma14 gamma3mod3 gamma5mod5 gamma6mod3 gamma7mod7 gamma9mod3 gamma10mod5 gamma12mod3 gamma14mod7
 
-mgammas: mgamma8
+mgamma6: mgamma6.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mgamma6.c mgamma.o -lm -o mgamma6
+
+mgamma8: mgamma8.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mgamma8.c mgamma.o -lm -o mgamma8
+
+mgamma10: mgamma10.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mgamma10.c mgamma.o -lm -o mgamma10
+
+mgamma12: mgamma12.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mgamma12.c mgamma.o -lm -o mgamma12
+
+mgamma14: mgamma14.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mgamma14.c mgamma.o -lm -o mgamma14
+
+mgammas: mgamma6 mgamma8 mgamma10 mgamma12 mgamma14
 

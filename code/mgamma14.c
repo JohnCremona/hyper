@@ -6,9 +6,9 @@
 #include <math.h>
 #include "mgamma.h"
 
-#define DEG    8
+#define DEG    14
 #define MAXP    128
-#define NCODES  100
+#define NCODES  250
 
 static inline int zmod (int x, int m)
     { register int t, z;  t = (1.0/m) * x;  z = x-t*m;  if ( z < 0 ) z += m;  if ( z >= m ) z -= m;  return z; }
@@ -90,6 +90,12 @@ int main (int argc, char *argv[])
         //
         // for ( f[k] = 0 ; f[k] < p ; f[k]++ ) { df[k-1] = zmod(k*f[k], p);
         //
+        for ( f[10] = 0 ; f[10] < p ; f[10]++ ) { df[9] = zmod(10*f[10], p);
+        for ( f[9] = 0 ; f[9] < p ; f[9]++ ) { df[8] = zmod(9*f[9], p);
+        for ( f[8] = 0 ; f[8] < p ; f[8]++ ) { df[7] = zmod(8*f[8], p);
+        for ( f[7] = 0 ; f[7] < p ; f[7]++ ) { df[6] = zmod(7*f[7], p);
+        for ( f[6] = 0 ; f[6] < p ; f[6]++ ) { df[5] = zmod(6*f[6], p);
+        for ( f[5] = 0 ; f[5] < p ; f[5]++ ) { df[4] = zmod(5*f[5], p);
         for ( f[4] = 0 ; f[4] < p ; f[4]++ ) { df[3] = zmod(4*f[4], p);
         for ( f[3] = 0 ; f[3] < p ; f[3]++ ) { df[2] = zmod(3*f[3], p);
         for ( f[2] = 0 ; f[2] < p ; f[2]++ ) { df[1] = zmod(2*f[2], p);
@@ -161,7 +167,7 @@ int main (int argc, char *argv[])
                 } // end of f[0] loop
           }     // end of f[1] loop
           // next line has DEG4 * } ending f[k] loops for k=2..DEG4, DEG2 (DEG3 is thread number)
-        }}}}
+        }}}}}}}}}}
     } // end of parallel block
 
     printf ("Checked %ld curves in %.3fs\n", 3*(long)pow(p,DEG2), omp_get_wtime()-start);

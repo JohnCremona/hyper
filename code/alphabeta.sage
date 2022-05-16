@@ -551,13 +551,22 @@ def convert_key(k):
     mults = sorted([s*m for m,s in k])
     return "[" + ",".join("{:+d}".format(m) for m in mults) + "]"
 
-def show_Gamma_mults(n, p):
-    for d,dname in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
-                       ["Gamma({},1)".format(n), "Gamma({},u)".format(n)]):
-        counts = d[(p,n)]
-        print("{}: {} different patterns".format(dname, len(counts)))
-        for k in sorted(counts.keys(), key=lambda x:tuple(xi[0]*xi[1] for xi in x)):
-            print("{}: {}".format(convert_key(k), counts[k]))
+def show_Gamma_mults(n, p, outfile=None):
+    if outfile:
+        with open(outfile, 'w') as output:
+            for d,t in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],  ["1", "u"]):
+                dname = "Gamma({},{})".format(n,t)
+                counts = d[(p,n)]
+                output.write("{}: {} different patterns\n".format(dname, len(counts)))
+                for k in sorted(counts.keys(), key=lambda x:tuple(xi[0]*xi[1] for xi in x)):
+                    output.write("{} {} {}\n".format(t, convert_key(k), counts[k]))
+    else:
+        for d,t in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],  ["1", "u"]):
+            dname = "Gamma({},{})".format(n,t)
+            counts = d[(p,n)]
+            print("{}: {} different patterns".format(dname, len(counts)))
+            for k in sorted(counts.keys(), key=lambda x:tuple(xi[0]*xi[1] for xi in x)):
+                print("{} {} {}".format(t, convert_key(k), counts[k]))
 
 def one_row(p):
     """ Function to check entries in Table in paper
