@@ -106,6 +106,9 @@ gammas: gamma3 gamma4 gamma5 gamma6 gamma7 gamma8 gamma9 gamma10 gamma11 gamma12
 mgamma5: mgamma5.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma5.c mgamma.o -lm -o mgamma5
 
+mxgamma5: mxgamma5.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mxgamma5.c mgamma.o -lm -o mxgamma5
+
 mgamma6: mgamma6.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma6.c mgamma.o -lm -o mgamma6
 
@@ -115,11 +118,17 @@ mxgamma6: mxgamma6.c mgamma.o
 mgamma7: mgamma7.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma7.c mgamma.o -lm -o mgamma7
 
+mxgamma7: mxgamma7.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mxgamma7.c mgamma.o -lm -o mxgamma7
+
 mgamma8: mgamma8.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma8.c mgamma.o -lm -o mgamma8
 
 mgamma9: mgamma9.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma9.c mgamma.o -lm -o mgamma9
+
+mxgamma9: mxgamma9.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mxgamma9.c mgamma.o -lm -o mxgamma9
 
 mgamma10: mgamma10.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma10.c mgamma.o -lm -o mgamma10
@@ -130,6 +139,9 @@ mxgamma10: mxgamma10.c mgamma.o
 mgamma11: mgamma11.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma11.c mgamma.o -lm -o mgamma11
 
+mxgamma11: mxgamma11.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mxgamma11.c mgamma.o -lm -o mxgamma11
+
 mgamma12: mgamma12.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma12.c mgamma.o -lm -o mgamma12
 
@@ -139,10 +151,13 @@ mxgamma12: mxgamma12.c mgamma.o
 mgamma13: mgamma13.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma13.c mgamma.o -lm -o mgamma13
 
+mxgamma13: mxgamma13.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mxgamma13.c mgamma.o -lm -o mxgamma13
+
 mgamma14: mgamma14.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mgamma14.c mgamma.o -lm -o mgamma14
 
 mxgamma14: mxgamma14.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mxgamma14.c mgamma.o -lm -o mxgamma14
 
-mgammas: mgamma5 mgamma6 mxgamma6 mgamma7 mgamma8 mgamma9 mgamma10 mxgamma10 mgamma11 mgamma12 mxgamma12 mgamma13 mgamma14 mxgamma14
+mgammas: mgamma5 mxgamma5 mgamma6 mxgamma6 mgamma7 mxgamma7 mgamma8 mgamma9 mxgamma9 mgamma10 mxgamma10 mgamma11 mxgamma11 mgamma12 mxgamma12 mgamma13 mxgamma13 mgamma14 mxgamma14
