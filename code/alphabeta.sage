@@ -578,6 +578,27 @@ def show_Gamma_mults(n, p, outfile=None):
             for k in sorted(counts.keys(), key=lambda x:tuple(xi[0]*xi[1] for xi in x)):
                 print("{} {} {}".format(t, convert_key(k), counts[k]))
 
+
+def read_Gamma_mults(n, p, filename=None, new_style=False):
+    from collections import Counter
+    if not filename:
+        filename = "m{}gamma{}_{}.out".format("" if n%p else "x", n, p)
+    print("Reading Gamma multiplicites for degree {}, p={}, from {}".format(n,p,filename))
+    c1 = Counter()
+    cu = Counter()
+    with open(filename) as infile:
+        for L in infile:
+            if L[0] not in ["1", "u"]:
+               continue
+            t, code, mult = L.split()
+            assert t in ["1", "u"]
+            code = [] if code=="[]" else [int(m) for m in code[1:-1].split(",")]
+            if t=="u" and new_style:
+                code = [m if m%2 else -m for m in code]
+            code = tuple(sorted((abs(m),sign(m)) for m in code))
+            (c1 if t=="1" else cu)[code] = ZZ(mult)
+    return c1, cu
+
 def one_row(p):
     """ Function to check entries in Table in paper
     """

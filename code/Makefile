@@ -160,4 +160,13 @@ mgamma14: mgamma14.c mgamma.o
 mxgamma14: mxgamma14.c mgamma.o
 	gcc -O3 -funroll-loops -fopenmp mxgamma14.c mgamma.o -lm -o mxgamma14
 
-mgammas: mgamma5 mxgamma5 mgamma6 mxgamma6 mgamma7 mxgamma7 mgamma8 mgamma9 mxgamma9 mgamma10 mxgamma10 mgamma11 mxgamma11 mgamma12 mxgamma12 mgamma13 mxgamma13 mgamma14 mxgamma14
+mgamma15: mgamma15.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mgamma15.c mgamma.o -lm -o mgamma15
+
+mxgamma15: mxgamma15.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mxgamma15.c mgamma.o -lm -o mxgamma15
+
+mgamma16: mgamma16.c mgamma.o
+	gcc -O3 -funroll-loops -fopenmp mgamma16.c mgamma.o -lm -o mgamma16
+
+mgammas: mgamma5 mxgamma5 mgamma6 mxgamma6 mgamma7 mxgamma7 mgamma8 mgamma9 mxgamma9 mgamma10 mxgamma10 mgamma11 mxgamma11 mgamma12 mxgamma12 mgamma13 mxgamma13 mgamma14 mxgamma14 mgamma15 mxgamma15 mgamma16
