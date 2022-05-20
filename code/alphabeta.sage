@@ -3,15 +3,12 @@ from sage.all import (QQ, ZZ, GF, PolynomialRing, ProjectiveSpace)
 
 from basics import (Qp, pp, affine)
 
+max_p_for_degree = {1:0, 2:0, 3:3, 4:5, 5:11, 6:13, 7:19, 8:23, 9:37, 10:37}
+
 ################################# Set up dicts for Gamma sets  ##################################
 
-# The short version of Gamma_plus, Gamma_minus with keys (p,d) only
-# exist for p not dividing d and hold a restricted set of
-# "affine-reduced" polynomials with leading coefficients restricted to
-# (1,0,{0,1,u},...)         for d even or p=3(4)
-# (1,0,{0,1,u,u^2,u^3},...) for d odd and p=1(4)
-#
-# each being a representative of an affine orbit. of size p or p(p-1)/2 or p(p-1)/4.
+# The Gamma_plus, Gamma_minus dicts with keys (p,d) have values
+# Counter objects, counting sorted lists of pairs (m,sign).
 
 try:
     n = len(Gamma_plus_dict)
@@ -21,96 +18,24 @@ try:
     n = len(Gamma_minus_dict)
 except NameError:
     Gamma_minus_dict = {}
-try:
-    n = len(Gamma_plus_short_dict)
-except NameError:
-    Gamma_plus_short_dict = {}
-try:
-    n = len(Gamma_minus_short_dict)
-except NameError:
-    Gamma_minus_short_dict = {}
-
-try:
-    n = len(Gamma_plus_mult_dict)
-except NameError:
-    Gamma_plus_mult_dict = {}
-try:
-    n = len(Gamma_minus_mult_dict)
-except NameError:
-    Gamma_minus_mult_dict = {}
-try:
-    n = len(Gamma_plus_short_mult_dict)
-except NameError:
-    Gamma_plus_short_mult_dict = {}
-try:
-    n = len(Gamma_minus_short_mult_dict)
-except NameError:
-    Gamma_minus_short_mult_dict = {}
-
-
-max_p_for_degree = {1:0, 2:0, 3:3, 4:5, 5:11, 6:13, 7:19, 8:23, 9:37, 10:37}
 
 def initialize_Gamma_dicts():
-    global Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_dict, Gamma_minus_short_dict
+    global Gamma_plus_dict, Gamma_minus_dict
     Gamma_plus_dict = {}
     Gamma_minus_dict = {}
-    Gamma_plus_short_dict = {}
-    Gamma_minus_short_dict = {}
-
-def initialize_Gamma_mult_dicts():
-    global Gamma_plus_mult_dict, Gamma_minus_mult_dict, Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict
-    Gamma_plus_mult_dict = {}
-    Gamma_minus_mult_dict = {}
-    Gamma_plus_short_mult_dict = {}
-    Gamma_minus_short_mult_dict = {}
-
-def save_Gammas_old():
-    filename="Gamma"
-    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
-                             ["plus", "minus", "plus_short_mult", "minus_short_mult"]):
-        for k in Gdict.keys():
-            p = k[0]
-            if p==2:
-                Gdict[k] = [[[int(c) for c in pol.coefficients(sparse=False)] for pol in fh] for fh in Gdict[k]]
-        f = "_".join([filename, suffix])
-        print("Saving {}".format(f))
-        save(Gdict, f)
-        for k in Gdict.keys():
-            p = k[0]
-            if p==2:
-                Fx = PolynomialRing(GF(p), 'x')
-                Gdict[k] = [[Fx(co1) for co1 in co] for co in Gdict[k]]
 
 def save_Gammas():
     filename="Gamma"
-    for Gdict, suffix in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
-                             ["plus_short_mult", "minus_short_mult"]):
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict],
+                             ["plus", "minus"]):
         f = "_".join([filename, suffix])
         print("Saving {}".format(f))
         save(Gdict, f)
 
-# The restore functions use the update() method so that local values
-# are preserved, but NB if the same key exists locally and on file
-# then the file version will overwrite the local one.
-
-def restore_Gammas_old(filename="Gamma"):
-    global Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict
-    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict, Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
-                             ["plus", "minus", "plus_short_mult", "minus_short_mult"]):
-        f = "_".join([filename, suffix])
-        print("Restoring {}".format(f))
-        Gdict.update(load(f))
-        if suffix in ["plus", "minus"]:
-            for k in Gdict.keys():
-                p = k[0]
-                if p==2:
-                    Fx = PolynomialRing(GF(p), 'x')
-                    Gdict[k] = [[Fx(co1) for co1 in co] for co in Gdict[k]]
-
 def restore_Gammas(filename="Gamma"):
-    global Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict
-    for Gdict, suffix in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],
-                             ["plus_short_mult", "minus_short_mult"]):
+    global Gamma_plus_dict, Gamma_minus_dict
+    for Gdict, suffix in zip([Gamma_plus_dict, Gamma_minus_dict],
+                             ["plus", "minus"]):
         f = "_".join([filename, suffix])
         print("Restoring {}".format(f))
         Gdict.update(load(f))
@@ -185,7 +110,6 @@ def initialize_N_dict():
 def initialize_all_dicts():
     initialize_alpha_beta_dicts()
     initialize_Gamma_dicts()
-    #initialize_Delta_dicts()
     initialize_N_dict()
 
 def show1dict(d,dn):
@@ -354,192 +278,38 @@ def Gamma_plus_mults(d,p):
     """Counter giving frequencies of each pattern of signed root
     multiplicities for f in Gamma(d,1; p)
     """
-    if (p,d) in Gamma_plus_short_mult_dict:
-        return Gamma_plus_short_mult_dict[(p,d)]
+    if (p,d) in Gamma_plus_dict:
+        return Gamma_plus_dict[(p,d)]
     raise RuntimeError("No stored Gamma_plus multiplicities for degree {}, p={}".format(d,p))
 
 def Gamma_minus_mults(d,p):
     """Counter giving frequencies of each pattern of signed root
     multiplicities for f in Gamma(d,u; p)
     """
-    if (p,d) in Gamma_minus_short_mult_dict:
-        return Gamma_minus_short_mult_dict[(p,d)]
+    if (p,d) in Gamma_minus_dict:
+        return Gamma_minus_dict[(p,d)]
     raise RuntimeError("No stored Gamma_minus multiplicities for degree {}, p={}".format(d,p))
 
-def Gamma_plus(d,F=None):
-    """List of monics of degree d with no smooth points, with multiplicity
-    flag (set when retrieved from the precomputed restricted list,
-    else not set).
-    """
-    if F==None:
-       return [], False
-    if F in ZZ:
-        q = F
-    else:
-        q = F.cardinality()
-    if q>max_p_for_degree.get(d, Infinity):
-        return [], False
-    if (q,d) in Gamma_plus_short_dict:
-        return Gamma_plus_short_dict[(q,d)], True
-    if (q,d) in Gamma_plus_dict:
-        return Gamma_plus_dict[(q,d)], False
-    if F in ZZ:
-        F = GF(q)
-    print("Computing Gamma_plus({},{})".format(d,F))
-    if q==2:
-        from basics import monics
-        res = [[f,h] for f in monics(F,d,d%2)
-               for h in monics(F,(d+1)//2,(d+1)%2)
-               if no_smooth_points_mod2(f,h)]
-    else:
-        res = Gamma_new(d,F,+1)
-    Gamma_plus_dict[(q,d)] = res
-    #print("accessing Gamma(d,1) with p={}".format(d,q))
-    return res, False
+##########################################################################################
+#
+# code for computing Gamma_plus(n) and Gamma_minus(n) for p=2
+#
+def Gamma_plus_2(d):
+    from basics import monics
+    res = [[f,h] for f in monics(F,d,d%2)
+           for h in monics(F,(d+1)//2,(d+1)%2)
+           if no_smooth_points_mod2(f,h)]
+    return res
 
-def Gamma_default(d,F,plusorminus):
-    if plusorminus==+1:
-       return Gamma_plus_default(d,F)
-    else:
-       return Gamma_minus_default(d,F)
-
-def Gamma_plus_default(d,F):
-    p = F.cardinality()
-    from basics import monics, monics0
-    m = monics if d%p==0 else monics0
-    res = [f for f in m(F,d) if no_smooth_points(f)]
-    if d%p==0:
-       return res
-    x = res[0].parent().gen()
-    return [f(x+b) for b in F for f in res]
-
-def Gamma_minus_default(d,F):
-    p = F.cardinality()
-    u = a_nonsquare(F)
-    from basics import monics, monics0
-    m = monics if d%p==0 else monics0
-    res = [f for f in m(F,d,u) if (not (u*f).is_square()) and no_smooth_points(f)]
-    if d%p==0:
-       return res
-    x = res[0].parent().gen()
-    return [f(x+b) for b in F for f in res]
-
-def Gamma_new(d,F,plusorminus):
-    if d<3: return []
-    if d<4 and F.cardinality()>3: return []
-    if d<5 and F.cardinality()>5: return []
-    if d<6 and F.cardinality()>11: return []
-    if d<7 and F.cardinality()>20: return []
-    if d%2==0:
-       return Gamma_new_even(d,F,plusorminus)
-    else:
-       return Gamma_new_odd(d,F,plusorminus)
-
-def Gamma_new_even(d,F,plusorminus):
-    p = F.cardinality()
-    if p<=d-3 or d<=3 or p.divides(d):
-       return Gamma_default(d,F,plusorminus)
-    x = polygen(F)
-    ff0 = prod([x-j for j in range(d-2)])
-    ff  = [f//f(k) for k,f in enumerate([ff0//(x-k) for k in range(d-2)])]
-    assert all([ff[i](j)==F(i==j) for i in range(d-2) for j in range(d-2)])
-    # list of 0 and non-squares:
-    ns = [i for i in F if i.is_zero() or not i.is_square()]
-    p2 = (p+1)//2
-    assert len(ns) == p2
-    rr = range(1,p2)
-    u = ns[1] # first non-square
-    s = ff0[d-3]
-    t = ff0[d-4]-s**2
-    if plusorminus==-1:
-       t*=u
-       u1=u
-       test = lambda f: no_smooth_points(f) and not (u*f).is_square()
-    else:
-       u1=1
-       test = lambda f: no_smooth_points(f)
-
-    def pols(k):
-        """Construct polys of degree d with top 3 coeffs 1,0,k and d-2 non-square values
-        """
-        #print("k={}".format(k))
-        temp = [(u1*x**2-s*u1*x+k-t)*ff0 + sum([w[j]*ff[j] for j in range(d-2)])
-           for w in xmrange_iter([ns for _ in range(d-2)])]
-        assert all([list(f)[-3:] == [k,0,u1] for f in temp])
-        temp = [f for f in temp if test(f)]
-        if k:
-           temp = [f(r*x)/r**d for r in rr for f in temp]
-        return temp
-
-    return [f(x+b) for f in sum([pols(k) for k in [0,1,u]],[]) for b in F]
-
-def Gamma_new_odd(d,F,plusorminus):
-    p = F.cardinality()
-    if p<d or d<=2 or p.divides(d):
-       return Gamma_plus_default(d,F)
-    x = polygen(F)
-    ff0 = prod([x-j for j in range(d-1)])
-    ff  = [f//f(k) for k,f in enumerate([ff0//(x-k) for k in range(d-1)])]
-    ff0 *= (x+sum(range(d-1)))
-    assert all([ff[i](j)==F(i==j) for i in range(d-1) for j in range(d-1)])
-    # list of 0 and non-squares:
-    ns = [i for i in F if i.is_zero() or not i.is_square()]
-    p2 = (p+1)//2
-    assert len(ns) == p2
-    u = ns[1] # first non-square
-    if plusorminus==-1:
-       u1=u
-       test = lambda f: no_smooth_points(f) and not (u*f).is_square()
-    else:
-       u1=1
-       test = lambda f: no_smooth_points(f)
-
-    # Construct polys of degree d with top 2 coeffs 0,k and d-1 non-square values
-    temp = [u1*ff0 + sum([w[j]*ff[j] for j in range(d-1)])
-           for w in xmrange_iter([ns for _ in range(d-1)])]
-    assert all([list(f)[-2:] == [0,u1] for f in temp])
-    temp = [f for f in temp if test(f)]
-
-    return [f(x+b) for f in temp for b in F]
-
-def Gamma_minus(d, F=None):
-    """List of f of degree d, with (fixed) non-square leading coefficient
-    u, with no smooth points but not of the form u*h^2, with
-    multiplicity flag (set when retrieved from the precomputed
-    restricted list, else not set).
-    """
-    if F==None:
-       return [], False
-    if F in ZZ:
-        q = F
-    else:
-        q = F.cardinality()
-    if q>max_p_for_degree.get(d, Infinity):
-        return [], False
-    if (q,d) in Gamma_minus_short_dict:
-        return Gamma_minus_short_dict[(q,d)], True
-    if (q,d) in Gamma_minus_dict:
-        return Gamma_minus_dict[(q,d)], False
-    if d%2:
-        res, fl = Gamma_plus(d,F)
-        Gamma_minus_dict[(q,d)] = res
-        return res, False
-    if F in ZZ:
-        F = GF(q)
-    print("Computing Gamma_minus({},{})".format(d,F))
-    if q==2:
-        from basics import monics
-        res = [[f,h] for f in monics(F,d,1)
-               for h in monics(F,d//2,1)
-            if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
-    else:
-        res = Gamma_new(d,F,-1)
-    Gamma_minus_dict[(q,d)] = res
-    #print("accessing Gamma(d,u) with p={}".format(d,q))
-    return res, False
+def Gamma_minus_2(d):
+    from basics import monics
+    res = [[f,h] for f in monics(F,d,1)
+           for h in monics(F,d//2,1)
+           if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
+    return res
 
 def show_Gamma(verbose=False):
-    for d,dname in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict], ["Gamma(n,1) multiplicities", "Gamma(n,u) multiplicities"]):
+    for d,dname in zip([Gamma_plus_dict, Gamma_minus_dict], ["Gamma(n,1) multiplicities", "Gamma(n,u) multiplicities"]):
         print("\n{} entries".format(dname))
         for k in sorted(d.keys()):
             if verbose:
@@ -552,9 +322,14 @@ def convert_key(k):
     return "[" + ",".join("{:+d}".format(m) for m in mults) + "]"
 
 def show_Gamma_mults(n, p, outfile=None):
+    """
+    Display Gamma(n; p) nicely in a format easily comparable
+    with C output.  Either shown on screen or sent to a filename if
+    given as 3rd arguement.
+    """
     if outfile:
         with open(outfile, 'w') as output:
-            for d,t in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],  ["1", "u"]):
+            for d,t in zip([Gamma_plus_dict, Gamma_minus_dict],  ["1", "u"]):
                 if t=="u" and n%2:
                     continue
                 dname = "Gamma({},{})".format(n,t)
@@ -566,7 +341,7 @@ def show_Gamma_mults(n, p, outfile=None):
                 for k in sorted(counts.keys(), key=lambda x:tuple(xi[0]*xi[1] for xi in x)):
                     output.write("{} {} {}\n".format(t, convert_key(k), counts[k]))
     else:
-        for d,t in zip([Gamma_plus_short_mult_dict, Gamma_minus_short_mult_dict],  ["1", "u"]):
+        for d,t in zip([Gamma_plus_dict, Gamma_minus_dict],  ["1", "u"]):
             if t=="u" and n%2:
                 continue
             dname = "Gamma({},{})".format(n,t)
@@ -580,6 +355,20 @@ def show_Gamma_mults(n, p, outfile=None):
 
 
 def read_Gamma_mults(n, p, filename=None, new_style=False):
+    """Read C output file for degree n, prime p, and return two counters
+    for Gamma_plus and Gamma_minus.  The C output file will not have
+    any "u" lines when n is odd, so then the second counter is empty.
+
+    When the newstyle flag is False (default), for "u" lines the
+    multiplicity lists are for polynomials with leading coefficient u
+    (quadratic non-residue), as is JC's C programs.  Otherwise they
+    are for monic polynomials, as in the new definition and TF's
+    output, and we switch signs for comparison.
+
+    Currently the later code assumes that Gamma_minus multiplicities
+    are old-style.
+
+    """
     from collections import Counter
     if not filename:
         filename = "m{}gamma{}_{}.out".format("" if n%p else "x", n, p)
@@ -647,7 +436,7 @@ def one_row_from_mults(p):
         print("No table row for p = {}".format(p))
         return
     d_list = [1, 2, 3, 4, 4, 5, 6, 6, 7, 8, 8]
-    G_list = [Gamma_plus_short_mult_dict if i in [0,1,2,4,5,7,8,10] else Gamma_minus_short_mult_dict for i in range(11)]
+    G_list = [Gamma_plus_dict if i in [0,1,2,4,5,7,8,10] else Gamma_minus_dict for i in range(11)]
     res = [sum(G[p,d].values()) for d,G in zip(d_list, G_list)]
     if res==table[p]:
         print("p={} OK".format(p))
@@ -1824,4 +1613,181 @@ def fill_restricted_gamma_dicts():
 #         else:
 #             print("(p,d)={}: {} elements".format(k,len(Delta_dict[k])))
 
+
+##########################################################################################
+#
+# old code for computing Gamma sets of polynomials for odd p, now obsolete
+#
+
+def Gamma_plus(d,F=None):
+    """List of monics of degree d with no smooth points, with multiplicity
+    flag (set when retrieved from the precomputed restricted list,
+    else not set).
+    """
+    if F==None:
+       return [], False
+    if F in ZZ:
+        q = F
+    else:
+        q = F.cardinality()
+    if q>max_p_for_degree.get(d, Infinity):
+        return [], False
+    if (q,d) in Gamma_plus_short_dict:
+        return Gamma_plus_short_dict[(q,d)], True
+    if (q,d) in Gamma_plus_dict:
+        return Gamma_plus_dict[(q,d)], False
+    if F in ZZ:
+        F = GF(q)
+    print("Computing Gamma_plus({},{})".format(d,F))
+    if q==2:
+        from basics import monics
+        res = [[f,h] for f in monics(F,d,d%2)
+               for h in monics(F,(d+1)//2,(d+1)%2)
+               if no_smooth_points_mod2(f,h)]
+    else:
+        res = Gamma_new(d,F,+1)
+    Gamma_plus_dict[(q,d)] = res
+    #print("accessing Gamma(d,1) with p={}".format(d,q))
+    return res, False
+
+def Gamma_default(d,F,plusorminus):
+    if plusorminus==+1:
+       return Gamma_plus_default(d,F)
+    else:
+       return Gamma_minus_default(d,F)
+
+def Gamma_plus_default(d,F):
+    p = F.cardinality()
+    from basics import monics, monics0
+    m = monics if d%p==0 else monics0
+    res = [f for f in m(F,d) if no_smooth_points(f)]
+    if d%p==0:
+       return res
+    x = res[0].parent().gen()
+    return [f(x+b) for b in F for f in res]
+
+def Gamma_minus_default(d,F):
+    p = F.cardinality()
+    u = a_nonsquare(F)
+    from basics import monics, monics0
+    m = monics if d%p==0 else monics0
+    res = [f for f in m(F,d,u) if (not (u*f).is_square()) and no_smooth_points(f)]
+    if d%p==0:
+       return res
+    x = res[0].parent().gen()
+    return [f(x+b) for b in F for f in res]
+
+def Gamma_new(d,F,plusorminus):
+    if d<3: return []
+    if d<4 and F.cardinality()>3: return []
+    if d<5 and F.cardinality()>5: return []
+    if d<6 and F.cardinality()>11: return []
+    if d<7 and F.cardinality()>20: return []
+    if d%2==0:
+       return Gamma_new_even(d,F,plusorminus)
+    else:
+       return Gamma_new_odd(d,F,plusorminus)
+
+def Gamma_new_even(d,F,plusorminus):
+    p = F.cardinality()
+    if p<=d-3 or d<=3 or p.divides(d):
+       return Gamma_default(d,F,plusorminus)
+    x = polygen(F)
+    ff0 = prod([x-j for j in range(d-2)])
+    ff  = [f//f(k) for k,f in enumerate([ff0//(x-k) for k in range(d-2)])]
+    assert all([ff[i](j)==F(i==j) for i in range(d-2) for j in range(d-2)])
+    # list of 0 and non-squares:
+    ns = [i for i in F if i.is_zero() or not i.is_square()]
+    p2 = (p+1)//2
+    assert len(ns) == p2
+    rr = range(1,p2)
+    u = ns[1] # first non-square
+    s = ff0[d-3]
+    t = ff0[d-4]-s**2
+    if plusorminus==-1:
+       t*=u
+       u1=u
+       test = lambda f: no_smooth_points(f) and not (u*f).is_square()
+    else:
+       u1=1
+       test = lambda f: no_smooth_points(f)
+
+    def pols(k):
+        """Construct polys of degree d with top 3 coeffs 1,0,k and d-2 non-square values
+        """
+        #print("k={}".format(k))
+        temp = [(u1*x**2-s*u1*x+k-t)*ff0 + sum([w[j]*ff[j] for j in range(d-2)])
+           for w in xmrange_iter([ns for _ in range(d-2)])]
+        assert all([list(f)[-3:] == [k,0,u1] for f in temp])
+        temp = [f for f in temp if test(f)]
+        if k:
+           temp = [f(r*x)/r**d for r in rr for f in temp]
+        return temp
+
+    return [f(x+b) for f in sum([pols(k) for k in [0,1,u]],[]) for b in F]
+
+def Gamma_new_odd(d,F,plusorminus):
+    p = F.cardinality()
+    if p<d or d<=2 or p.divides(d):
+       return Gamma_plus_default(d,F)
+    x = polygen(F)
+    ff0 = prod([x-j for j in range(d-1)])
+    ff  = [f//f(k) for k,f in enumerate([ff0//(x-k) for k in range(d-1)])]
+    ff0 *= (x+sum(range(d-1)))
+    assert all([ff[i](j)==F(i==j) for i in range(d-1) for j in range(d-1)])
+    # list of 0 and non-squares:
+    ns = [i for i in F if i.is_zero() or not i.is_square()]
+    p2 = (p+1)//2
+    assert len(ns) == p2
+    u = ns[1] # first non-square
+    if plusorminus==-1:
+       u1=u
+       test = lambda f: no_smooth_points(f) and not (u*f).is_square()
+    else:
+       u1=1
+       test = lambda f: no_smooth_points(f)
+
+    # Construct polys of degree d with top 2 coeffs 0,k and d-1 non-square values
+    temp = [u1*ff0 + sum([w[j]*ff[j] for j in range(d-1)])
+           for w in xmrange_iter([ns for _ in range(d-1)])]
+    assert all([list(f)[-2:] == [0,u1] for f in temp])
+    temp = [f for f in temp if test(f)]
+
+    return [f(x+b) for f in temp for b in F]
+
+def Gamma_minus(d, F=None):
+    """List of f of degree d, with (fixed) non-square leading coefficient
+    u, with no smooth points but not of the form u*h^2, with
+    multiplicity flag (set when retrieved from the precomputed
+    restricted list, else not set).
+    """
+    if F==None:
+       return [], False
+    if F in ZZ:
+        q = F
+    else:
+        q = F.cardinality()
+    if q>max_p_for_degree.get(d, Infinity):
+        return [], False
+    if (q,d) in Gamma_minus_short_dict:
+        return Gamma_minus_short_dict[(q,d)], True
+    if (q,d) in Gamma_minus_dict:
+        return Gamma_minus_dict[(q,d)], False
+    if d%2:
+        res, fl = Gamma_plus(d,F)
+        Gamma_minus_dict[(q,d)] = res
+        return res, False
+    if F in ZZ:
+        F = GF(q)
+    print("Computing Gamma_minus({},{})".format(d,F))
+    if q==2:
+        from basics import monics
+        res = [[f,h] for f in monics(F,d,1)
+               for h in monics(F,d//2,1)
+            if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
+    else:
+        res = Gamma_new(d,F,-1)
+    Gamma_minus_dict[(q,d)] = res
+    #print("accessing Gamma(d,u) with p={}".format(d,q))
+    return res, False
 
