@@ -18,13 +18,13 @@ hdeg4: hhyper.cc
 	gcc $(CFLAGS) -DDEGREE=4 hhyper.cc -o hdeg4 -g -lm -lstdc++ -lpari
 
 xdeg6: xhyper.cc
-	gcc $(CFLAGS) -DDEGREE=6 xhyper.cc -o xdeg6 -g -lm -lstdc++ -lpari
+	gcc $(CFLAGS) -DDEGREE=6 xhyper.cc -o xdeg6 -g $(LFLAGS)
 
 xdeg8: xhyper.cc
-	gcc $(CFLAGS) -DDEGREE=8 xhyper.cc -o xdeg8 -g -lm -lstdc++ -lpari
+	gcc $(CFLAGS) -DDEGREE=8 xhyper.cc -o xdeg8 -g $(LFLAGS)
 
 xdeg10: xhyper.cc
-	gcc $(CFLAGS) -DDEGREE=10 xhyper.cc -o xdeg10 -g -lm -lstdc++ -lpari
+	gcc $(CFLAGS) -DDEGREE=10 xhyper.cc -o xdeg10 -g $(LFLAGS)
 
 negdef: negdef.cc
 	gcc $(CFLAGS) negdef.cc -o negdef -g -lm -lstdc++ -lpari
