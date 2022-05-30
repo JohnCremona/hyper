@@ -259,52 +259,39 @@ long disc4(long* ai) {return disc4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
 long is_quartic_neg_def(long* ai) {return is_quartic_neg_def(ai[0],ai[1],ai[2],ai[3],ai[4]);}
 
 // global variables
-GEN g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12;
-GEN f;
-GEN dummy = stoi(0);
+GEN gi[ncoeffs];
+GEN f, dummy = stoi(0);
+
+GEN make_gen_poly() // only for degrees 2, 4, 6, 8, 10, 12 here far,
+                    // since mkpoln has a varargs parameter so needs
+                    // all the coeffs individually.
+{
+#if DEGREE==2
+  return mkpoln(ncoeffs,gi[0],gi[1],gi[2]);
+#elif DEGREE==4
+  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4]);
+#elif DEGREE==6
+  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4],gi[5],gi[6]);
+#elif DEGREE==8
+  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4],gi[5],gi[6],gi[7],gi[8]);
+#elif DEGREE==10
+  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4],gi[5],gi[6],gi[7],gi[8],gi[9],gi[10]);
+#elif DEGREE==12
+  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4],gi[5],gi[6],gi[7],gi[8],gi[9],gi[10],gi[11],gi[12]);
+#endif
+}
 
 long pari_sturm(long *ai, int pos_only=0, int neg_only=0)
 // Return the number of real roots (default), number of positive real
 // roots (if pos_only==1) or number of negative real roots (if
 // neg_only==1)
 {
-  // Only for degrees 2, 4, 6, 8, 10 so far, since mkpoln needs all the coeffs individually.
-  long res;
   pari_sp av = avma;
-  g0 = stoi(ai[0]);
-  g1 = stoi(ai[1]);
-  g2 = stoi(ai[2]);
-#if DEGREE==2
-  f = mkpoln(ncoeffs,g0,g1,g2);
-#else
-  g3 = stoi(ai[3]);
-  g4 = stoi(ai[4]);
-#if DEGREE==4
-  f = mkpoln(ncoeffs,g0,g1,g2,g3,g4);
-#else
-  g5 = stoi(ai[5]);
-  g6 = stoi(ai[6]);
-#if DEGREE==6
-  f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6);
-#else
-  g7 = stoi(ai[7]);
-  g8 = stoi(ai[8]);
-#if DEGREE==8
-  f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6,g7,g8);
-#else
-  g9 = stoi(ai[9]);
-  g10 = stoi(ai[10]);
-#if DEGREE==10
-  f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10);
-#else
-  g11 = stoi(ai[11]);
-  g12 = stoi(ai[12]);
-  f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12);
-#endif
-#endif
-#endif
-#endif
-#endif
+  long res;  int i;
+
+  for (i=0; i<ncoeffs; i++)
+    gi[i] = stoi(ai[i]);
+  f = make_gen_poly();
   f = gdiv(f,ggcd(f,derivpol(f)));
 
   if (pos_only)
