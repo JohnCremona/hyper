@@ -54,14 +54,128 @@ void interleave(long* res, long* ai, long* bi)
     res[i] = (i%2? bi[i] : ai[i]);
 }
 
+// return f(x) where f has coefficients ai (ai[0]=lc(f), ai[deg]=f(0))
 long evaluate(long *ai, long x)
 {
   long res=ai[0];
   for (int i=1; i<ncoeffs; i++)
-    res = res*x+ai[i];
+    {
+      res *= x;
+      res += ai[i];
+    }
   return res;
 }
 
+long evaluate_at_0(long *ai)
+{
+  return ai[DEGREE];
+}
+
+long evaluate_at_1(long *ai)
+{
+  long res=ai[0];
+  for (int i=1; i<ncoeffs; i++)
+    res += ai[i];
+  return res;
+}
+
+long evaluate_at_minus1(long *ai)
+{
+  long res=ai[0];
+  for (int i=1; i<ncoeffs; i++)
+    res = ai[i] - res;
+  return res;
+}
+
+long evaluate_at_2(long *ai)
+{
+  long res=ai[0];
+  for (int i=1; i<ncoeffs; i++)
+    {
+      res <<= 1;
+      res += ai[i];
+    }
+  return res;
+}
+
+long evaluate_at_3(long *ai)
+{
+  long res=ai[0];
+  for (int i=1; i<ncoeffs; i++)
+    {
+      res *= 3;
+      res += ai[i];
+    }
+  return res;
+}
+
+long evaluate_at_4(long *ai)
+{
+  long res=ai[0];
+  for (int i=1; i<ncoeffs; i++)
+    {
+      res <<= 2;
+      res += ai[i];
+    }
+  return res;
+}
+
+long evaluate_at_minus2(long *ai)
+{
+  long res=ai[0];
+  for (int i=1; i<ncoeffs; i++)
+    {
+      res <<= 1;
+      res = ai[i] - res;
+    }
+  return res;
+}
+
+long evaluate_at_minus3(long *ai)
+{
+  long res=ai[0];
+  for (int i=1; i<ncoeffs; i++)
+    {
+      res *= 3;
+      res = ai[i] - res;
+    }
+  return res;
+}
+
+long evaluate_at_minus4(long *ai)
+{
+  long res=ai[0];
+  for (int i=1; i<ncoeffs; i++)
+    {
+      res <<= 2;
+      res = ai[i] - res;
+    }
+  return res;
+}
+
+long evaluate_at_half(long *ai)
+{
+  long res=ai[DEGREE];
+  for (int i=DEGREE; i>0; i--)
+    {
+      res <<= 1;
+      res += ai[i-1];
+    }
+  return res;
+}
+
+long evaluate_at_minushalf(long *ai)
+{
+  long res=ai[DEGREE];
+  for (int i=DEGREE; i>0; i--)
+    {
+      res <<= 1;
+      res = ai[i-1] - res;
+    }
+  return res;
+}
+
+// return f(x/y)*y^deg where f has coefficients ai (ai[0]=lc(f), ai[deg]=f(0))
 long evaluate2(long *ai, long x, long y)
 {
   long res=ai[0]*y + ai[1]*x;
@@ -314,13 +428,21 @@ int is_neg_def_uncached(long* ai, int pos_only, int neg_only, int simple_criteri
     if ((evens-odds)>=0) return 0;
 
   if(!neg_only)
-    if (evaluate(ai,2)>=0) return 0;
+    if (evaluate_at_2(ai)>=0) return 0;
   if(!pos_only)
-    if (evaluate(ai,-2)>=0) return 0;
+    if (evaluate_at_minus2(ai)>=0) return 0;
   if(!neg_only)
-    if (evaluate2(ai,2,1)>=0) return 0;
+    if (evaluate_at_half(ai)>=0) return 0;
   if(!pos_only)
-    if (evaluate2(ai,-2,1)>=0) return 0;
+    if (evaluate_at_minushalf(ai)>=0) return 0;
+  if(!neg_only)
+    if (evaluate_at_3(ai)>=0) return 0;
+  if(!pos_only)
+    if (evaluate_at_minus3(ai)>=0) return 0;
+  if(!neg_only)
+    if (evaluate_at_4(ai)>=0) return 0;
+  if(!pos_only)
+    if (evaluate_at_minus4(ai)>=0) return 0;
 
   if (simple_criterion_only) return 1;
 
@@ -352,8 +474,8 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
 #endif
   int i,j;
 
-  non = 0.0; // on return, holds (lower bound for) non neg def density
-  neg = 0.0; // on return, holds (lower bound for) neg def density
+  non = 0; // on return, holds (lower bound for) non neg def density
+  neg = 0; // on return, holds (lower bound for) neg def density
 
   long *co3 = new long[ncoeffs]; // used for temporary coeff lists
 
@@ -381,7 +503,7 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
 #ifdef DEBUG
       cout << "all negative definite" << endl;
 #endif
-      neg=1.0; delete[] co3; return;
+      neg=1; delete[] co3; return;
     }
 #ifdef DEBUG
   cout << "(b)"<<endl;
@@ -410,7 +532,7 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
 #ifdef DEBUG
       cout << "none negative definite (new condition)" << endl;
 #endif
-      non=1.0; return;
+      non=1; return;
     }
 #endif // TRAIN
 
@@ -434,7 +556,7 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
 #ifdef DEBUG
       cout << "none negative definite" << endl;
 #endif
-      non=1.0; delete[] co3; return;
+      non=1; delete[] co3; return;
     }
 #ifdef DEBUG
   cout << "(d)"<<endl;
@@ -669,27 +791,30 @@ void nonNDdensity_scaled(int maxdepth)
 }
 
 
-int main()
+int main (int argc, char *argv[])
 {
+  int maxdepth, simple=0, scaled=1;
+  if ( argc < 2 )
+    {
+      cout << argv[0] << " depth (or " <<argv[0]<< " depth 1 for unscaled version)" << endl;
+      return 0;
+    }
+  maxdepth = atoi(argv[1]);
+  if ( argc > 2 )
+    {
+      scaled = atoi(argv[2]);
+    }
   pari_init(100000000,2);
   std::cout.precision(10);
   cout << "Density of non-negative definite real polynomials of degree " << DEGREE << endl;
-  int maxdepth, simple=0;
-  //  cout << "Use full (0) or simplified (1) criterion? ";
-  //  cin >> simple;
-  cout << "Input depth of recursion: ";
-  cin >> maxdepth;
-  int scaled=1;
-  cout << "Use old (0) or new scaled (1) version? ";
-  cin >> scaled;
+  cout << " -- recursion depth " <<maxdepth << ", ";
+  cout << (scaled?"scaled":"unscaled") << " version" <<endl;
   if (scaled)
     {
-      cout << "\nScaled version, depth = " << maxdepth << endl;
       nonNDdensity_scaled(maxdepth);
     }
   else
     {
-      cout << "\nUnscaled version, depth = " << maxdepth << endl;
       nonNDdensity2(maxdepth, simple);
     }
 }
