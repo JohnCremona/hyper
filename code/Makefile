@@ -1,4 +1,5 @@
-ECLIB_BASE=$(HOME)/eclib
+#ECLIB_BASE=$(HOME)/eclib
+ECLIB_BASE=/usr/local
 INCDIR = $(ECLIB_BASE)/include
 LIBDIR = $(ECLIB_BASE)/lib
 
