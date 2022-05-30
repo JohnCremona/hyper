@@ -29,6 +29,24 @@ const bigrational four(4);
 //#define DEGREE 2
 #endif
 #define ncoeffs (1+DEGREE)
+long powerof2[ncoeffs];
+long powerof3[ncoeffs];
+long powerof4[ncoeffs];
+
+void print_coeffs(long *ai)
+{
+  for (int i=0; i<ncoeffs; i++)
+    {
+      if(i) cout<<" ";
+      cout<<ai[i];
+    }
+}
+
+void show_box(long *ai, long *bi)
+{
+  cout << "ai: "; print_coeffs(ai); cout << endl;
+  cout << "bi: "; print_coeffs(bi); cout << endl;
+}
 
 void fill_all(long* ai, long c)
 {
@@ -81,96 +99,92 @@ long evaluate_at_1(long *ai)
 
 long evaluate_at_minus1(long *ai)
 {
-  long res=ai[0];
-  for (int i=1; i<ncoeffs; i++)
+  long res; int i;
+  for (i=1, res=ai[0]; i<ncoeffs; i++)
     res = ai[i] - res;
   return res;
 }
 
 long evaluate_at_2(long *ai)
 {
-  long res=ai[0];
-  for (int i=1; i<ncoeffs; i++)
-    {
-      res <<= 1;
-      res += ai[i];
-    }
+  long res; int i;
+  for (i=0, res=0; i<ncoeffs; i++)
+    res += ai[DEGREE-i] * powerof2[i];
   return res;
 }
 
 long evaluate_at_3(long *ai)
 {
-  long res=ai[0];
-  for (int i=1; i<ncoeffs; i++)
-    {
-      res *= 3;
-      res += ai[i];
-    }
+  long res; int i;
+  for (i=0, res=0; i<ncoeffs; i++)
+    res += ai[DEGREE-i] * powerof3[i];
   return res;
 }
 
 long evaluate_at_4(long *ai)
 {
-  long res=ai[0];
-  for (int i=1; i<ncoeffs; i++)
-    {
-      res <<= 2;
-      res += ai[i];
-    }
+  long res; int i;
+  for (i=0, res=0; i<ncoeffs; i++)
+    res += ai[DEGREE-i] * powerof4[i];
   return res;
 }
 
 long evaluate_at_minus2(long *ai)
 {
-  long res=ai[0];
-  for (int i=1; i<ncoeffs; i++)
+  long res; int i;
+  for (i=0, res=0; i<ncoeffs; i++)
     {
-      res <<= 1;
-      res = ai[i] - res;
+      if (i%2)
+        res -= ai[DEGREE-i] * powerof2[i];
+      else
+        res += ai[DEGREE-i] * powerof2[i];
     }
   return res;
 }
 
 long evaluate_at_minus3(long *ai)
 {
-  long res=ai[0];
-  for (int i=1; i<ncoeffs; i++)
+  long res; int i;
+  for (i=0, res=0; i<ncoeffs; i++)
     {
-      res *= 3;
-      res = ai[i] - res;
+      if (i%2)
+        res -= ai[DEGREE-i] * powerof3[i];
+      else
+        res += ai[DEGREE-i] * powerof3[i];
     }
   return res;
 }
 
 long evaluate_at_minus4(long *ai)
 {
-  long res=ai[0];
-  for (int i=1; i<ncoeffs; i++)
+  long res; int i;
+  for (i=0, res=0; i<ncoeffs; i++)
     {
-      res <<= 2;
-      res = ai[i] - res;
+      if (i%2)
+        res -= ai[DEGREE-i] * powerof4[i];
+      else
+        res += ai[DEGREE-i] * powerof4[i];
     }
   return res;
 }
 
 long evaluate_at_half(long *ai)
 {
-  long res=ai[DEGREE];
-  for (int i=DEGREE; i>0; i--)
-    {
-      res <<= 1;
-      res += ai[i-1];
-    }
+  long res; int i;
+  for (i=0, res=0; i<ncoeffs; i++)
+    res += ai[i] * powerof2[i];
   return res;
 }
 
 long evaluate_at_minushalf(long *ai)
 {
-  long res=ai[DEGREE];
-  for (int i=DEGREE; i>0; i--)
+  long res; int i;
+  for (i=0, res=0; i<ncoeffs; i++)
     {
-      res <<= 1;
-      res = ai[i-1] - res;
+      if (i%2)
+        res -= ai[i] * powerof2[i];
+      else
+        res += ai[i] * powerof2[i];
     }
   return res;
 }
@@ -178,8 +192,8 @@ long evaluate_at_minushalf(long *ai)
 // return f(x/y)*y^deg where f has coefficients ai (ai[0]=lc(f), ai[deg]=f(0))
 long evaluate2(long *ai, long x, long y)
 {
-  long res=ai[0]*y + ai[1]*x;
-  for (int i=2; i<ncoeffs; i++)
+  long res=ai[0]*y + ai[1]*x; int i;
+  for (i=2; i<ncoeffs; i++)
     res = res*y+ai[i]*pow(x,i);
   return res;
 }
@@ -243,21 +257,6 @@ long h4(long* ai) {return h4(ai[0],ai[1],ai[2]);}
 long q4(long* ai) {return q4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
 long disc4(long* ai) {return disc4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
 long is_quartic_neg_def(long* ai) {return is_quartic_neg_def(ai[0],ai[1],ai[2],ai[3],ai[4]);}
-
-void print_coeffs(long *ai)
-{
-  for (int i=0; i<ncoeffs; i++)
-    {
-      if(i) cout<<" ";
-      cout<<ai[i];
-    }
-}
-
-void show_box(long *ai, long *bi)
-{
-  cout << "ai: "; print_coeffs(ai); cout << endl;
-  cout << "bi: "; print_coeffs(bi); cout << endl;
-}
 
 // global variables
 GEN g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12;
@@ -461,10 +460,10 @@ int is_neg_def(long* ai, int pos_only, int neg_only, int simple_criterion_only)
 #endif
 }
 
-void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, int simple=0)
+void QND(int maxdepth, int depth, long *co1, long *co2, long& non, long& neg, int simple=0)
 // co1, co2 hold the coefficients of two polynomials at extreme
 // corners, with co1[i]<co2[i] for all i.  Recurse (with depth
-// incremented) unless depth>=0.  non is the fraction of this box
+// incremented) unless depth>=maxdepth.  non is the fraction of this box
 // proved not negative definite, neg is the fraction proved negative
 // definite.
 {
@@ -474,8 +473,8 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
 #endif
   int i,j;
 
-  non = 0; // on return, holds (lower bound for) non neg def density
-  neg = 0; // on return, holds (lower bound for) neg def density
+  non = 0; // on return, holds (lower bound for) non neg def density (*2^depth) in this box
+  neg = 0; // on return, holds (lower bound for) neg def density (*2^depth) in this box
 
   long *co3 = new long[ncoeffs]; // used for temporary coeff lists
 
@@ -503,7 +502,7 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
 #ifdef DEBUG
       cout << "all negative definite" << endl;
 #endif
-      neg=1; delete[] co3; return;
+      neg=1<<(maxdepth-depth); delete[] co3; return;
     }
 #ifdef DEBUG
   cout << "(b)"<<endl;
@@ -532,7 +531,7 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
 #ifdef DEBUG
       cout << "none negative definite (new condition)" << endl;
 #endif
-      non=1; return;
+      non=1<<(maxdepth-depth); return;
     }
 #endif // TRAIN
 
@@ -556,7 +555,7 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
 #ifdef DEBUG
       cout << "none negative definite" << endl;
 #endif
-      non=1; delete[] co3; return;
+      non=1<<(maxdepth-depth); delete[] co3; return;
     }
 #ifdef DEBUG
   cout << "(d)"<<endl;
@@ -567,7 +566,7 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
   // recursion depth has been reached, its volume will be lost to the
   // error term, as both non and neg are 0.
 
-  if (depth>=0)
+  if (depth>=maxdepth)
     {
 #ifdef DEBUG
       cout << "reached max depth" << endl;
@@ -655,8 +654,8 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
   // first sub-box: co3 is the same as co2 except for the j'th entry which is the mean
   assign(co3, sco2);
   co3[j] = f;
-  bigrational non1, neg1;
-  QND(depth+1, sco1, co3, non1, neg1, simple);
+  long non1, neg1;
+  QND(maxdepth, depth+1, sco1, co3, non1, neg1, simple);
 #ifdef DEBUG
   long vol = volume(sco1,sco2);
   long vol1 = volume(sco1,co3);
@@ -671,8 +670,8 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
   // second sub-box: co3 is the same as co1 except for the j'th entry which is the mean
   assign(co3, sco1);
   co3[j] = f;
-  bigrational non2, neg2;
-  QND(depth+1, co3, sco2, non2, neg2, simple);
+  long non2, neg2;
+  QND(maxdepth, depth+1, co3, sco2, non2, neg2, simple);
 #ifdef DEBUG
   long vol2 = volume(co3,sco2);
   if (2*vol2!=vol)
@@ -684,8 +683,8 @@ void QND(int depth, long *co1, long *co2, bigrational& non, bigrational& neg, in
   if (vol2!=vol1) cout<<"!!! (4)"<<endl;
 #endif
 
-  non = (non1+non2)/two; // average over two equal subvolumes
-  neg = (neg1+neg2)/two; // average over two equal subvolumes
+  non = non1+non2; // sum of two subvolumes
+  neg = neg1+neg2; // sum of two subvolumes
 
   delete[] co3;
   delete[] sco1;
@@ -700,17 +699,20 @@ void nonNDdensity2(int maxdepth, int simple=0)
   ai[1] = 0;               // switch x and -x; this symmetry halves the relevant box
   bi[0] = bi[DEGREE] = 0;  // 3/4 of the half-box is certainly not ND
                            // since first or last coefficient is >=0
-  bigrational non, neg;
-  // non holds proved non neg def volume proportion
-  // neg holds proved neg def volume proportion
+  long non, neg;
+  // non holds proved non neg def volume proportion * 2^maxdepth
+  // neg holds proved neg def volume proportion * 2^maxdepth
   // depth starts negative, each recursion incrememnts it or stops when 0
-  QND(-maxdepth, ai, bi, non, neg, simple);
+  QND(maxdepth, 0, ai, bi, non, neg, simple);
   delete [] ai, bi;
   if (!simple)
     {
       cout << "\nAfter recursion in the quarter box, non = " << non << ", neg = " << neg << endl;
     }
-  bigrational nonND = (three+non)/four, ND = neg/four;
+  bigrational nonND(non),  ND(neg), scale(4<<maxdepth);
+  nonND = nonND/scale;
+  ND    =    ND/scale;
+  nonND += three/four;
   if (!simple)
     {
       cout << ND << " <= (neg.def.density) <= " << one-nonND << endl;
@@ -747,7 +749,8 @@ void nonNDdensity_scaled(int maxdepth)
 
   bigrational nonND = bigrational(6*(DEGREE+1));
   bigrational ND    = bigrational(0);
-  bigrational non, neg, fac;
+  bigrational scale(1<<(maxdepth));
+  long non, neg, fac;
   int i, r;
 
   for(i=0; i<DEGREE; i++)
@@ -767,12 +770,12 @@ void nonNDdensity_scaled(int maxdepth)
         }
 
       // depth starts negative, each recursion increments it or stops when 0
-      QND(-maxdepth, ai, bi, non, neg, 0);
+      QND(maxdepth, 0, ai, bi, non, neg, 0);
       fac = 2;
       if (i<2) fac = 4;
       if (i>(DEGREE-3)) fac = 1;
-      nonND   += fac*non;
-      ND      += fac*neg;
+      nonND   += bigrational(fac*non) / scale;
+      ND      += bigrational(fac*neg) / scale;
     }
 
   nonND = nonND / bigrational(8*(DEGREE+1));
@@ -793,7 +796,7 @@ void nonNDdensity_scaled(int maxdepth)
 
 int main (int argc, char *argv[])
 {
-  int maxdepth, simple=0, scaled=1;
+  int i, maxdepth, simple=0, scaled=1;
   if ( argc < 2 )
     {
       cout << argv[0] << " depth (or " <<argv[0]<< " depth 1 for unscaled version)" << endl;
@@ -806,6 +809,13 @@ int main (int argc, char *argv[])
     }
   pari_init(100000000,2);
   std::cout.precision(10);
+  powerof2[0] = powerof3[0] = powerof4[0] = 1;
+  for (int i=0; i<ncoeffs-1; i++)
+    {
+      powerof2[i+1] = 2*powerof2[i];
+      powerof3[i+1] = 3*powerof3[i];
+      powerof4[i+1] = 4*powerof4[i];
+    }
   cout << "Density of non-negative definite real polynomials of degree " << DEGREE << endl;
   cout << " -- recursion depth " <<maxdepth << ", ";
   cout << (scaled?"scaled":"unscaled") << " version" <<endl;
