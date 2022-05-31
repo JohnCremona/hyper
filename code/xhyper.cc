@@ -266,7 +266,7 @@ long pari_sturm(long *ai, int pos_only=0, int neg_only=0)
 // neg_only==1)
 {
   long res;
-#pragma omp critical(pari)
+  //#pragma omp critical(pari)
 {
   pari_sp av = avma;
   GEN g0 = stoi(ai[0]);
@@ -752,8 +752,13 @@ void nonNDdensity_scaled(int maxdepth)
   bigrational nonND = bigrational(6*(DEGREE+1));
   bigrational ND    = bigrational(0);
   // the parallel block replaces a loop (i=0; i<DEGREE; i++)
+  struct pari_thread pth[DEGREE];
+  for (int i = 1; i < DEGREE; i++) pari_thread_alloc(&pth[i],8000000,NULL);
 #pragma omp parallel num_threads(DEGREE)
     {
+      int i = omp_get_thread_num();
+      if (i) (void)pari_thread_start(&pth[i]);
+      printf("Starting thread %d\n", i);
       long non, neg, fac;
       long ai[ncoeffs];
       long bi[ncoeffs];
@@ -761,7 +766,6 @@ void nonNDdensity_scaled(int maxdepth)
       bi[DEGREE]=0;
       bi[0]=0;
       bi[1]=0;
-      int i = omp_get_thread_num();
 
       if(i<2)
 	{
@@ -782,10 +786,12 @@ void nonNDdensity_scaled(int maxdepth)
         nonND   += bigrational(fac*non) / scale;
         ND      += bigrational(fac*neg) / scale;
       }
-    }
+      printf("Stopping thread %d\n", i);
+      if (i) pari_thread_close();
+    } // end of parallel block
 
-  nonND = nonND / bigrational(8*(DEGREE+1));
-  ND    = ND / bigrational(8*(DEGREE+1));
+    nonND = nonND / bigrational(8*(DEGREE+1));
+    ND    = ND / bigrational(8*(DEGREE+1));
 
   cout<<"Total after scaling: neg def = "<<ND<<", non = "<<nonND<<endl;
 
