@@ -1,5 +1,7 @@
 //Version using integers only, no doubles, and libpari
 
+#include <time.h>
+#include <omp.h>
 #include <math.h>
 #include <iostream>
 #include <map>
@@ -258,40 +260,49 @@ long q4(long* ai) {return q4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
 long disc4(long* ai) {return disc4(ai[0],ai[1],ai[2],ai[3],ai[4]);}
 long is_quartic_neg_def(long* ai) {return is_quartic_neg_def(ai[0],ai[1],ai[2],ai[3],ai[4]);}
 
-// global variables
-GEN gi[ncoeffs];
-GEN f, dummy = stoi(0);
-
-GEN make_gen_poly() // only for degrees 2, 4, 6, 8, 10, 12 here far,
-                    // since mkpoln has a varargs parameter so needs
-                    // all the coeffs individually.
-{
-#if DEGREE==2
-  return mkpoln(ncoeffs,gi[0],gi[1],gi[2]);
-#elif DEGREE==4
-  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4]);
-#elif DEGREE==6
-  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4],gi[5],gi[6]);
-#elif DEGREE==8
-  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4],gi[5],gi[6],gi[7],gi[8]);
-#elif DEGREE==10
-  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4],gi[5],gi[6],gi[7],gi[8],gi[9],gi[10]);
-#elif DEGREE==12
-  return mkpoln(ncoeffs,gi[0],gi[1],gi[2],gi[3],gi[4],gi[5],gi[6],gi[7],gi[8],gi[9],gi[10],gi[11],gi[12]);
-#endif
-}
-
 long pari_sturm(long *ai, int pos_only=0, int neg_only=0)
 // Return the number of real roots (default), number of positive real
 // roots (if pos_only==1) or number of negative real roots (if
 // neg_only==1)
 {
+  long res;
+  //#pragma omp critical(pari)
+{
   pari_sp av = avma;
-  long res;  int i;
-
-  for (i=0; i<ncoeffs; i++)
-    gi[i] = stoi(ai[i]);
-  f = make_gen_poly();
+  GEN g0 = stoi(ai[0]);
+  GEN g1 = stoi(ai[1]);
+  GEN g2 = stoi(ai[2]);
+#if DEGREE==2
+  GEN f = mkpoln(ncoeffs,g0,g1,g2);
+#else
+  GEN g3 = stoi(ai[3]);
+  GEN g4 = stoi(ai[4]);
+#if DEGREE==4
+  GEN f = mkpoln(ncoeffs,g0,g1,g2,g3,g4);
+#else
+  GEN g5 = stoi(ai[5]);
+  GEN g6 = stoi(ai[6]);
+#if DEGREE==6
+  GEN f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6);
+#else
+  GEN g7 = stoi(ai[7]);
+  GEN g8 = stoi(ai[8]);
+#if DEGREE==8
+  GEN f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6,g7,g8);
+#else
+  GEN g9 = stoi(ai[9]);
+  GEN g10 = stoi(ai[10]);
+#if DEGREE==10
+  GEN f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10);
+#else
+  GEN g11 = stoi(ai[11]);
+  GEN g12 = stoi(ai[12]);
+  GEN f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12);
+#endif
+#endif
+#endif
+#endif
+#endif
   f = gdiv(f,ggcd(f,derivpol(f)));
 
   if (pos_only)
@@ -303,8 +314,9 @@ long pari_sturm(long *ai, int pos_only=0, int neg_only=0)
       else
         res = sturm(f);                  // #roots
     }
-  gerepileupto(av, dummy);
-  return res;
+  gerepileupto(av, stoi(0));
+ }
+ return res;
 }
 
 // global caches for results of the is_neg_def() function:
@@ -434,7 +446,11 @@ int is_neg_def_uncached(long* ai, int pos_only, int neg_only, int simple_criteri
 
   // now the leading coeff is negative so f(x) is neg def if it has no real roots:
 
-  return pari_sturm(ai, pos_only, neg_only)==0;
+  int ans;
+  {
+    ans = (pari_sturm(ai, pos_only, neg_only)==0);
+  }
+  return ans;
 }
 #endif
 
@@ -729,44 +745,53 @@ void nonNDdensity2(int maxdepth, int simple=0)
 
 void nonNDdensity_scaled(int maxdepth)
 {
-  long *ai = new long[ncoeffs];
-  long *bi = new long[ncoeffs];
 
   // Compute 4D volumes
 
+  bigrational scale(1<<(maxdepth));
   bigrational nonND = bigrational(6*(DEGREE+1));
   bigrational ND    = bigrational(0);
-  bigrational scale(1<<(maxdepth));
-  long non, neg, fac;
-  int i, r;
-
-  for(i=0; i<DEGREE; i++)
+  // the parallel block replaces a loop (i=0; i<DEGREE; i++)
+  struct pari_thread pth[DEGREE];
+  for (int i = 1; i < DEGREE; i++) pari_thread_alloc(&pth[i],8000000,NULL);
+#pragma omp parallel num_threads(DEGREE)
     {
+      int i = omp_get_thread_num();
+      if (i) (void)pari_thread_start(&pth[i]);
+      printf("Starting thread %d\n", i);
+      long non, neg, fac;
+      long ai[ncoeffs];
+      long bi[ncoeffs];
       fill_all(ai,-1); fill_all(bi,+1);
       bi[DEGREE]=0;
       bi[0]=0;
       bi[1]=0;
+
       if(i<2)
 	{
 	  ai[i]=bi[i]=-1;
 	}
       else
         {
-          r = 1+(i>>1);
+          int r = 1+(i>>1);
           ai[r]=bi[r]=(i&1?-1:+1);
         }
 
-      // depth starts negative, each recursion increments it or stops when 0
       QND(maxdepth, 0, ai, bi, non, neg, 0);
       fac = 2;
       if (i<2) fac = 4;
       if (i>(DEGREE-3)) fac = 1;
-      nonND   += bigrational(fac*non) / scale;
-      ND      += bigrational(fac*neg) / scale;
-    }
+#pragma omp critical(min)
+      {
+        nonND   += bigrational(fac*non) / scale;
+        ND      += bigrational(fac*neg) / scale;
+      }
+      printf("Stopping thread %d\n", i);
+      if (i) pari_thread_close();
+    } // end of parallel block
 
-  nonND = nonND / bigrational(8*(DEGREE+1));
-  ND    = ND / bigrational(8*(DEGREE+1));
+    nonND = nonND / bigrational(8*(DEGREE+1));
+    ND    = ND / bigrational(8*(DEGREE+1));
 
   cout<<"Total after scaling: neg def = "<<ND<<", non = "<<nonND<<endl;
 
@@ -777,13 +802,13 @@ void nonNDdensity_scaled(int maxdepth)
   bigrational err = (one-nonND-ND)/two;
   cout << "middle value for non-neg def density = " << mid << " = " << bigfloat(mid) << endl;
   cout << "error bound for non-neg def density  = " << err << " = " << bigfloat(err) << endl;
-  delete [] ai, bi;
 }
 
 
 int main (int argc, char *argv[])
 {
   int i, maxdepth, simple=0, scaled=1;
+  double start;
   if ( argc < 2 )
     {
       cout << argv[0] << " depth (or " <<argv[0]<< " depth 1 for unscaled version)" << endl;
@@ -794,6 +819,9 @@ int main (int argc, char *argv[])
     {
       scaled = atoi(argv[2]);
     }
+
+  start = omp_get_wtime();
+
   pari_init(100000000,2);
   std::cout.precision(10);
   powerof2[0] = powerof3[0] = powerof4[0] = 1;
@@ -814,4 +842,5 @@ int main (int argc, char *argv[])
     {
       nonNDdensity2(maxdepth, simple);
     }
+  printf ("Elapsed time %.3fs\n", omp_get_wtime()-start);
 }
