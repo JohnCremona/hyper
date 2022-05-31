@@ -3,7 +3,7 @@ ECLIB_BASE=/usr/local
 INCDIR = $(ECLIB_BASE)/include
 LIBDIR = $(ECLIB_BASE)/lib
 
-CFLAGS = -std=gnu++11 -O4 -I$(INCDIR)
+CFLAGS = -std=gnu++11 -O4 -g -I$(INCDIR)
 LFLAGS =  -lm -lstdc++ -lpari -lec -lntl -L$(LIBDIR) -Wl,-rpath -Wl,$(LIBDIR)
 
 sextic: sextic.cc
@@ -12,20 +12,20 @@ sextic: sextic.cc
 sextic2: sextic2.cc
 	gcc $(CFLAGS) sextic2.cc -o sextic2 -g -lm -lstdc++ -lpari
 
-xdeg4: xhyper.cc
-	gcc $(CFLAGS) xhyper.cc -o xdeg4 -g $(LFLAGS)
-
 hdeg4: hhyper.cc
 	gcc $(CFLAGS) -DDEGREE=4 hhyper.cc -o hdeg4 -g -lm -lstdc++ -lpari
 
+xdeg4: xhyper.cc
+	gcc $(CFLAGS) xhyper.cc -funroll-loops -fopenmp $(LFLAGS) -o xdeg4
+
 xdeg6: xhyper.cc
-	gcc $(CFLAGS) -DDEGREE=6 xhyper.cc -o xdeg6 -g $(LFLAGS)
+	gcc $(CFLAGS) -DDEGREE=6 xhyper.cc -funroll-loops -fopenmp $(LFLAGS) -o xdeg6
 
 xdeg8: xhyper.cc
-	gcc $(CFLAGS) -DDEGREE=8 xhyper.cc -o xdeg8 -g $(LFLAGS)
+	gcc $(CFLAGS) -DDEGREE=8 xhyper.cc -funroll-loops -fopenmp $(LFLAGS) -o xdeg8
 
 xdeg10: xhyper.cc
-	gcc $(CFLAGS) -DDEGREE=10 xhyper.cc -o xdeg10 -g $(LFLAGS)
+	gcc $(CFLAGS) -DDEGREE=10 xhyper.cc -funroll-loops -fopenmp $(LFLAGS) -o xdeg10
 
 negdef: negdef.cc
 	gcc $(CFLAGS) negdef.cc -o negdef -g -lm -lstdc++ -lpari
