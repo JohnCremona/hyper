@@ -1,4 +1,4 @@
-from sage.all import (save, load, prod, polygen, xmrange_iter, moebius, primes, Infinity)
+from sage.all import (save, load, prod, polygen, xmrange_iter, moebius, primes, Infinity, sign, binomial)
 from sage.all import (QQ, ZZ, GF, PolynomialRing, ProjectiveSpace)
 
 from basics import (Qp, pp, affine)
@@ -44,67 +44,46 @@ def restore_Gammas(filename="Gamma"):
 
 # Initialize dicts to store the betas and alphas but do not reset on reload!
 # The beta and alpha values for subscripts 0,1,2 are known directly.
-try:
-    n = len(beta_0_dict)
-except NameError:
-    print("Initializing beta(i,p) for i=0,1,2 to 0,1,1/2")
-    beta_0_dict = {(0,pp):0, (1,pp):1, (2,pp):1/2}
-try:
-    n = len(beta_plus_dict)
-except NameError:
-    print("Initializing beta(i,1) for i=0,1,2 to 1,1,1/p with p={}".format(pp))
-    beta_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1/pp}
-try:
-    n = len(beta_minus_dict)
-except NameError:
-    print("Initializing beta(i,u) for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
-    beta_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
 
-def initialize_beta_dicts():
-    global beta_0_dict, beta_plus_dict, beta_minus_dict
-    print("Initializing beta(i,p) for i=0,1,2 to 0,1,1/2")
-    beta_0_dict =      {(0,pp):0, (1,pp):1, (2,pp):1/2}
-    print("Initializing beta(i,1) for i=0,1,2 to 1,1,1/p with p={}".format(pp))
-    beta_plus_dict =   {(0,pp):1, (1,pp):1, (2,pp):1/pp}
-    print("Initializing beta(i,u) for i=0,1,2 to 0,1,1/(p+1) with p={}".format(pp))
-    beta_minus_dict =  {(0,pp):0, (1,pp):1, (2,pp):1/(pp+1)}
+# alpha_dict has keys (n,eps,p) where n>=0, eps is in {"1", "u", "p"} and p is pp or a prime.
 
-try:
-    n = len(alpha_0_dict)
-except NameError:
-    print("Initializing alpha(i,p) for i=0,1,2 to 0,1,1/2")
-    alpha_0_dict = {(0,pp):0, (1,pp):1, (2,pp):1/2}
-try:
-    n = len(alpha_plus_dict)
-except NameError:
-    print("Initializing alpha(i,1) for i=0,1,2 to 1,1,1")
-    alpha_plus_dict = {(0,pp):1, (1,pp):1, (2,pp):1}
-try:
-    n = len(alpha_minus_dict)
-except NameError:
-    print("Initializing alpha(i,u) for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
-    alpha_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
+def initialize_alpha_dict():
+    global alpha_dict
+    print("Initializing alpha(i,eps,p) for i=0,1,2")
+    alpha_dict = {(0,"p",pp):0, (1,"p",pp):1, (2,"p",pp):1/2,
+                  (0,"1",pp):1, (1,"1",pp):1, (2,"1",pp):1,
+                  (0,"u",pp):0, (1,"u",pp):1, (2,"u",pp):pp/(pp+1)}
 
-def initialize_alpha_dicts():
-    global alpha_0_dict, alpha_plus_dict, alpha_minus_dict
-    print("Initializing alpha(i,p) for i=0,1,2 to 0,1,1/2")
-    alpha_0_dict =     {(0,pp):0, (1,pp):1, (2,pp):1/2}
-    print("Initializing alpha(i,1) for i=0,1,2 to 1,1,1")
-    alpha_plus_dict =  {(0,pp):1, (1,pp):1, (2,pp):1}
-    print("Initializing alpha(i,u) for i=0,1,2 to 0,1,p/(p+1) with p={}".format(pp))
-    alpha_minus_dict = {(0,pp):0, (1,pp):1, (2,pp):pp/(pp+1)}
+def initialize_beta_dict():
+    global beta_dict
+    print("Initializing beta(i,eps,p) for i=0,1,2")
+    beta_dict = {(0,"p",pp):0, (1,"p",pp):1, (2,"p",pp):1/2,
+                 (0,"1",pp):1, (1,"1",pp):1, (2,"1",pp):1/pp,
+                 (0,"u",pp):0, (1,"u",pp):1, (2,"u",pp):1/(pp+1)}
 
 def initialize_alpha_beta_dicts():
-    initialize_alpha_dicts()
-    initialize_beta_dicts()
+    initialize_alpha_dict()
+    initialize_beta_dict()
+
+try:
+    n = len(alpha_dict)
+except NameError:
+    initialize_alpha_dict()
+
+try:
+    n = len(beta_dict)
+except NameError:
+    initialize_beta_dict()
+
+################################# Set up dict for N_sigma  ##################################
+
+def initialize_N_dict():
+    global N_dict
+    N_dict = {}
 
 try:
     n = len(N_dict)
 except NameError:
-    N_dict = {}
-
-def initialize_N_dict():
-    global N_dict
     N_dict = {}
 
 def initialize_all_dicts():
@@ -112,37 +91,32 @@ def initialize_all_dicts():
     initialize_Gamma_dicts()
     initialize_N_dict()
 
+################################# Functions to display dicts  ##################################
+
 def show1dict(d,dn):
     print(dn+":")
     for k in sorted(d.keys()):
-        print("\t(i,p)={}: {}".format(k,d[k]))
+        print("\t(i,eps,p)={}: {}".format(k,d[k]))
 
 def show_beta_dicts():
-    show1dict(beta_0_dict, "beta(n,p)")
-    show1dict(beta_plus_dict, "beta(n,1)")
-    show1dict(beta_minus_dict, "beta(n,u)")
+    show1dict(beta_dict, "beta(n,eps,p)")
 
 def show_alpha_dicts():
-    show1dict(alpha_0_dict, "alpha(n,p)")
-    show1dict(alpha_plus_dict, "alpha(n,1)")
-    show1dict(alpha_minus_dict, "alpha(n,u)")
+    show1dict(alpha_dict, "alpha(n,eps,p)")
 
 def show_dicts():
     show_alpha_dicts()
     show_beta_dicts()
 
-def N(j, p=pp):
+################################# Functions for factorization patterns etc  #######################
+
+def N_monics(j, p=pp):
     """The number of degree j monic irreducibles in GF(p)[X].
     """
     global N_dict
     if not (j,p) in N_dict:
         N_dict[(j,p)] = sum([moebius(d)*p**(j//d) for d in ZZ(j).divisors()]) / j
     return N_dict[(j,p)]
-
-def Ndash(j, p=pp):
-    """The number of degree j homogeneous irreducibles in GF(p)[X,Y] up to scaling.
-    """
-    return p+1 if j==1 else N(j,p)
 
 def Phi(d, base=[1,1]):
     """List of factorization patterns in degree d.  Each is a list of
@@ -173,25 +147,25 @@ def m1(phi, j):
     """
     return len([de for de in phi if de[0]==j])
 
-def lambda_helper(phi, NN, p=pp):
-    """ Helper function for affine and projective factorization probabilities.
+
+def N_phi(phi, p=pp):
+    """For phi a factorization pattern, returns the number of monic
+    polynomials over F_p with factorizatino pattern phi: equation (6)
+    in the paper.
     """
     d = deg_fp(phi)
-    return prod([prod([NN(j,p)-i for i in
-                       range(m1(phi,j))])/prod([ZZ(m2(phi,[j,i])).factorial()
-                                                for i in range(1,d+1)]) for j in range(1,d+1)])
+    return prod([prod([N_monics(j,p)-i for i in range(m1(phi,j))]) /
+                 prod([ZZ(m2(phi,[j,i])).factorial() for i in range(1,d+1)])
+                 for j in range(1,d+1)])
 
 def lambda_A(phi, p=pp):
     """ The probability that a monic polynomial of degree deg(phi) has factorization pattern phi.
     """
-    d = deg_fp(phi)
-    return lambda_helper(phi, N, p) / p**d
+    return N_phi(phi, p) / deg_fp(phi)
 
-def lambda_P(phi, p=pp):
-    """ The probability that a homogeneous polynomial of degree deg(phi) has factorization pattern phi.
-    """
-    d = deg_fp(phi)
-    return lambda_helper(phi, Ndash, p) * (p-1)/ (p**(d+1)-1)
+
+##########################################################################################
+#
 
 def a_nonsquare(F):
     """ The first non-square element of F (an odd finite field).
@@ -201,7 +175,7 @@ def a_nonsquare(F):
            return u
     raise ValueError("Field {} has no non-squares!".format(F))
 
-def no_smooth_points(f): 
+def no_smooth_points(f):
     """Return True iff y^2=f(x) has no smooth
     (affine) points over the base (odd finite) field.
 
@@ -274,6 +248,56 @@ def nfactors_mod2(f,h,abs=False):
 def is_irred_mod2(f,h,abs=False):
     return nfactors_mod2(f,h,abs)==[1]
 
+def is_square_homog(f):
+    """ Test if f (homogeneous) is a square, by factoring.
+    """
+    if f.degree()%2 ==1:
+       return False
+    F = f.base_ring()
+    f_fac = f.factor()
+    return F(f_fac.unit()).is_square() and all([e%2==0 for g,e in f_fac])
+
+def no_smooth_points_homog(f):
+    """Return True iff z^2=f(x,y) has no smooth (projective) points over the base (odd finite) field.
+
+    N.B.  z^2=f(x,y) has no smooth F_p-points if for all (x:y) in
+     P^1(F_p) either f(x,y) is nonsquare or it is 0 and (x:y) is also
+     a root of both derivatives.  Note that x*fx+y*fy=d*f but we must
+     check that all 3 are zero to correctly handle (0:1), (1:0) and
+     the case p|d.
+    """
+    x,y = f.parent().gens()
+    fx = f.derivative(x)
+    fy = f.derivative(y)
+    P1 = ProjectiveSpace(f.base_ring(),1)
+    return all([(not f(x,y).is_square()) or (fx(x,y)==fy(x,y)==f(x,y)==0)
+     for x,y in P1])
+
+
+##########################################################################################
+#
+# code for computing Gamma_plus(n) and Gamma_minus(n) for p=2
+#
+def Gamma_plus_2(d):
+    from basics import monics
+    F = GF(2)
+    res = [[f,h] for f in monics(F,d,d%2)
+           for h in monics(F,(d+1)//2,(d+1)%2)
+           if no_smooth_points_mod2(f,h)]
+    return res
+
+def Gamma_minus_2(d):
+    from basics import monics
+    F = GF(2)
+    res = [[f,h] for f in monics(F,d,1)
+           for h in monics(F,d//2,1)
+           if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
+    return res
+
+##########################################################################################
+#
+# Look up Gamma multiplicities from dicts
+#
 def Gamma_plus_mults(d,p):
     """Counter giving frequencies of each pattern of signed root
     multiplicities for f in Gamma(d,1; p)
@@ -292,22 +316,8 @@ def Gamma_minus_mults(d,p):
 
 ##########################################################################################
 #
-# code for computing Gamma_plus(n) and Gamma_minus(n) for p=2
+# Display Gamma multiplicities from dicts
 #
-def Gamma_plus_2(d):
-    from basics import monics
-    res = [[f,h] for f in monics(F,d,d%2)
-           for h in monics(F,(d+1)//2,(d+1)%2)
-           if no_smooth_points_mod2(f,h)]
-    return res
-
-def Gamma_minus_2(d):
-    from basics import monics
-    res = [[f,h] for f in monics(F,d,1)
-           for h in monics(F,d//2,1)
-           if no_smooth_points_mod2(f,h) and is_irred_mod2(f,h,True)]
-    return res
-
 def show_Gamma(verbose=False):
     for d,dname in zip([Gamma_plus_dict, Gamma_minus_dict], ["Gamma(n,1) multiplicities", "Gamma(n,u) multiplicities"]):
         print("\n{} entries".format(dname))
@@ -353,7 +363,10 @@ def show_Gamma_mults(n, p, outfile=None):
             for k in sorted(counts.keys(), key=lambda x:tuple(xi[0]*xi[1] for xi in x)):
                 print("{} {} {}".format(t, convert_key(k), counts[k]))
 
-
+##########################################################################################
+#
+# Read Gamma multiplicities from C output, for storing in dicts
+#
 def read_Gamma_mults(n, p, filename=None, new_style=False):
     """Read C output file for degree n, prime p, and return two counters
     for Gamma_plus and Gamma_minus.  The C output file will not have
@@ -388,6 +401,10 @@ def read_Gamma_mults(n, p, filename=None, new_style=False):
             (c1 if t=="1" else cu)[code] = ZZ(mult)
     return c1, cu
 
+##########################################################################################
+#
+# Check Gamma multiplicities agree with paper (old version, obsolete)
+#
 def one_row(p):
     """ Function to check entries in Table in paper
     """
@@ -418,6 +435,10 @@ def one_row(p):
           print("p={} not OK, table is\n{} but we get\n{}".format(p,table[p],res))
     return res
 
+##########################################################################################
+#
+# Check Gamma multiplicities agree with paper (new version)
+#
 def one_row_from_mults(p):
     """ Function to check entries in Table in paper
     """
@@ -444,94 +465,132 @@ def one_row_from_mults(p):
         print("p={} not OK, table is\n{} but we get\n{}".format(p,table[p],res))
     return res
 
-def is_square_homog(f):
-    """ Test if f (homogeneous) is a square, by factoring.
+##########################################################################################
+#
+
+def T(r, eps, p=pp):
     """
-    if f.degree()%2 ==1:
-       return False
-    F = f.base_ring()
-    f_fac = f.factor()
-    return F(f_fac.unit()).is_square() and all([e%2==0 for g,e in f_fac])
-
-def no_smooth_points_homog(f):
-    """Return True iff z^2=f(x,y) has no smooth (projective) points over the base (odd finite) field.
-
-    N.B.  z^2=f(x,y) has no smooth F_p-points if for all (x:y) in
-     P^1(F_p) either f(x,y) is nonsquare or it is 0 and (x:y) is also
-     a root of both derivatives.  Note that x*fx+y*fy=d*f but we must
-     check that all 3 are zero to correctly handle (0:1), (1:0) and
-     the case p|d.
+    Helper function for R(n,eps,p)
     """
-    x,y = f.parent().gens()
-    fx = f.derivative(x)
-    fy = f.derivative(y)
-    P1 = ProjectiveSpace(f.base_ring(),1)
-    return all([(not f(x,y).is_square()) or (fx(x,y)==fy(x,y)==f(x,y)==0)
-     for x,y in P1])
-
-def beta_eps(eps):
-    """ Return the function beta(-,u), beta(-,p) or beta(-,1) according to eps=-1,0,+1.
-    """
-    try:
-        return [beta_minus,beta_0,beta_plus][eps+1]
-    except IndexError:
-        return beta
-
-def f_term(f,p=pp):
-    """Helper function for alpha(-,eps).  In the paper this is
-    expressed differently, as a double product over j up to the degree
-    and eps, with multiplicities.  Here we just take the product over
-    all roots.
-
-    Note that if there is a root of multiplicity 1 then beta(1,eps)=1
-    and the result is 0, but this will only be called with f which
-    have no such roots.
-
-    This works equally well in the projective case.
-    """
-    if p==pp: # will not be called in this case anyway
-        return 0
-    from basics import signed_roots
-    return prod((1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f))
-
-def sum_f_terms(flist, p=pp, mflag=False):
-    """
-    Sum of f_term(f,p) over f in flist
-    """
-    if p==pp: # will not be called in this case anyway
-        return 0
-    if mflag:
-        from basics import f_multiplicity
-        return sum(f_multiplicity(f)*f_term(f, p) for f in flist)
+    if r%2 and eps in ["1", "u"]:
+        return 2*sum(p**s * alpha(s, "p", p) for s in range(r))
     else:
-        return sum(f_term(f, p) for f in flist)
+        return sum(p**s * (alpha(s, "1", p) + alpha(s, "u", p)) for s in range(r))
 
-def sum_f_terms_from_mults(counts_dict, p=pp):
-    return sum(cnt*prod(1-beta_eps(eps)(j,p) for j,eps in mlt) for mlt, cnt in counts_dict.items())
+def R(n, eps, p=pp):
+    """
+    R(n,eps,p) = beta(n,eps,p) - p**-binomial(n,2) * alpha(n,eps,p)
+    """
+    return (p-1) * sum(p**(-binomial(r+1,2)) * T(r, eps, p) for r in range(1,n)) / 2
 
-def fh_term(f,h):
-    """Helper function for alpha(-,eps) in case p=2.  In the paper
-    this is expressed differently, as a double product over j up to
-    the degree and eps, with multiplicities.  Here we just take the
-    product over all roots.
+def sum_f_terms(n, eps, p=pp):
+    """
+    First helper function for S(), for eps=1,u.
 
-    Note that if there is a root of multiplicity 1 then beta(1,eps)=1
-    and the result is 0, but this will only be called with f which
-    have no such roots.
+    The reason for flipping + and - multiplicities when eps="u" is that
+    we stored multiplicities for old-style Gamma(n,u;p) containing
+    polys with leading coefficient u.
 
-    This works equally well in the projective case.
+    The other difference from old_sum_f_terms_from_mults is that we
+    omit multiplicity (n,-).
+    """
+    eps = eps_decode(eps) # convert to +1,-1
+    mults = Gamma_plus_mults(n,p)if eps == 1 else Gamma_minus_mults(n,p)
+    return sum(cnt*prod(1-beta(j, eps_encode(eps*eps1), p) for j,eps1 in mlt)
+               for mlt, cnt in mults.items() if mlt[0]!=n)
+
+def phi_term(phi, eps, p, v=None):
+    """Helper function for sum_phi_terms(), for eps = u, p.
+
+    For eps=u:  return N_phi * prod_{1^d in phi}(1-beta(2*d, u, p))
+
+    For eps=p:  return N_phi * prod_{1^d in phi}(1-beta(d, p, p))
 
     """
-    from basics import point_multiplicities
-    return prod([(1-beta_eps(eps)(j,2)) for P,(j,eps) in point_multiplicities(f,h)])
+    i = 2 if eps == "u" else 1
+    return N_phi(phi,p) * prod(1-beta(i*e,eps,p,v) for d,e in phi if d==1)
 
-def sum_fh_terms(fhlist):
+def sum_phi_terms(n, eps, p, v):
     """
-    Sum of fh_term(f,h) over (f,h) in fhlist
+    Second helper function for S(), for eps = u,p.
+    NB not required for eps=u, n odd.
     """
-    return sum(fh_term(f,h) for f,h in fhlist)
+    m = n/2 if eps == "u" else n
+    return sum(phi_term(phi, eps, p) for phi in Phi(m) if phi != [m,1])
 
-def phi_term(phi, double, p, v=None):
+
+def S(n, eps, p=pp):
+    """
+    For eps=1,u,p (n even) or just 1,p (n odd):
+
+    S(n,eps,p) = alpha(n,eps,p) - p**-(n-1) * beta(n,eps,p)
+    """
+    if n%2 and eps=="u":
+        return 0
+    r = p**(-(n-1))
+    ans = 1 - r
+    if eps in ["1", "u"]:
+        ans -= p*r*sum_f_terms(n, eps, p)
+    if eps in ["u", "p"]:
+        ans -= p*r*sum_phi_terms(n, eps, p)
+
+def make_alphas_and_betas(n, p=pp, verbose=False):
+    """Compute (and optionally display) all alpha(i,eps,p) and and beta(i,eps,p) for i<=p.
+    """
+    if n<3:
+        return
+    k = (n,"1",p)
+    if k in alpha_dict and k in beta_dict:
+        return
+    for i in range(3,n):
+        make_alphas_and_betas(i, p, verbose)
+    #
+    # Now the work begins
+    #
+    r = p**(-(n-1))
+    s = p**(-binomial(n,2))
+    rs = r*s
+    R_n_1 = R(n,"1",p)
+    R_n_p = R(n,"p",p)
+    S_n_1 = S(n,"1",p)
+    S_n_p = S(n,"p",p)
+    if n%2==0:
+        alpha_dict[(n,"1",p)] = (r*R_n_1 +   S_n_1)/(1-rs)
+    else:
+        alpha_dict[(n,"1",p)] = (rs*(r*R_n_p + S_n_p) + (r*R_n_1 + S_n_1))/(1-rs*rs)
+    beta_dict[(n,"p",p)]  = R_n_p + s*alpha_dict[(n,"1",p)]
+    alpha_dict[(n,"p",p)] = S_n_p + r*beta_dict[(n,"p",p)]
+    beta_dict[(n,"1",p)]  = R_n_1 + s*alpha_dict[(n,"p",p)]
+    beta_dict[(n,"u",p)]  = R(n,"u",p) + s*alpha_dict[(n,"1",p)]
+    if n%2==0:
+        alpha_dict[(n,"u",p)] = S(n,"u",p) + r*beta_dict[(n,"u",p)]
+    else:
+        alpha_dict[(n,"u",p)] = alpha_dict[(n,"1",p)]
+
+eps_encode = {-1: "u", 0: "p", +1: "1"}
+eps_decode = {"u": -1, "p": 0, "1": +1}
+
+def alpha(n, eps, p=pp):
+    try:
+        eps = eps_encode(eps)
+    except KeyError:
+        pass
+    k = (n, eps, p)
+    if k not in alpha_dict:
+        make_alphas_and_betas(n, p)
+    return alpha_dict[k]
+
+def beta(n, eps, p=pp):
+    try:
+        eps = eps_encode(eps)
+    except KeyError:
+        pass
+    k = (n, eps, p)
+    if k not in beta_dict:
+        make_alphas_and_betas(n, p)
+    return beta_dict[k]
+
+def old_phi_term(phi, double, p, v=None):
     """Helper function for alpha(-,p), alpha(-,u).
 
     alpha(-,u) has double=True which uses beta(2*e,u) for (1,e) in phi.
@@ -542,19 +601,30 @@ def phi_term(phi, double, p, v=None):
     be = (lambda i: beta_minus(2*i,p,v)) if double else (lambda i: beta_0(i,p,v))
     return lambda_A(phi,p) * prod(1-be(e) for d,e in phi if d==1)
 
-def sum_phi_terms(i, double, p, v):
+def sum_old_phi_terms(i, double, p, v):
     j = i//2 if double else i
-    return sum(phi_term(phi, double, p, v) for phi in Phi(j))
+    return sum(old_phi_term(phi, double, p, v) for phi in Phi(j))
 
-def alpha(i,p=pp,v=None):
+def old_alpha(i,p=pp,v=None):
     """ Average of alpha(i,1) and alpha(i,u)
     """
     return (alpha_plus(i,p,v)+alpha_minus(i,p,v))/2
 
-def beta(i,p=pp,v=None):
+def old_beta(i,p=pp,v=None):
     """ Average of beta(i,1) and beta(i,u)
     """
     return (beta_plus(i,p,v)+beta_minus(i,p,v))/2
+
+def beta_eps(eps):
+    """ Return the function beta(-,u), beta(-,p) or beta(-,1) according to eps=-1,0,+1.
+    """
+    try:
+        return [beta_minus,beta_0,beta_plus][eps+1]
+    except IndexError:
+        return beta
+
+def old_sum_f_terms_from_mults(counts_dict, p=pp):
+    return sum(cnt*prod(1-beta_eps(eps)(j,p) for j,eps in mlt) for mlt, cnt in counts_dict.items())
 
 def alpha_plus(i,p=pp,v=None, verbose=False):
     """alpha(i,1; p).
@@ -597,7 +667,7 @@ def alpha_plus(i,p=pp,v=None, verbose=False):
     if verbose: print("Computing alpha_plus({},{})".format(i,p))
     if p in ZZ:
         e = ((3*i+1)//2 if i%2 else 3*i//2) if p==2 else i
-        a = 1 - sum_f_terms_from_mults(Gamma_plus_mults(i,p), p)/p**e
+        a = 1 - old_sum_f_terms_from_mults(Gamma_plus_mults(i,p), p)/p**e
     else:
         a = 1
     try:
@@ -646,10 +716,10 @@ def alpha_minus(i,p=pp,v=None, verbose=False):
     # now i is even, use Prop 3.3(ii)
     if verbose: print("Computing alpha_minus({},{})".format(i,p))
     i2 = i//2
-    a = 1 - sum_phi_terms(i,True,p,v) / p**i2
+    a = 1 - sum_old_phi_terms(i,True,p,v) / p**i2
     if p in ZZ:
         e = 3*i2 if p==2 else i
-        a = a - sum_f_terms_from_mults(Gamma_minus_mults(i, p),p) / p**e
+        a = a - old_sum_f_terms_from_mults(Gamma_minus_mults(i, p),p) / p**e
     try:
         a = F(a)
         if verbose: print("setting alpha_minus({},{})".format(i,p))
@@ -695,7 +765,7 @@ def alpha_0(i,p=pp,v=None, verbose=False):
     # use Prop 3.3 (iii)
     if verbose:
         print("Computing alpha_0({},{})".format(i,p))
-    a = 1 - sum_phi_terms(i,False,p,v)
+    a = 1 - sum_old_phi_terms(i,False,p,v)
     try:
         a = F(a)
         if verbose:
@@ -1481,6 +1551,11 @@ def make_gammas_odd_iter(n,p, code="1"):
                 if f[i]:
                     yield lc*scale(f,u)
 
+Gamma_plus_mult_dict= {}
+Gamma_minus_mult_dict= {}
+Gamma_plus_short_mult_dict= {}
+Gamma_minus_short_mult_dict= {}
+
 def make_gammas(n,p, restricted=False, store=False):
     print("(n,p)=({},{})".format(n,p))
     gam_1, gam_u = make_gammas_odd(n,p, restricted) if n%2 else make_gammas_even(n,p, restricted)
@@ -1791,3 +1866,71 @@ def Gamma_minus(d, F=None):
     #print("accessing Gamma(d,u) with p={}".format(d,q))
     return res, False
 
+def old_f_term(f,p=pp):
+    """Helper function for alpha(-,eps).  In the paper this is
+    expressed differently, as a double product over j up to the degree
+    and eps, with multiplicities.  Here we just take the product over
+    all roots.
+
+    Note that if there is a root of multiplicity 1 then beta(1,eps)=1
+    and the result is 0, but this will only be called with f which
+    have no such roots.
+
+    This works equally well in the projective case.
+    """
+    if p==pp: # will not be called in this case anyway
+        return 0
+    from basics import signed_roots
+    return prod((1-beta_eps(eps)(j,p)) for a,j,eps in signed_roots(f))
+
+def old_sum_f_terms(flist, p=pp, mflag=False):
+    """
+    Sum of old_f_term(f,p) over f in flist
+    """
+    if p==pp: # will not be called in this case anyway
+        return 0
+    if mflag:
+        from basics import f_multiplicity
+        return sum(f_multiplicity(f)*old_f_term(f, p) for f in flist)
+    else:
+        return sum(old_f_term(f, p) for f in flist)
+
+def fh_term(f,h):
+    """Helper function for alpha(-,eps) in case p=2.  In the paper
+    this is expressed differently, as a double product over j up to
+    the degree and eps, with multiplicities.  Here we just take the
+    product over all roots.
+
+    Note that if there is a root of multiplicity 1 then beta(1,eps)=1
+    and the result is 0, but this will only be called with f which
+    have no such roots.
+
+    This works equally well in the projective case.
+
+    """
+    from basics import point_multiplicities
+    return prod([(1-beta_eps(eps)(j,2)) for P,(j,eps) in point_multiplicities(f,h)])
+
+def sum_fh_terms(fhlist):
+    """
+    Sum of fh_term(f,h) over (f,h) in fhlist
+    """
+    return sum(fh_term(f,h) for f,h in fhlist)
+
+def lambda_helper(phi, NN, p=pp):
+    """ Helper function for affine and projective factorization probabilities.
+    """
+    d = deg_fp(phi)
+    return prod([prod([NN(j,p)-i for i in
+                       range(m1(phi,j))])/prod([ZZ(m2(phi,[j,i])).factorial()
+                                                for i in range(1,d+1)]) for j in range(1,d+1)])
+def N_forms(j, p=pp):
+    """The number of degree j homogeneous irreducibles in GF(p)[X,Y] up to scaling.
+    """
+    return p+1 if j==1 else N_monics(j,p)
+
+def lambda_P(phi, p=pp):
+    """ The probability that a homogeneous polynomial of degree deg(phi) has factorization pattern phi.
+    """
+    d = deg_fp(phi)
+    return lambda_helper(phi, N_forms, p) * (p-1)/ (p**(d+1)-1)
