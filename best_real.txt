@@ -83,7 +83,5 @@ Lower bound 0.873954 (via boxes)
 Monte Carlo 0.87411
 Upper bound 0.874124 (via boxes)
 
-and the hyperplane method improves the lower bound to 0.874070
-(rigorous, h=12), and even 0.874083 (not yet rigorous, rigorous h=13
-is running). This narrows the gap from 0.00017 to 0.000054 (or even
-0.000041).
+and the hyperplane method improves the lower bound to 0.874083
+(rigorous, h=13). This narrows the gap from 0.00017 to 0.000041.
