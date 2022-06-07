@@ -472,7 +472,7 @@ def T(r, eps, p=pp):
     """
     Helper function for R(r,eps,p)
     """
-    print("In T(r, eps, p) with r={}, eps={}, p={}".format(r,eps,p))
+    #print("In T(r, eps, p) with r={}, eps={}, p={}".format(r,eps,p))
     if (r%2==1 if eps in ["1", "u"] else r%2==0):
         return 2*sum(p**s * alpha(s, "p", p) for s in range(r))
     else:
@@ -482,7 +482,7 @@ def R(n, eps, p=pp):
     """
     R(n,eps,p) = beta(n,eps,p) - p**-binomial(n,2) * alpha(n,eps,p)
     """
-    print("In R(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
+    #print("In R(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
     return (p-1) * sum(p**(-binomial(r+1,2)) * T(r, eps, p) for r in range(1,n)) / 2
 
 def sum_f_terms(n, eps, p=pp):
@@ -496,13 +496,13 @@ def sum_f_terms(n, eps, p=pp):
     The other difference from old_sum_f_terms_from_mults is that we
     omit multiplicity (n,-).
     """
-    print("In sum_f_terms(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
-    if p==pp:
+    #print("In sum_f_terms(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
+    if p==pp or p>max_p_for_degree.get(n,Infinity):
         return 0
-    eps = eps_decode[eps] # convert to +1,-1
-    mults = Gamma_plus_mults(n,p) if eps == 1 else Gamma_minus_mults(n,p)
-    return sum(cnt*prod(1-beta(j, eps_encode[eps*eps1], p) for j,eps1 in mlt)
-               for mlt, cnt in mults.items() if len(mlt)==0 or mlt[0]!=n)
+    eps1 = eps_decode[eps] # convert to +1,-1
+    mults = Gamma_plus_mults(n,p) if eps1 == 1 else Gamma_minus_mults(n,p)
+    return sum(cnt*prod(1-beta(j, eps_encode[eps1*s], p) for j,s in mlt)
+               for mlt, cnt in mults.items())
 
 def phi_term(phi, eps, p):
     """Helper function for sum_phi_terms(), for eps = u, p.
@@ -520,7 +520,7 @@ def sum_phi_terms(n, eps, p):
     Second helper function for S(), for eps = u,p.
     NB not required for eps=u, n odd.
     """
-    print("In sum_phi_terms(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
+    #print("In sum_phi_terms(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
     m = n//2 if eps == "u" else n
     phis = [phi for phi in Phi(m) if phi!=[[1,m]]]
     return sum(phi_term(phi, eps, p) for phi in phis)
@@ -529,18 +529,18 @@ def S(n, eps, p=pp):
     """
     For eps=1,u,p (n even) or just 1,p (n odd):
 
-    S(n,eps,p) = alpha(n,eps,p) - p**-(n-1) * beta(n,eps,p)
+    S(n,eps,p) = alpha(n,eps,p) - p**-(n-1) * beta(n,eps,p) (eps="u","p");
+    S(n,"1",p") = alpha(n,"1", p)
     """
-    print("In S(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
-    if n%2 and eps=="u":
-        return 0
-    r = p**(-(n-1))
-    ans = 1 - p**(-(n-1))
-    if eps in ["1", "u"]:
-        ans -= p**(-n)*sum_f_terms(n, eps, p)
-    if eps in ["u", "p"]:
-        ans -= p**(-n)*sum_phi_terms(n, eps, p)
-    return ans
+    #print("In S(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
+    if eps == "1":
+        return 1 - p**(-n)*sum_f_terms(n, eps, p)
+    if eps == "u":
+        if n%2:
+            return 0
+        return 1 - p**(-n) * (p + sum_f_terms(n, eps, p) + sum_phi_terms(n, eps, p))
+    # now eps=="p"
+    return  1 - p**(-n) * (p + sum_phi_terms(n, eps, p))
 
 def make_alphas_and_betas(n, p=pp, verbose=False):
     """Compute (and optionally display) all alpha(i,eps,p) and and beta(i,eps,p) for i<=p.
@@ -554,51 +554,24 @@ def make_alphas_and_betas(n, p=pp, verbose=False):
         return
     for i in range(3,n):
         make_alphas_and_betas(i, p, verbose)
-    #
-    # Now the work begins
-    #
+
     if verbose:
         print("Computing alpha({},eps,{}) and beta({},eps,{})".format(n,p,n,p))
     r = p**(-(n-1))
     s = p**(-binomial(n,2))
     rs = r*s
-    R_1 = R(n,"1",p)
-    if verbose:
-        print("R({},1,{}) = {}".format(n,p,R_1))
-    R_p = R(n,"p",p)
-    if verbose:
-        print("R({},p,{}) = {}".format(n,p,R_p))
-    R_u = R(n,"u",p)
-    if verbose:
-        print("R({},u,{}) = {}".format(n,p,R_u))
-    S_1 = S(n,"1",p)
-    if verbose:
-        print("S({},1,{}) = {}".format(n,p,S_1))
-    S_p = S(n,"p",p)
-    if verbose:
-        print("S({},p,{}) = {}".format(n,p,S_p))
-    t = S_p+r*R_p
 
-    if p==pp or p>max_p_for_degree[n]:
-        alpha_dict[(n,"1",p)] = 1
-    else:
-        if n%2:
-            alpha_dict[(n,"1",p)] = (S_1+r*R_1)/(1-rs)
-        else:
-            alpha_dict[(n,"1",p)] = (rs*(r*R_p + S_p) + (r*R_1 + S_1))/(1-rs*rs)
+    epslist = ["1", "u", "p"]
+    eps2list = ["p", "p", "1"] if n%2 else epslist
+    R_n = dict([(eps,R(n,eps,p)) for eps in epslist])
 
-    if n%2:
-        beta_dict[(n,"p",p)]  = R_p + s*alpha_dict[(n, "1", p)]
-        alpha_dict[(n,"p",p)] = S_p + r*beta_dict[(n, "p", p)]
-    else:
-        alpha_dict[(n,"p",p)] = (r*R_p+S_p)/(1-rs)
-        beta_dict[(n,"p",p)]  = R_p + s*alpha_dict[(n, "p", p)]
+    alpha_dict[(n,"1",p)] = S(n,"1",p)
+    alpha_dict[(n,"u",p)] = alpha_dict[(n,"1",p)] if n%2 else (S(n,"u",p)+r*R_n["u"])/(1-rs)
+    t = S(n,"p",p)+r*R_n["p"]
+    alpha_dict[(n,"p",p)] = (t+rs*alpha_dict[(n,"1",p)]) if n%2 else t/(1-rs)
 
-    alpha_dict[(n,"u",p)] = alpha_dict[(n,"1",p)] if n%2 else (S(n,"u",p)+r*R_u)/(1-rs)
-
-    beta_dict[(n,"1",p)]  = R_1 + s*alpha_dict[(n, "p" if n%2 else "1", p)]
-    beta_dict[(n,"u",p)]  = R_u + s*alpha_dict[(n, "p" if n%2 else "u", p)]
-
+    for eps1, eps2 in zip(epslist, eps2list):
+        beta_dict[(n,eps1,p)]  = R_n[eps1] + s*alpha_dict[(n, eps2, p)]
 
     if verbose:
         print("Added entries for n={} to alpha_dict and beta_dict for p={}".format(n,p))
