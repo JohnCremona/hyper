@@ -1,7 +1,7 @@
 from sage.all import (save, load, prod, polygen, xmrange_iter, moebius, primes, Infinity, sign, binomial)
 from sage.all import (QQ, ZZ, GF, PolynomialRing, ProjectiveSpace)
 
-from basics import (Qp, pp, affine)
+from basics import (Qp, pp, affine, subs)
 
 max_p_for_degree = {1:0, 2:0, 3:3, 4:5, 5:11, 6:13, 7:19, 8:23, 9:37, 10:37}
 
@@ -492,17 +492,20 @@ def sum_f_terms(n, eps, p=pp):
     The reason for flipping + and - multiplicities when eps="u" is that
     we stored multiplicities for old-style Gamma(n,u;p) containing
     polys with leading coefficient u.
-
-    The other difference from old_sum_f_terms_from_mults is that we
-    omit multiplicity (n,-).
     """
     #print("In sum_f_terms(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
     if p==pp or p>max_p_for_degree.get(n,Infinity):
         return 0
     eps1 = eps_decode[eps] # convert to +1,-1
     mults = Gamma_plus_mults(n,p) if eps1 == 1 else Gamma_minus_mults(n,p)
-    return sum(cnt*prod(1-beta(j, eps_encode[eps1*s], p) for j,s in mlt)
-               for mlt, cnt in mults.items())
+    # To flip signs we negate s in (j,s) when eps1=-1 and j is even
+    def fact(j,s):
+        #if eps1 == -1 and j%2==0:
+        #    s = -s
+        print("j={}, s={}, eps_encode[s]={}, beta(j, eps_encode[s], p)={}".format(j,s,eps_encode[s],beta(j, eps_encode[s], p)))
+        return 1-beta(j, eps_encode[s], p);
+    print([(cnt,mlt,prod(fact(j,s) for j,s in mlt)) for mlt, cnt in mults.items()])
+    return sum(cnt*prod(fact(j,s) for j,s in mlt) for mlt, cnt in mults.items())
 
 def phi_term(phi, eps, p):
     """Helper function for sum_phi_terms(), for eps = u, p.
@@ -626,17 +629,29 @@ def check_value(ab,i,eps,val,p=pp):
 def check3():
     """ Check that all 3 beta(3,eps; p) are correct for p=3 and p generic.
     """
+    alpha_3_p_generic = (4*pp**5 - pp**3 + 3*pp**2 - 6*pp + 6)/(6*pp**5)
+    beta_3_1_generic = beta_3_u_generic = (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8)
+    beta_3_p_generic = (pp**3+pp**2-2*pp+2)/(2*pp**3)
+    make_alphas_and_betas(3)
+    check_value("alpha",3,"1", 1)
+    check_value("alpha",3,"u", 1)
+    check_value("alpha",3,"p", alpha_3_p_generic)
+    check_value("beta",3,"1", beta_3_1_generic)
+    check_value("beta",3,"u", beta_3_u_generic)
+    check_value("beta",3,"p", beta_3_p_generic)
+
     make_alphas_and_betas(3,3)
+    check_value("alpha",3,"1", 26/27, 3)
+    check_value("alpha",3,"u", 26/27, 3)
+    check_value("alpha",3,"p", 4319/6561,3)
     check_value("beta",3,"1", 50246/177147, 3)
     check_value("beta",3,"u", 50246/177147, 3)
     check_value("beta",3,"p", 431/729,3)
 
-    make_alphas_and_betas(3)
-    check_value("beta",3,"1", (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
-    check_value("beta",3,"u", (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8))
-    check_value("beta",3,"p", (pp**3+pp**2-2*pp+2)/(2*pp**3))
-
     make_alphas_and_betas(3,2)
+    check_value("alpha",3,"1", 7/8, 2)
+    check_value("alpha",3,"u", 7/8, 2)
+    check_value("alpha",3,"p", 167/256,2)
     check_value("beta",3,"1", 807/2048, 2)
     check_value("beta",3,"u", 807/2048, 2)
     check_value("beta",3,"p", 39/64,2)
@@ -645,15 +660,24 @@ def check3():
 def check4():
     """ Check that all 3 beta(4,eps; p) are correct for p=3, p=5 and p generic.
     """
-    make_alphas_and_betas(4,3)
-    make_alphas_and_betas(4,5)
-    make_alphas_and_betas(4)
-    check_value("beta",4,"1", 16600/59049, 3)
-    check_value("beta",4,"1", 352624/1953125, 5)
-    check_value("beta",4,"1", (pp**2+1)*(2*pp**3-pp**2-2*pp+2)/(2*pp**6))
+    beta_4_1_generic = (pp**2+1)*(2*pp**3-pp**2-2*pp+2)/(2*pp**6)
+    beta_4_u_generic = (2*pp**10+3*pp**9-pp**5+2*pp**4-2*pp**2-3*pp-1)/(2*(pp+1)**2 *(pp**9-1))
+    beta_4_p_generic = (4*pp**10+8*pp**9-4*pp**8+4*pp**6-3*pp**4+pp**3-5*pp-5)/(8*(pp+1)*(pp**9-1))
 
-    check_value("beta",4,"u", (2*pp**10+3*pp**9-pp**5+2*pp**4-2*pp**2-3*pp-1)/(2*(pp+1)**2 *(pp**9-1)))
-    check_value("beta",4,"p", (4*pp**10+8*pp**9-4*pp**8+4*pp**6-3*pp**4+pp**3-5*pp-5)/(8*(pp+1)*(pp**9-1)))
+    make_alphas_and_betas(4)
+    check_value("beta",4,"1", beta_4_1_generic)
+    check_value("beta",4,"u", beta_4_u_generic)
+    check_value("beta",4,"p", beta_4_p_generic)
+
+    make_alphas_and_betas(4,3)
+    check_value("beta",4,"1", 16600/59049, 3)
+    check_value("beta",4,"u", subs(beta_4_u_generic,3), 3)
+    check_value("beta",4,"p", subs(beta_4_p_generic,3), 3)
+
+    make_alphas_and_betas(4,5)
+    check_value("beta",4,"1", 352624/1953125, 5)
+    check_value("beta",4,"u", subs(beta_4_u_generic,5), 5)
+    check_value("beta",4,"p", subs(beta_4_p_generic,5), 5)
 
     make_alphas_and_betas(4,2)
     check_value("beta",4,"1", 407079/1048576, 2)
@@ -682,20 +706,20 @@ def check5():
 def check6():
     """ Check that all beta(6,eps; p) and alpha(6,eps; p) are correct for p=3.
     """
-    make_alphas_and_betas(6,3)
-    check_value("beta",6,"p", 26377476341107224253/44887561041873369600, 3)
-    check_value("beta",6,"1", 605398279518845051650813/2153584544086426253951538, 3)
-    check_value("beta",6,"u", 27339928051320364957/97256382257392300800, 3)
+    check_value("alpha",6,"1",1)
+    check_value("alpha",6,"u",(pp**31 + 4*pp**30 + 8*pp**29 + 11*pp**28 + 13*pp**27 + 29/2*pp**26 + 103/6*pp**25 + 56/3*pp**24 + 133/6*pp**23 + 68/3*pp**22 + 68/3*pp**21 + 127/6*pp**20 + 62/3*pp**19 + 65/3*pp**18 + 139/6*pp**17 + 193/8*pp**16 + 577/24*pp**15 + 24*pp**14 + 191/8*pp**13 + 583/24*pp**12 + 23*pp**11 + 19*pp**10 + 17*pp**9 + 31/2*pp**8 + 25/2*pp**7 + 59/6*pp**6 + 15/2*pp**5 + 5*pp**4 + 7/3*pp**3 + 3/2*pp**2 + 2*pp + 1)/(pp**31 + 4*pp**30 + 8*pp**29 + 12*pp**28 + 16*pp**27 + 20*pp**26 + 24*pp**25 + 28*pp**24 + 32*pp**23 + 35*pp**22 + 36*pp**21 + 36*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 36*pp**15 + 36*pp**14 + 36*pp**13 + 36*pp**12 + 35*pp**11 + 32*pp**10 + 28*pp**9 + 24*pp**8 + 20*pp**7 + 16*pp**6 + 12*pp**5 + 8*pp**4 + 4*pp**3 + pp**2))
+    check_value("alpha",6,"p",(91/144*pp**29 + 91/36*pp**28 + 5*pp**27 + 1075/144*pp**26 + 719/72*pp**25 + 37/3*pp**24 + 117/8*pp**23 + 427/24*pp**22 + 21*pp**21 + 1651/72*pp**20 + 218/9*pp**19 + 1169/48*pp**18 + 427/18*pp**17 + 1711/72*pp**16 + 1159/48*pp**15 + 187/8*pp**14 + 545/24*pp**13 + 49/2*pp**12 + 26*pp**11 + 101/4*pp**10 + 301/12*pp**9 + 95/4*pp**8 + 85/4*pp**7 + 223/12*pp**6 + 33/2*pp**5 + 29/2*pp**4 + 10*pp**3 + 11/2*pp**2 + 5/2*pp + 1/2)/(pp**29 + 4*pp**28 + 8*pp**27 + 12*pp**26 + 16*pp**25 + 20*pp**24 + 24*pp**23 + 28*pp**22 + 32*pp**21 + 35*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 36*pp**15 + 36*pp**14 + 36*pp**13 + 36*pp**12 + 36*pp**11 + 36*pp**10 + 35*pp**9 + 32*pp**8 + 28*pp**7 + 24*pp**6 + 20*pp**5 + 16*pp**4 + 12*pp**3 + 8*pp**2 + 4*pp + 1))
     check_value("beta",6,"1",(pp**24 + 1/2*pp**23 + 1/2*pp**22 + pp**21 + pp**19 + pp**18 + 1/2*pp**17 + pp**16 - 7/8*pp**15 + 2/3*pp**14 - 1/2*pp**13 + 5/24*pp**12 + 1/2*pp**11 - 3/2*pp**10 + 3/2*pp**9 + 1/2*pp**8 + 1/2*pp**6 + 1/3*pp**5 + 1/2*pp**4 + 1/6*pp**3 + 1/2*pp**2 + pp - 1)/(pp**25 + pp**24 + pp**23 + pp**22 + pp**21 + pp**20 + pp**19 + pp**18 + pp**17))
     check_value("beta",6,"u",(pp**28 + 7/2*pp**27 + 6*pp**26 + 17/2*pp**25 + 11*pp**24 + 13*pp**23 + 16*pp**22 + 39/2*pp**21 + 45/2*pp**20 + 193/8*pp**19 + 577/24*pp**18 + 24*pp**17 + 191/8*pp**16 + 583/24*pp**15 + 24*pp**14 + 23*pp**13 + 25*pp**12 + 53/2*pp**11 + 51/2*pp**10 + 73/3*pp**9 + 71/3*pp**8 + 121/6*pp**7 + 37/2*pp**6 + 47/3*pp**5 + 41/3*pp**4 + 55/6*pp**3 + 14/3*pp**2 + 13/6*pp + 2/3)/(pp**29 + 4*pp**28 + 8*pp**27 + 12*pp**26 + 16*pp**25 + 20*pp**24 + 24*pp**23 + 28*pp**22 + 32*pp**21 + 35*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 36*pp**15 + 36*pp**14 + 36*pp**13 + 36*pp**12 + 36*pp**11 + 36*pp**10 + 35*pp**9 + 32*pp**8 + 28*pp**7 + 24*pp**6 + 20*pp**5 + 16*pp**4 + 12*pp**3 + 8*pp**2 + 4*pp + 1))
     check_value("beta",6,"p",(1/2*pp**35 + 5/2*pp**34 + 5*pp**33 + 7*pp**32 + 19/2*pp**31 + 25/2*pp**30 + 91/6*pp**29 + 35/2*pp**28 + 20*pp**27 + 133/6*pp**26 + 22*pp**25 + 22*pp**24 + 49/2*pp**23 + 26*pp**22 + 103/4*pp**21 + 3775/144*pp**20 + 473/18*pp**19 + 105/4*pp**18 + 3751/144*pp**17 + 1907/72*pp**16 + 79/3*pp**15 + 177/8*pp**14 + 439/24*pp**13 + 33/2*pp**12 + 1003/72*pp**11 + 211/18*pp**10 + 147/16*pp**9 + 56/9*pp**8 + 271/72*pp**7 + 95/48*pp**6 + 11/8*pp**5 + 17/24*pp**4 - 1/2*pp - 1/2)/(pp**35 + 4*pp**34 + 8*pp**33 + 12*pp**32 + 16*pp**31 + 20*pp**30 + 24*pp**29 + 28*pp**28 + 32*pp**27 + 35*pp**26 + 36*pp**25 + 36*pp**24 + 36*pp**23 + 36*pp**22 + 36*pp**21 + 36*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 35*pp**15 + 32*pp**14 + 28*pp**13 + 24*pp**12 + 20*pp**11 + 16*pp**10 + 12*pp**9 + 8*pp**8 + 4*pp**7 + pp**6))
 
+    make_alphas_and_betas(6,3)
     check_value("alpha",6, "p", 690037935950003/1098030248972800, 3)
     check_value("alpha",6,"1", 28366779023771/30502389939948, 3)
     check_value("alpha",6,"u", 9541669997405587/10262359634630400, 3)
-    check_value("alpha",6,"1",1)
-    check_value("alpha",6,"u",(pp**31 + 4*pp**30 + 8*pp**29 + 11*pp**28 + 13*pp**27 + 29/2*pp**26 + 103/6*pp**25 + 56/3*pp**24 + 133/6*pp**23 + 68/3*pp**22 + 68/3*pp**21 + 127/6*pp**20 + 62/3*pp**19 + 65/3*pp**18 + 139/6*pp**17 + 193/8*pp**16 + 577/24*pp**15 + 24*pp**14 + 191/8*pp**13 + 583/24*pp**12 + 23*pp**11 + 19*pp**10 + 17*pp**9 + 31/2*pp**8 + 25/2*pp**7 + 59/6*pp**6 + 15/2*pp**5 + 5*pp**4 + 7/3*pp**3 + 3/2*pp**2 + 2*pp + 1)/(pp**31 + 4*pp**30 + 8*pp**29 + 12*pp**28 + 16*pp**27 + 20*pp**26 + 24*pp**25 + 28*pp**24 + 32*pp**23 + 35*pp**22 + 36*pp**21 + 36*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 36*pp**15 + 36*pp**14 + 36*pp**13 + 36*pp**12 + 35*pp**11 + 32*pp**10 + 28*pp**9 + 24*pp**8 + 20*pp**7 + 16*pp**6 + 12*pp**5 + 8*pp**4 + 4*pp**3 + pp**2))
-    check_value("alpha",6,"p",(91/144*pp**29 + 91/36*pp**28 + 5*pp**27 + 1075/144*pp**26 + 719/72*pp**25 + 37/3*pp**24 + 117/8*pp**23 + 427/24*pp**22 + 21*pp**21 + 1651/72*pp**20 + 218/9*pp**19 + 1169/48*pp**18 + 427/18*pp**17 + 1711/72*pp**16 + 1159/48*pp**15 + 187/8*pp**14 + 545/24*pp**13 + 49/2*pp**12 + 26*pp**11 + 101/4*pp**10 + 301/12*pp**9 + 95/4*pp**8 + 85/4*pp**7 + 223/12*pp**6 + 33/2*pp**5 + 29/2*pp**4 + 10*pp**3 + 11/2*pp**2 + 5/2*pp + 1/2)/(pp**29 + 4*pp**28 + 8*pp**27 + 12*pp**26 + 16*pp**25 + 20*pp**24 + 24*pp**23 + 28*pp**22 + 32*pp**21 + 35*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 36*pp**15 + 36*pp**14 + 36*pp**13 + 36*pp**12 + 36*pp**11 + 36*pp**10 + 35*pp**9 + 32*pp**8 + 28*pp**7 + 24*pp**6 + 20*pp**5 + 16*pp**4 + 12*pp**3 + 8*pp**2 + 4*pp + 1))
+    check_value("beta",6,"p", 26377476341107224253/44887561041873369600, 3)
+    check_value("beta",6,"1", 605398279518845051650813/2153584544086426253951538, 3)
+    check_value("beta",6,"u", 27339928051320364957/97256382257392300800, 3)
 
 def check_ab(i=None):
     if i==3:
