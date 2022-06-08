@@ -705,8 +705,6 @@ def check4():
     check_value("beta",4,"u", subs(beta_4_u_generic,5), 5)
     check_value("beta",4,"p", subs(beta_4_p_generic,5), 5)
 
-
-
 def check5():
     """ Check that all beta(5,eps; p) and alpha(5,eps; p) are correct for p=3.
     """
@@ -775,9 +773,11 @@ def rho_0(n,p=pp):
         """ prob. soluble if deg(f mod p)=i
         """
         if i%2:
-            return ie(beta(n-i,p), alpha(i,p))
+            a = (alpha(i,"1",p) + alpha(i,"u",p))/2
+            b = (beta(n-i,"1",p) + beta(n-i,"u",p))/2
+            return ie(a, b)
         else:
-            return (ie(beta_plus(n-i,p), alpha_plus(i,p))+ie(beta_minus(n-i,p), alpha_minus(i,p)))/2
+            return (ie(beta(n-i,"1",p), alpha(i,"1",p)) + ie(beta(n-i,"u",p), alpha(i,"u",p)))/2
 
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
 
@@ -792,7 +792,7 @@ def rho_1(n,p=pp):
     def term(i):
         """ prob. soluble if deg(f/p mod p)=i
         """
-        return ie(beta_0(n-i,p), alpha_0(i,p))
+        return ie(beta(n-i,"p",p), alpha(i,"p",p))
     # prob sol if f/p mod p is nonzero
 
     return (p-1)*sum([term(i)*p**i for i in range(n+1)])/p**(n+1)
@@ -855,78 +855,6 @@ Space for comments
 
 """
 
-"""
-    New notation from 22/3/22
-
-(1) alpha and beta labels switched
-(2) superscripts +, -, 0 replaced by second paramater 1, u, p
-
-"""
-def alpha_1(n, p=pp):
-    """
-    alpha(n, 1)
-    """
-    return alpha_plus(n, p)
-
-def beta_1(n, p=pp):
-    """
-    beta(n, 1)
-    """
-    return beta_plus(n, p)
-
-def alpha_u(n, p=pp):
-    """
-    alpha(n, u)
-    """
-    return alpha_minus(n, p)
-
-def beta_u(n, p=pp):
-    """
-    beta(n, u)
-    """
-    return beta_minus(n, p)
-
-def alpha_p(n, p=pp):
-    """
-    alpha(n, p)
-    """
-    return alpha_0(n, p)
-
-def beta_p(n, p=pp):
-    """
-    beta(n, p)
-    """
-    return beta_0(n, p)
-
-def new_alpha(n, p=pp):
-    """
-    alpha(n, p)
-    """
-    return alpha(n, p)
-
-def new_beta(n, p=pp):
-    """
-    beta(n, p)
-    """
-    return beta(n, p)
-
-def new_rho_1(n, p=pp):
-    """
-    rho(n, 1)
-    """
-    r0 = rho_0(n,p)
-    r1 = rho_1(n,p)
-    pn1 = p**(n+1)
-    return (pn1*r0 + r1) / (pn1 + 1)
-
-def new_rho_p(n, p=pp):
-    """
-    rho(n, p)
-    """
-    r0 = rho_0(n,p)
-    r1 = rho_1(n,p)
-    pn1 = p**(n+1)
-    return (pn1*r1 + r0) / (pn1 + 1)
 
 ################ Code to create Gamma sets from the C program output ##############################
 

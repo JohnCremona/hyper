@@ -9,38 +9,27 @@ from sage.all import Set, primes
 # since this won't work from a .sage file:
 
 # from alphabeta import (restore_Gammas, Gamma_plus_dict, Gamma_minus_dict, one_row,
-#                        alpha_0_dict, alpha_plus_dict, alpha_minus_dict,
-#                        beta_0_dict, beta_plus_dict, beta_minus_dict,
 #                        initialize_alpha_beta_dicts, make_betas, rho,
 #                        check_ab, check_rho)
 
-if not Gamma_plus_short_mult_dict:
+if not Gamma_plus_dict:
     restore_Gammas()
 
-
 print("Gamma(n,1) precomputed for these primes and degree ranges:")
-print(" - complete lists:")
 print([(p,Set([k[1] for k in Gamma_plus_dict.keys() if k[0]==p]))
          for p in Set([k[0] for k in Gamma_plus_dict.keys()])])
-print(" - multiplicities only for:")
-print([(p,Set([k[1] for k in Gamma_plus_short_mult_dict.keys() if k[0]==p]))
-         for p in Set([k[0] for k in Gamma_plus_short_mult_dict.keys()])])
 
 print("Gamma(n,u) precomputed for these primes and degree ranges:")
-print(" - complete lists:")
 print([(p,Set([k[1] for k in Gamma_minus_dict.keys() if k[0]==p]))
          for p in Set([k[0] for k in Gamma_minus_dict.keys()])])
-print(" - multiplicities only for:")
-print([(p,Set([k[1] for k in Gamma_minus_short_mult_dict.keys() if k[0]==p]))
-         for p in Set([k[0] for k in Gamma_minus_short_mult_dict.keys()])])
 
 print()
 print("*"*80)
 print()
 smallp = list(primes(3,32))
-print("Check that the code for computing |Gamma(n,eps; p)| agrees with the table in the paper (for odd p up to {})".format(max(smallp)))
+print("Check that the code for computing |Gamma(n,eps; p)| agrees with the table in the paper (for odd p up to {})".format(31))
 
-for p in smallp:
+for p in primes(3,32):
     one_row_from_mults(p)
 
 # NB since we do not yet have Gamma(n,eps) for n>8, we
@@ -50,21 +39,17 @@ for p in smallp:
 
 initialize_alpha_beta_dicts()
 
-print("For n up to 10 we use the recursive formulas to compute all beta(n,eps)")
+print("For n up to 10 we use the recursive formulas to compute all alpha(n,eps;p) and beta(n,eps;p)")
 
 for i in range(3,11):
     print("i={}".format(i), end=", ")
-    make_betas(i, verbose=False)
+    make_alphas_and_betas(i, verbose=False)
 
-print("We now have the following beta(n,eps):")
+print("We now have alpha(n,eps;p) for the following (n,eps,p):")
+print(list(alpha_dict.keys()))
 
-for d in [beta_0_dict, beta_plus_dict, beta_minus_dict]:
-    print(list(d.keys()))
-
-print("and in the course of computing these we have also computed these alpha(n,eps):")
-
-for d in [alpha_0_dict, alpha_plus_dict, alpha_minus_dict]:
-    print(list(d.keys()))
+print("and beta(n,eps;p) for the following (n,eps,p):")
+print(list(beta_dict.keys()))
 
 print()
 print("*"*80)
@@ -75,22 +60,19 @@ print("For genus 1 and 2 we only need degrees up to 6 and primes up to 13")
 
 for p in primes(15):
     print("p={}".format(p))
-    make_betas(6, p, verbose=False)
+    make_alphas_and_betas(6, p, verbose=False)
 
 print("The stored alpha(n,eps; p) are now")
-
-for d in [alpha_0_dict, alpha_plus_dict, alpha_minus_dict]:
-    print(list(d.keys()))
+print(list(alpha_dict.keys()))
 
 print(" and the stored beta(n,eps; p) are:")
-
-for d in [beta_0_dict, beta_plus_dict, beta_minus_dict]:
-    print(list(d.keys()))
+print(list(beta_dict.keys()))
 
 print()
 print("*"*80)
 print()
-print("Check alpha and beta values:")
+
+print("Check alpha and beta values are correct:")
 check_ab()
 
 print("Check rho values:")
@@ -151,7 +133,7 @@ print("The first few values (p<30) computed individually:")
 
 for p in primes(30):
     print("p={}".format(p))
-    make_betas(8, p, verbose=False)
+    make_alphas_and_betas(8, p, verbose=False)
 
 for p in primes(30):
     print("p={}: {} = {}".format(p,rho(3,p),rho(3,p)*1.0))
@@ -177,7 +159,7 @@ print("The first few values (p<40) are computed individually.")
 print(" - first the alphas and betas")
 for p in primes(50):
     print("p={}".format(p))
-    make_betas(10, p, verbose=False)
+    make_alphas_and_betas(10, p, verbose=False)
 
 print(" - then the rhos")
 for p in primes(50):
