@@ -27,6 +27,9 @@ xdeg8: xhyper.cc
 xdeg10: xhyper.cc
 	gcc $(CFLAGS) -DDEGREE=10 xhyper.cc -funroll-loops -fopenmp $(LFLAGS) -o xdeg10
 
+xdeg12: xhyper.cc
+	gcc $(CFLAGS) -DDEGREE=12 xhyper.cc -funroll-loops -fopenmp $(LFLAGS) -o xdeg12
+
 negdef: negdef.cc
 	gcc $(CFLAGS) negdef.cc -o negdef -g -lm -lstdc++ -lpari
 
