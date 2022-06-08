@@ -294,7 +294,7 @@ long pari_sturm(long *ai, int pos_only=0, int neg_only=0)
   GEN g10 = stoi(ai[10]);
 #if DEGREE==10
   GEN f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10);
-#else
+#else // DEGREE must be 2,4,6,8,10,12 so far
   GEN g11 = stoi(ai[11]);
   GEN g12 = stoi(ai[12]);
   GEN f = mkpoln(ncoeffs,g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12);
