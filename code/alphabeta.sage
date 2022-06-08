@@ -500,11 +500,7 @@ def sum_f_terms(n, eps, p=pp):
     mults = Gamma_plus_mults(n,p) if eps1 == 1 else Gamma_minus_mults(n,p)
     # To flip signs we negate s in (j,s) when eps1=-1 and j is even
     def fact(j,s):
-        #if eps1 == -1 and j%2==0:
-        #    s = -s
-        print("j={}, s={}, eps_encode[s]={}, beta(j, eps_encode[s], p)={}".format(j,s,eps_encode[s],beta(j, eps_encode[s], p)))
         return 1-beta(j, eps_encode[s], p);
-    print([(cnt,mlt,prod(fact(j,s) for j,s in mlt)) for mlt, cnt in mults.items()])
     return sum(cnt*prod(fact(j,s) for j,s in mlt) for mlt, cnt in mults.items())
 
 def phi_term(phi, eps, p):
@@ -537,7 +533,8 @@ def S(n, eps, p=pp):
     """
     #print("In S(n, eps, p) with n={}, eps={}, p={}".format(n,eps,p))
     if eps == "1":
-        return 1 - p**(-n)*sum_f_terms(n, eps, p)
+        e = ((3*n+1)//2 if n%2 else 3*n//2) if p==2 else n
+        return 1 - p**(-e)*sum_f_terms(n, eps, p)
     if eps == "u":
         if n%2:
             return 0
@@ -629,9 +626,10 @@ def check_value(ab,i,eps,val,p=pp):
 def check3():
     """ Check that all 3 beta(3,eps; p) are correct for p=3 and p generic.
     """
-    alpha_3_p_generic = (4*pp**5 - pp**3 + 3*pp**2 - 6*pp + 6)/(6*pp**5)
-    beta_3_1_generic = beta_3_u_generic = (6*pp**7-3*pp**6+pp**5-pp**3+3*pp**2-6*pp+6)/(6*pp**8)
-    beta_3_p_generic = (pp**3+pp**2-2*pp+2)/(2*pp**3)
+    p = pp
+    alpha_3_p_generic = (4*p**5 - p**3 + 3*p**2 - 6*p + 6)/(6*p**5)
+    beta_3_1_generic = beta_3_u_generic = (6*p**7-3*p**6+p**5-p**3+3*p**2-6*p+6)/(6*p**8)
+    beta_3_p_generic = (p**3+p**2-2*p+2)/(2*p**3)
     make_alphas_and_betas(3)
     check_value("alpha",3,"1", 1)
     check_value("alpha",3,"u", 1)
@@ -639,14 +637,6 @@ def check3():
     check_value("beta",3,"1", beta_3_1_generic)
     check_value("beta",3,"u", beta_3_u_generic)
     check_value("beta",3,"p", beta_3_p_generic)
-
-    make_alphas_and_betas(3,3)
-    check_value("alpha",3,"1", 26/27, 3)
-    check_value("alpha",3,"u", 26/27, 3)
-    check_value("alpha",3,"p", 4319/6561,3)
-    check_value("beta",3,"1", 50246/177147, 3)
-    check_value("beta",3,"u", 50246/177147, 3)
-    check_value("beta",3,"p", 431/729,3)
 
     make_alphas_and_betas(3,2)
     check_value("alpha",3,"1", 7/8, 2)
@@ -656,62 +646,98 @@ def check3():
     check_value("beta",3,"u", 807/2048, 2)
     check_value("beta",3,"p", 39/64,2)
 
+    make_alphas_and_betas(3,3)
+    check_value("alpha",3,"1", 26/27, 3)
+    check_value("alpha",3,"u", 26/27, 3)
+    check_value("alpha",3,"p", 4319/6561,3)
+    check_value("beta",3,"1", 50246/177147, 3)
+    check_value("beta",3,"u", 50246/177147, 3)
+    check_value("beta",3,"p", 431/729,3)
+
+    # for p>=5 the generic formulas hold:
+    make_alphas_and_betas(3,5)
+    check_value("alpha",3,"1", 1, 5)
+    check_value("alpha",3,"u", 1, 5)
+    check_value("alpha",3,"p", subs(alpha_3_p_generic,5), 5)
+    check_value("beta",3,"1", subs(beta_3_1_generic,5), 5)
+    check_value("beta",3,"u", subs(beta_3_u_generic,5), 5)
+    check_value("beta",3,"p", subs(beta_3_p_generic,5), 5)
 
 def check4():
     """ Check that all 3 beta(4,eps; p) are correct for p=3, p=5 and p generic.
     """
-    beta_4_1_generic = (pp**2+1)*(2*pp**3-pp**2-2*pp+2)/(2*pp**6)
-    beta_4_u_generic = (2*pp**10+3*pp**9-pp**5+2*pp**4-2*pp**2-3*pp-1)/(2*(pp+1)**2 *(pp**9-1))
-    beta_4_p_generic = (4*pp**10+8*pp**9-4*pp**8+4*pp**6-3*pp**4+pp**3-5*pp-5)/(8*(pp+1)*(pp**9-1))
+    p = pp
+    alpha_4_u_generic = p*(p-1)*(2*p**9 + 6*p**8 + 6*p**7 + 4*p**6 + 3*p**5 + 5*p**4 + 5*p**3 + 5*p**2 + 5*p + 2)/(2*(p+1)**2*(p**9-1))
+    alpha_4_p_generic = (p-1)*(5*p**9 + 10*p**8 + 10*p**7 + 9*p**6 + 12*p**5 + 8*p**4 + 8*p**3 + 12*p**2 + 12*p + 4)/(8*(p + 1)*(p**9 - 1))
+    beta_4_1_generic = (p**2+1)*(2*p**3-p**2-2*p+2)/(2*p**6)
+    beta_4_u_generic = (2*p**10+3*p**9-p**5+2*p**4-2*p**2-3*p-1)/(2*(p+1)**2 *(p**9-1))
+    beta_4_p_generic = (4*p**10+8*p**9-4*p**8+4*p**6-3*p**4+p**3-5*p-5)/(8*(p+1)*(p**9-1))
 
     make_alphas_and_betas(4)
+    check_value("alpha",4,"1", 1)
+    check_value("alpha",4,"u", alpha_4_u_generic)
+    check_value("alpha",4,"p", alpha_4_p_generic)
     check_value("beta",4,"1", beta_4_1_generic)
     check_value("beta",4,"u", beta_4_u_generic)
     check_value("beta",4,"p", beta_4_p_generic)
 
+    make_alphas_and_betas(4,2)
+    check_value("alpha",4,"1", 13863/16384, 2)
+    check_value("alpha",4,"u", 3832/4599, 2)
+    check_value("alpha",4,"p", 1907/3066,2)
+    check_value("beta",4,"1", 407079/1048576, 2)
+    check_value("beta",4,"u", 3569/9198, 2)
+    check_value("beta",4,"p", 7369/12264,2)
+
     make_alphas_and_betas(4,3)
+    check_value("alpha",4,"1", 76/81, 3)
+    check_value("alpha",4,"u", subs(alpha_4_u_generic,3), 3)
+    check_value("alpha",4,"p", subs(alpha_4_p_generic,3), 3)
     check_value("beta",4,"1", 16600/59049, 3)
     check_value("beta",4,"u", subs(beta_4_u_generic,3), 3)
     check_value("beta",4,"p", subs(beta_4_p_generic,3), 3)
 
     make_alphas_and_betas(4,5)
+    check_value("alpha",4,"1", 124/125, 5)
+    check_value("alpha",4,"u", subs(alpha_4_u_generic,5), 5)
+    check_value("alpha",4,"p", subs(alpha_4_p_generic,5), 5)
     check_value("beta",4,"1", 352624/1953125, 5)
     check_value("beta",4,"u", subs(beta_4_u_generic,5), 5)
     check_value("beta",4,"p", subs(beta_4_p_generic,5), 5)
 
-    make_alphas_and_betas(4,2)
-    check_value("beta",4,"1", 407079/1048576, 2)
-    check_value("beta",4,"u", 3569/9198, 2)
-    check_value("beta",4,"p", 7369/12264,2)
 
 
 def check5():
     """ Check that all beta(5,eps; p) and alpha(5,eps; p) are correct for p=3.
     """
+    p = pp
+    make_alphas_and_betas(5)
+    check_value("beta",5,"1",(p**26 + 1/2*p**25 - 1/2*p**24 + 1/2*p**23 - 1/2*p**22 + p**20 - 1/2*p**19 - 11/30*p**17 + 2/15*p**16 - 1/12*p**15 + 1/6*p**14 - 3/10*p**13 + 1/5*p**12 + 1/4*p**11 - 1/3*p**7 + 1/6*p**5 - 5/6*p**3 + 3/2*p**2 + p - 1)/(p**27 + p**26))
+    check_value("beta",5,"u",(p**26 + 1/2*p**25 - 1/2*p**24 + 1/2*p**23 - 1/2*p**22 + p**20 - 1/2*p**19 - 11/30*p**17 + 2/15*p**16 - 1/12*p**15 + 1/6*p**14 - 3/10*p**13 + 1/5*p**12 + 1/4*p**11 - 1/3*p**7 + 1/6*p**5 - 5/6*p**3 + 3/2*p**2 + p - 1)/(p**27 + p**26))
+    check_value("beta",5,"p",(1/2*p**13 + p**12 - 1/2*p**11 + 1/2*p**9 - 1/3*p**7 + 1/6*p**5 - 5/6*p**3 + 3/2*p**2 + p - 1)/(p**13 + p**12))
+    check_value("alpha",5,"1",1)
+    check_value("alpha",5,"u",1)
+    check_value("alpha",5,"p",  (19/30*p**17 + 19/30*p**16 - 1/12*p**15 + 1/6*p**14 - 3/10*p**13 + 1/5*p**12 + 1/4*p**11 - 1/3*p**7 + 1/6*p**5 - 5/6*p**3 + 3/2*p**2 + p - 1)/(p**17 + p**16))
+
     make_alphas_and_betas(5,3)
     check_value("beta",5,"p", 1493687989147/2541865828329, 3)
     check_value("beta",5,"1", 13670659773280445407/48630661836227715204, 3)
     check_value("beta",5,"u", 13670659773280445407/48630661836227715204, 3)
-    check_value("beta",5,"1",(pp**26 + 1/2*pp**25 - 1/2*pp**24 + 1/2*pp**23 - 1/2*pp**22 + pp**20 - 1/2*pp**19 - 11/30*pp**17 + 2/15*pp**16 - 1/12*pp**15 + 1/6*pp**14 - 3/10*pp**13 + 1/5*pp**12 + 1/4*pp**11 - 1/3*pp**7 + 1/6*pp**5 - 5/6*pp**3 + 3/2*pp**2 + pp - 1)/(pp**27 + pp**26))
-    check_value("beta",5,"u",(pp**26 + 1/2*pp**25 - 1/2*pp**24 + 1/2*pp**23 - 1/2*pp**22 + pp**20 - 1/2*pp**19 - 11/30*pp**17 + 2/15*pp**16 - 1/12*pp**15 + 1/6*pp**14 - 3/10*pp**13 + 1/5*pp**12 + 1/4*pp**11 - 1/3*pp**7 + 1/6*pp**5 - 5/6*pp**3 + 3/2*pp**2 + pp - 1)/(pp**27 + pp**26))
-    check_value("beta",5,"p",(1/2*pp**13 + pp**12 - 1/2*pp**11 + 1/2*pp**9 - 1/3*pp**7 + 1/6*pp**5 - 5/6*pp**3 + 3/2*pp**2 + pp - 1)/(pp**13 + pp**12))
-
     check_value("alpha",5,"p", 129514464056263/205891132094649, 3)
     check_value("alpha",5,"1", 160260073/172186884, 3)
     check_value("alpha",5,"u", 160260073/172186884, 3)
-    check_value("alpha",5,"1",1)
-    check_value("alpha",5,"u",1)
-    check_value("alpha",5,"p",  (19/30*pp**17 + 19/30*pp**16 - 1/12*pp**15 + 1/6*pp**14 - 3/10*pp**13 + 1/5*pp**12 + 1/4*pp**11 - 1/3*pp**7 + 1/6*pp**5 - 5/6*pp**3 + 3/2*pp**2 + pp - 1)/(pp**17 + pp**16))
 
 def check6():
     """ Check that all beta(6,eps; p) and alpha(6,eps; p) are correct for p=3.
     """
+    p = pp
+    make_alphas_and_betas(6)
     check_value("alpha",6,"1",1)
-    check_value("alpha",6,"u",(pp**31 + 4*pp**30 + 8*pp**29 + 11*pp**28 + 13*pp**27 + 29/2*pp**26 + 103/6*pp**25 + 56/3*pp**24 + 133/6*pp**23 + 68/3*pp**22 + 68/3*pp**21 + 127/6*pp**20 + 62/3*pp**19 + 65/3*pp**18 + 139/6*pp**17 + 193/8*pp**16 + 577/24*pp**15 + 24*pp**14 + 191/8*pp**13 + 583/24*pp**12 + 23*pp**11 + 19*pp**10 + 17*pp**9 + 31/2*pp**8 + 25/2*pp**7 + 59/6*pp**6 + 15/2*pp**5 + 5*pp**4 + 7/3*pp**3 + 3/2*pp**2 + 2*pp + 1)/(pp**31 + 4*pp**30 + 8*pp**29 + 12*pp**28 + 16*pp**27 + 20*pp**26 + 24*pp**25 + 28*pp**24 + 32*pp**23 + 35*pp**22 + 36*pp**21 + 36*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 36*pp**15 + 36*pp**14 + 36*pp**13 + 36*pp**12 + 35*pp**11 + 32*pp**10 + 28*pp**9 + 24*pp**8 + 20*pp**7 + 16*pp**6 + 12*pp**5 + 8*pp**4 + 4*pp**3 + pp**2))
-    check_value("alpha",6,"p",(91/144*pp**29 + 91/36*pp**28 + 5*pp**27 + 1075/144*pp**26 + 719/72*pp**25 + 37/3*pp**24 + 117/8*pp**23 + 427/24*pp**22 + 21*pp**21 + 1651/72*pp**20 + 218/9*pp**19 + 1169/48*pp**18 + 427/18*pp**17 + 1711/72*pp**16 + 1159/48*pp**15 + 187/8*pp**14 + 545/24*pp**13 + 49/2*pp**12 + 26*pp**11 + 101/4*pp**10 + 301/12*pp**9 + 95/4*pp**8 + 85/4*pp**7 + 223/12*pp**6 + 33/2*pp**5 + 29/2*pp**4 + 10*pp**3 + 11/2*pp**2 + 5/2*pp + 1/2)/(pp**29 + 4*pp**28 + 8*pp**27 + 12*pp**26 + 16*pp**25 + 20*pp**24 + 24*pp**23 + 28*pp**22 + 32*pp**21 + 35*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 36*pp**15 + 36*pp**14 + 36*pp**13 + 36*pp**12 + 36*pp**11 + 36*pp**10 + 35*pp**9 + 32*pp**8 + 28*pp**7 + 24*pp**6 + 20*pp**5 + 16*pp**4 + 12*pp**3 + 8*pp**2 + 4*pp + 1))
-    check_value("beta",6,"1",(pp**24 + 1/2*pp**23 + 1/2*pp**22 + pp**21 + pp**19 + pp**18 + 1/2*pp**17 + pp**16 - 7/8*pp**15 + 2/3*pp**14 - 1/2*pp**13 + 5/24*pp**12 + 1/2*pp**11 - 3/2*pp**10 + 3/2*pp**9 + 1/2*pp**8 + 1/2*pp**6 + 1/3*pp**5 + 1/2*pp**4 + 1/6*pp**3 + 1/2*pp**2 + pp - 1)/(pp**25 + pp**24 + pp**23 + pp**22 + pp**21 + pp**20 + pp**19 + pp**18 + pp**17))
-    check_value("beta",6,"u",(pp**28 + 7/2*pp**27 + 6*pp**26 + 17/2*pp**25 + 11*pp**24 + 13*pp**23 + 16*pp**22 + 39/2*pp**21 + 45/2*pp**20 + 193/8*pp**19 + 577/24*pp**18 + 24*pp**17 + 191/8*pp**16 + 583/24*pp**15 + 24*pp**14 + 23*pp**13 + 25*pp**12 + 53/2*pp**11 + 51/2*pp**10 + 73/3*pp**9 + 71/3*pp**8 + 121/6*pp**7 + 37/2*pp**6 + 47/3*pp**5 + 41/3*pp**4 + 55/6*pp**3 + 14/3*pp**2 + 13/6*pp + 2/3)/(pp**29 + 4*pp**28 + 8*pp**27 + 12*pp**26 + 16*pp**25 + 20*pp**24 + 24*pp**23 + 28*pp**22 + 32*pp**21 + 35*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 36*pp**15 + 36*pp**14 + 36*pp**13 + 36*pp**12 + 36*pp**11 + 36*pp**10 + 35*pp**9 + 32*pp**8 + 28*pp**7 + 24*pp**6 + 20*pp**5 + 16*pp**4 + 12*pp**3 + 8*pp**2 + 4*pp + 1))
-    check_value("beta",6,"p",(1/2*pp**35 + 5/2*pp**34 + 5*pp**33 + 7*pp**32 + 19/2*pp**31 + 25/2*pp**30 + 91/6*pp**29 + 35/2*pp**28 + 20*pp**27 + 133/6*pp**26 + 22*pp**25 + 22*pp**24 + 49/2*pp**23 + 26*pp**22 + 103/4*pp**21 + 3775/144*pp**20 + 473/18*pp**19 + 105/4*pp**18 + 3751/144*pp**17 + 1907/72*pp**16 + 79/3*pp**15 + 177/8*pp**14 + 439/24*pp**13 + 33/2*pp**12 + 1003/72*pp**11 + 211/18*pp**10 + 147/16*pp**9 + 56/9*pp**8 + 271/72*pp**7 + 95/48*pp**6 + 11/8*pp**5 + 17/24*pp**4 - 1/2*pp - 1/2)/(pp**35 + 4*pp**34 + 8*pp**33 + 12*pp**32 + 16*pp**31 + 20*pp**30 + 24*pp**29 + 28*pp**28 + 32*pp**27 + 35*pp**26 + 36*pp**25 + 36*pp**24 + 36*pp**23 + 36*pp**22 + 36*pp**21 + 36*pp**20 + 36*pp**19 + 36*pp**18 + 36*pp**17 + 36*pp**16 + 35*pp**15 + 32*pp**14 + 28*pp**13 + 24*pp**12 + 20*pp**11 + 16*pp**10 + 12*pp**9 + 8*pp**8 + 4*pp**7 + pp**6))
+    check_value("alpha",6,"u",(p**31 + 4*p**30 + 8*p**29 + 11*p**28 + 13*p**27 + 29/2*p**26 + 103/6*p**25 + 56/3*p**24 + 133/6*p**23 + 68/3*p**22 + 68/3*p**21 + 127/6*p**20 + 62/3*p**19 + 65/3*p**18 + 139/6*p**17 + 193/8*p**16 + 577/24*p**15 + 24*p**14 + 191/8*p**13 + 583/24*p**12 + 23*p**11 + 19*p**10 + 17*p**9 + 31/2*p**8 + 25/2*p**7 + 59/6*p**6 + 15/2*p**5 + 5*p**4 + 7/3*p**3 + 3/2*p**2 + 2*p + 1)/(p**31 + 4*p**30 + 8*p**29 + 12*p**28 + 16*p**27 + 20*p**26 + 24*p**25 + 28*p**24 + 32*p**23 + 35*p**22 + 36*p**21 + 36*p**20 + 36*p**19 + 36*p**18 + 36*p**17 + 36*p**16 + 36*p**15 + 36*p**14 + 36*p**13 + 36*p**12 + 35*p**11 + 32*p**10 + 28*p**9 + 24*p**8 + 20*p**7 + 16*p**6 + 12*p**5 + 8*p**4 + 4*p**3 + p**2))
+    check_value("alpha",6,"p",(91/144*p**29 + 91/36*p**28 + 5*p**27 + 1075/144*p**26 + 719/72*p**25 + 37/3*p**24 + 117/8*p**23 + 427/24*p**22 + 21*p**21 + 1651/72*p**20 + 218/9*p**19 + 1169/48*p**18 + 427/18*p**17 + 1711/72*p**16 + 1159/48*p**15 + 187/8*p**14 + 545/24*p**13 + 49/2*p**12 + 26*p**11 + 101/4*p**10 + 301/12*p**9 + 95/4*p**8 + 85/4*p**7 + 223/12*p**6 + 33/2*p**5 + 29/2*p**4 + 10*p**3 + 11/2*p**2 + 5/2*p + 1/2)/(p**29 + 4*p**28 + 8*p**27 + 12*p**26 + 16*p**25 + 20*p**24 + 24*p**23 + 28*p**22 + 32*p**21 + 35*p**20 + 36*p**19 + 36*p**18 + 36*p**17 + 36*p**16 + 36*p**15 + 36*p**14 + 36*p**13 + 36*p**12 + 36*p**11 + 36*p**10 + 35*p**9 + 32*p**8 + 28*p**7 + 24*p**6 + 20*p**5 + 16*p**4 + 12*p**3 + 8*p**2 + 4*p + 1))
+    check_value("beta",6,"1",(p**24 + 1/2*p**23 + 1/2*p**22 + p**21 + p**19 + p**18 + 1/2*p**17 + p**16 - 7/8*p**15 + 2/3*p**14 - 1/2*p**13 + 5/24*p**12 + 1/2*p**11 - 3/2*p**10 + 3/2*p**9 + 1/2*p**8 + 1/2*p**6 + 1/3*p**5 + 1/2*p**4 + 1/6*p**3 + 1/2*p**2 + p - 1)/(p**25 + p**24 + p**23 + p**22 + p**21 + p**20 + p**19 + p**18 + p**17))
+    check_value("beta",6,"u",(p**28 + 7/2*p**27 + 6*p**26 + 17/2*p**25 + 11*p**24 + 13*p**23 + 16*p**22 + 39/2*p**21 + 45/2*p**20 + 193/8*p**19 + 577/24*p**18 + 24*p**17 + 191/8*p**16 + 583/24*p**15 + 24*p**14 + 23*p**13 + 25*p**12 + 53/2*p**11 + 51/2*p**10 + 73/3*p**9 + 71/3*p**8 + 121/6*p**7 + 37/2*p**6 + 47/3*p**5 + 41/3*p**4 + 55/6*p**3 + 14/3*p**2 + 13/6*p + 2/3)/(p**29 + 4*p**28 + 8*p**27 + 12*p**26 + 16*p**25 + 20*p**24 + 24*p**23 + 28*p**22 + 32*p**21 + 35*p**20 + 36*p**19 + 36*p**18 + 36*p**17 + 36*p**16 + 36*p**15 + 36*p**14 + 36*p**13 + 36*p**12 + 36*p**11 + 36*p**10 + 35*p**9 + 32*p**8 + 28*p**7 + 24*p**6 + 20*p**5 + 16*p**4 + 12*p**3 + 8*p**2 + 4*p + 1))
+    check_value("beta",6,"p",(1/2*p**35 + 5/2*p**34 + 5*p**33 + 7*p**32 + 19/2*p**31 + 25/2*p**30 + 91/6*p**29 + 35/2*p**28 + 20*p**27 + 133/6*p**26 + 22*p**25 + 22*p**24 + 49/2*p**23 + 26*p**22 + 103/4*p**21 + 3775/144*p**20 + 473/18*p**19 + 105/4*p**18 + 3751/144*p**17 + 1907/72*p**16 + 79/3*p**15 + 177/8*p**14 + 439/24*p**13 + 33/2*p**12 + 1003/72*p**11 + 211/18*p**10 + 147/16*p**9 + 56/9*p**8 + 271/72*p**7 + 95/48*p**6 + 11/8*p**5 + 17/24*p**4 - 1/2*p - 1/2)/(p**35 + 4*p**34 + 8*p**33 + 12*p**32 + 16*p**31 + 20*p**30 + 24*p**29 + 28*p**28 + 32*p**27 + 35*p**26 + 36*p**25 + 36*p**24 + 36*p**23 + 36*p**22 + 36*p**21 + 36*p**20 + 36*p**19 + 36*p**18 + 36*p**17 + 36*p**16 + 35*p**15 + 32*p**14 + 28*p**13 + 24*p**12 + 20*p**11 + 16*p**10 + 12*p**9 + 8*p**8 + 4*p**7 + p**6))
 
     make_alphas_and_betas(6,3)
     check_value("alpha",6, "p", 690037935950003/1098030248972800, 3)
