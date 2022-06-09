@@ -1,0 +1,14 @@
+Checked 1875 curves in 0.005s
+#Gamma(6,1) =  250 (in 29 orbits) for p = 5
+#Gamma(6,u) =  145 (in 16 orbits) for p = 5
+
+Frequencies of signed root multiplicities
+Gamma(6,1): 5 different patterns
+1 [+2] 35
+1 [] 160
+1 [-2] 25
+1 [+2,+2] 10
+1 [+3] 20
+Gamma(6,u): 2 different patterns
+u [] 120
+u [+2] 25

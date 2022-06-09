@@ -1,0 +1,25 @@
+Checked 352947 curves in 0.008s
+#Gamma(8,1) =  21126 (in 1298 orbits) for p = 7
+#Gamma(8,u) =  18928 (in 1164 orbits) for p = 7
+
+Frequencies of signed root multiplicities
+Gamma(8,1): 12 different patterns
+1 [+2] 2191
+1 [+5] 14
+1 [-2] 2205
+1 [] 15309
+1 [-2,+2] 378
+1 [+3] 630
+1 [-2,+3] 84
+1 [+4] 63
+1 [+2,+2] 126
+1 [+3,+3] 21
+1 [+2,+3] 84
+1 [+2,+2,+2] 21
+Gamma(8,u): 6 different patterns
+u [-2] 1372
+u [+2] 2205
+u [] 14490
+u [+2,+3] 84
+u [+3] 588
+u [+2,+2] 189

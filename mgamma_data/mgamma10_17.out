@@ -1,0 +1,21 @@
+Checked 20927272323 curves in 31.850s
+#Gamma(10,1) =  6075868 (in 62802 orbits) for p = 17
+#Gamma(10,u) =  5592150 (in 57819 orbits) for p = 17
+
+Frequencies of signed root multiplicities
+Gamma(10,1): 9 different patterns
+1 [+2] 319498
+1 [-2] 259522
+1 [] 5440952
+1 [-2,+2] 8704
+1 [+3] 37264
+1 [+2,+3] 1088
+1 [+2,+2] 8160
+1 [+4] 544
+1 [+3,+3] 136
+Gamma(10,u): 5 different patterns
+u [+2] 259522
+u [] 5123664
+u [+3] 27744
+u [-2] 176868
+u [+2,+2] 4352

@@ -1,0 +1,11 @@
+Checked 1231016019 curves in 2.062s
+#Gamma(9,1) =  350540 (in 3758 orbits) for p = 17
+
+Frequencies of signed root multiplicities
+Gamma(9,1): 6 different patterns
+1 [] 315656
+1 [+2] 18632
+1 [+3] 1972
+1 [-2] 13872
+1 [+2,+3] 136
+1 [+2,+2] 272
