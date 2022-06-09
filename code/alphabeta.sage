@@ -538,7 +538,8 @@ def S(n, eps, p=pp):
     if eps == "u":
         if n%2:
             return 0
-        return 1 - p**(-n) * (p + sum_f_terms(n, eps, p) + sum_phi_terms(n, eps, p))
+        e = 3*n//2 if p==2 else n
+        return 1 - p**(-n) * (p + sum_phi_terms(n, eps, p)) - p**(-e) * sum_f_terms(n, eps, p)
     # now eps=="p"
     return  1 - p**(-n) * (p + sum_phi_terms(n, eps, p))
 
@@ -835,6 +836,9 @@ def check_rho(g,p=pp):
         print("rho_g values only stored for g = 1, 2 so far")
         return None
 
+def check_all_rho():
+    np = {1:5, 2: 6, 3: 10, 4: 16, 5: 4, 6: 4}
+    assert all(all([check_rho(g,p) for p in [pp]+primes_first_n(np[g])]) for g in range(1,7))
 """
 Space for comments
 
