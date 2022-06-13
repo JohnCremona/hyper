@@ -894,6 +894,13 @@ def check_rho(g,p=pp):
 def check_all_rho():
     np = {1:5, 2: 6, 3: 10, 4: 16, 5: 4, 6: 4, 7:4}
     assert all(all([check_rho(g,p) for p in [pp]+primes_first_n(np[g])]) for g in np)
+
+def show_rho():
+    for p in primes(50):
+        for g in range(1,8 if p<11 else 5):
+            print(p, g, rho(g,p)*RealField(100)(1))
+        print()
+
 """
 Space for comments
 
