@@ -565,7 +565,7 @@ deg 10, depth 25 (9s):    0.788425
 
 
 ======================================================================
-Lower bounds from vinci
+Lower bounds from vinci and lrs
 ======================================================================
 
 Notes: hyper.sage contains a function make_vinci_input(degree, depth,
@@ -686,9 +686,10 @@ directory.  OR (simpler and more reliable, since vinci just calls
 lrs): add the word "volume" on a single line after "end" in the .ext
 file and just run lrs on the file.
 
+deg 6, ht 1: V = 6611/46080 = 1 - 0.856532118 in <1s
 deg 6, ht 2: Volume:
 77256349758298059510894967024960483/699657177903484989710310360219648000
-= 1.104202918203e-01 = 1- 0.889579708179660417759445
+= 1.104202918203e-01 = 1- 0.889579708179660417759445 in 27s
 [compare with             0.8895797081797]
 
 NB this is already better than the LB 0.888818 from the boxes program.
@@ -700,14 +701,17 @@ deg 6, ht 4 Volume: 353012801584922396507285916506016212616566829217045981795877
         = 1 - 0.89986890746692336057163867548091567635  (34115s)
 [compare with 0.8998689074671]
 
-deg 8, ht 2: Volume: (rerun)
+deg 8, ht 1: V = 6134591/46448640 = 1 - 0.86792743555 in 278s
+deg 8, ht 2: Volume:
 2190988766094332950773461407648350143269404370100920355725155943003050836972819/22512594282539919071324938451154952953714263549543912205481751535440363520000000
 =          1 -0.90267719754566016597066776900175621178 (40896s)
 [compare with 0.90267719754566]
 
 NB this is already better than the LB 0.885066 from the boxes program.
 
-deg 10, ht 2: Volume: (running)
+deg 10, ht 1: Volume: 80637661/648806400 in 445245s (5.15 days), parallel*4
+deg 10, ht 2: Volume: (running lehner)
 
-deg 12, ht 2: Volume: (running)
+deg 12, ht 1: Volume: (not running)
+deg 12, ht 2: Volume: (running atkin)
 
