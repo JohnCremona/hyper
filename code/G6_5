@@ -1,0 +1,9 @@
+Gamma(6,1): 5 different patterns
+1 [] 160
+1 [-2] 25
+1 [+2] 35
+1 [+2,+2] 10
+1 [+3] 20
+Gamma(6,u): 2 different patterns
+u [] 120
+u [+2] 25
