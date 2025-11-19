@@ -371,6 +371,35 @@ int is_square_14(int* f, int p)
     ((f[6] - 2*(h0*h6+h1*h5+h2*h4) - h3*h3)%p == 0);
 }
 
+int is_square_16(int* f, int p)
+{
+  int half = (p+1)/2;
+  int h7 = (half*f[15])%p;
+  int h6 = (half*(f[14]-h7*h7))%p;
+  int h5 = (half*f[13] - h6*h7)%p;
+  int h4 = (half*(f[12]-h6*h6) - h5*h7)%p;
+  int h3 = (half*f[11] - h5*h6 - h4*h7)%p;
+  int h2 = (half*(f[10]-h5*h5) - h4*h6 - h3*h7)%p;
+  int h1 = (half*f[9] - h4*h5 - h3*h6 - h2*h7)%p;
+  int h0 = (half*(f[8] - h4*h4) - h3*h5 - h2*h6 - h1*h7)%p;
+  return
+    ((f[0] - h0*h0)%p == 0)
+    &&
+    ((f[1] - 2*h0*h1)%p == 0)
+    &&
+    ((f[2] - (h1*h1+2*h0*h2))%p == 0)
+    &&
+    ((f[3] - 2*(h0*h3+h1*h2))%p == 0)
+    &&
+    ((f[4] - 2*(h1*h3+h0*h4) - h2*h2)%p == 0)
+    &&
+    ((f[5] - 2*(h0*h5+h1*h4+h2*h3))%p == 0)
+    &&
+    ((f[6] - 2*(h0*h6+h1*h5+h2*h4) - h3*h3)%p == 0)
+    &&
+    ((f[7] - 2*(h0*h7+h1*h6+h2*h5+h3*h4))%p == 0);
+}
+
 int is_square(int n, int* f, int p)
 {
   if (n%2)
@@ -383,7 +412,8 @@ int is_square(int n, int* f, int p)
   case 10: return is_square_10(f, p);
   case 12: return is_square_12(f, p);
   case 14: return is_square_14(f, p);
-  default: return 0;
+  case 16: return is_square_16(f, p);
+  default: printf("No is_square function implemented for degree %d\n", n); return 0;
   }
 }
 
