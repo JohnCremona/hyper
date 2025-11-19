@@ -710,8 +710,8 @@ deg 8, ht 2: Volume:
 NB this is already better than the LB 0.885066 from the boxes program.
 
 deg 10, ht 1: Volume: 80637661/648806400 in 445245s (5.15 days), parallel*4
-deg 10, ht 2: Volume: (running lehner)
+deg 10, ht 2: Volume: (quit after ages running lehner)
 
 deg 12, ht 1: Volume: (not running)
-deg 12, ht 2: Volume: (running atkin)
+deg 12, ht 2: Volume: (quit after ages running atkin)
 
